@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, effect, input, output, signal } from '@angular/core';
 
 @Component({
   selector: 'app-confirm-dialog',
@@ -13,4 +13,21 @@ export class ConfirmDialogComponent {
 
   confirmar = output<void>();
   cancelar = output<void>();
+
+  /**
+   * O dialog só entra no DOM depois de ser aberto pela primeira vez.
+   * Antes disso não existe nada pra "piscar" na tela.
+   */
+  foiAbertoAlgumaVez = signal(false);
+
+  constructor() {
+    effect(
+      () => {
+        if (this.aberto()) {
+          this.foiAbertoAlgumaVez.set(true);
+        }
+      },
+      { allowSignalWrites: true },
+    );
+  }
 }
