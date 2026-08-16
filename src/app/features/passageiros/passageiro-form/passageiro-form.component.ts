@@ -33,6 +33,26 @@ export class PassageiroFormComponent implements OnInit {
     return this.passageiroId() !== null;
   }
 
+  /** Formatação visual do CPF (000.000.000-00). Validação de dígito verificador fica a cargo do backend. */
+  aplicarMascaraDocumento(valorDigitado: string): void {
+    if (this.form.controls.tipoDocumento.value !== 'CPF') {
+      return;
+    }
+
+    const digitos = valorDigitado.replace(/\D/g, '').slice(0, 11);
+    let formatado = digitos;
+
+    if (digitos.length > 9) {
+      formatado = digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+    } else if (digitos.length > 6) {
+      formatado = digitos.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    } else if (digitos.length > 3) {
+      formatado = digitos.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    }
+
+    this.form.controls.numeroDocumento.setValue(formatado, { emitEvent: false });
+  }
+
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
