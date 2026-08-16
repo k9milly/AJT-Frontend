@@ -1,0 +1,107 @@
+<div class="max-w-2xl">
+  <h1 class="text-xl font-bold text-gray-800 mb-6">
+    {{ modoEdicao ? 'Editar ordem de serviço' : 'Nova ordem de serviço' }}
+  </h1>
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="motoristaId">Motorista</label>
+        <select
+          id="motoristaId"
+          formControlName="motoristaId"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option [ngValue]="null">Selecione...</option>
+          @for (motorista of motoristas(); track motorista.id) {
+            <option [ngValue]="motorista.id">{{ motorista.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="veiculoId">Veículo</label>
+        <select
+          id="veiculoId"
+          formControlName="veiculoId"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option [ngValue]="null">Selecione...</option>
+          @for (veiculo of veiculos(); track veiculo.id) {
+            <option [ngValue]="veiculo.id">{{ veiculo.placa }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="data">Data</label>
+        <input
+          id="data"
+          type="date"
+          formControlName="data"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Paradas (transfers do dia)</label>
+      <div class="border border-gray-200 rounded-md divide-y divide-gray-100 max-h-56 overflow-y-auto">
+        @for (transfer of transfers(); track transfer.id) {
+          <label class="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50">
+            <input
+              type="checkbox"
+              [checked]="transferSelecionado(transfer.id)"
+              (change)="alternarTransfer(transfer.id, $any($event.target).checked)"
+              class="rounded border-gray-300"
+            />
+            <span class="text-gray-700">
+              {{ nomePassageiroDoTransfer(transfer.id) }} — {{ transfer.dataHora | date: 'dd/MM HH:mm' }}
+            </span>
+          </label>
+        }
+        @if (transfers().length === 0) {
+          <p class="px-3 py-2 text-sm text-gray-500">Nenhum transfer cadastrado ainda.</p>
+        }
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1" for="status">Status</label>
+      <select
+        id="status"
+        formControlName="status"
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        @for (status of statusOpcoes; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1" for="observacoes">Observações</label>
+      <textarea
+        id="observacoes"
+        formControlName="observacoes"
+        rows="3"
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      ></textarea>
+    </div>
+
+    @if (erro()) {
+      <p class="text-sm text-red-600">{{ erro() }}</p>
+    }
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="submit"
+        [disabled]="salvando()"
+        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-md"
+      >
+        {{ salvando() ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <a routerLink="/ordens-servico" class="text-sm text-gray-600 hover:underline">Cancelar</a>
+    </div>
+  </form>
+</div>
