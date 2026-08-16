@@ -31,6 +31,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/pontos-coleta/pontos-coleta.routes').then(m => m.PONTOS_COLETA_ROUTES),
       },
+      {
+        path: 'transfers',
+        loadChildren: () =>
+          import('./features/transfers/transfers.routes').then(m => m.TRANSFERS_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },
