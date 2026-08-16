@@ -1,0 +1,67 @@
+<div class="max-w-lg">
+  <h1 class="text-xl font-bold text-gray-800 mb-6">
+    {{ modoEdicao ? 'Editar passageiro' : 'Novo passageiro' }}
+  </h1>
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1" for="nome">Nome completo</label>
+      <input
+        id="nome"
+        type="text"
+        formControlName="nome"
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="tipoDocumento">Tipo de documento</label>
+        <select
+          id="tipoDocumento"
+          formControlName="tipoDocumento"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          @for (tipo of tiposDocumento; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="numeroDocumento">Número</label>
+        <input
+          id="numeroDocumento"
+          type="text"
+          formControlName="numeroDocumento"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1" for="nacionalidade">Nacionalidade</label>
+      <input
+        id="nacionalidade"
+        type="text"
+        formControlName="nacionalidade"
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+
+    @if (erro()) {
+      <p class="text-sm text-red-600">{{ erro() }}</p>
+    }
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="submit"
+        [disabled]="salvando()"
+        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-md"
+      >
+        {{ salvando() ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <a routerLink="/passageiros" class="text-sm text-gray-600 hover:underline">Cancelar</a>
+    </div>
+  </form>
+</div>

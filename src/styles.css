@@ -1,0 +1,6 @@
+/* Bootstrap importado apenas para o componente de navbar (requisito da entrega). */
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
