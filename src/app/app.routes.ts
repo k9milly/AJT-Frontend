@@ -16,6 +16,16 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/passageiros/passageiros.routes').then(m => m.PASSAGEIROS_ROUTES),
       },
+      {
+        path: 'motoristas',
+        loadChildren: () =>
+          import('./features/motoristas/motoristas.routes').then(m => m.MOTORISTAS_ROUTES),
+      },
+      {
+        path: 'veiculos',
+        loadChildren: () =>
+          import('./features/veiculos/veiculos.routes').then(m => m.VEICULOS_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },
