@@ -1,0 +1,71 @@
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-bold text-gray-800">Passageiros</h1>
+  <a
+    routerLink="novo"
+    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md"
+  >
+    + Novo passageiro
+  </a>
+</div>
+
+<div class="mb-4">
+  <input
+    type="text"
+    [value]="termoBusca()"
+    (input)="termoBusca.set($any($event.target).value)"
+    placeholder="Buscar por nome ou documento..."
+    class="w-full max-w-sm rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+  @if (carregando()) {
+    <p class="p-6 text-sm text-gray-500">Carregando...</p>
+  } @else if (passageirosFiltrados().length === 0) {
+    <p class="p-6 text-sm text-gray-500">Nenhum passageiro encontrado.</p>
+  } @else {
+    <table class="w-full text-sm text-left">
+      <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+        <tr>
+          <th class="px-4 py-3">Nome</th>
+          <th class="px-4 py-3">Documento</th>
+          <th class="px-4 py-3">Nacionalidade</th>
+          <th class="px-4 py-3 text-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        @for (passageiro of passageirosFiltrados(); track passageiro.id) {
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-gray-800">{{ passageiro.nome }}</td>
+            <td class="px-4 py-3 text-gray-600">
+              {{ passageiro.tipoDocumento }} — {{ passageiro.numeroDocumento }}
+            </td>
+            <td class="px-4 py-3 text-gray-600">{{ passageiro.nacionalidade }}</td>
+            <td class="px-4 py-3 text-right space-x-3">
+              <a [routerLink]="[passageiro.id, 'editar']" class="text-blue-600 hover:underline">
+                Editar
+              </a>
+              <button
+                type="button"
+                [disabled]="excluindoId() === passageiro.id"
+                (click)="pedirExclusao(passageiro)"
+                class="text-red-600 hover:underline disabled:opacity-50"
+              >
+                {{ excluindoId() === passageiro.id ? 'Excluindo...' : 'Excluir' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-confirm-dialog
+  [aberto]="passageiroParaExcluir() !== null"
+  titulo="Excluir passageiro"
+  [mensagem]="'Tem certeza que deseja excluir ' + (passageiroParaExcluir()?.nome ?? '') + '? Essa ação não pode ser desfeita.'"
+  textoConfirmar="Excluir"
+  (cancelar)="cancelarExclusao()"
+  (confirmar)="confirmarExclusao()"
+/>
