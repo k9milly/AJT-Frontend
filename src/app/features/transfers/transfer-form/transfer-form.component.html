@@ -1,0 +1,133 @@
+<div class="max-w-2xl">
+  <h1 class="text-xl font-bold text-gray-800 mb-6">
+    {{ modoEdicao ? 'Editar transfer' : 'Novo transfer' }}
+  </h1>
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1" for="passageiroId">Passageiro</label>
+      <select
+        id="passageiroId"
+        formControlName="passageiroId"
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option [ngValue]="null">Selecione...</option>
+        @for (passageiro of passageiros(); track passageiro.id) {
+          <option [ngValue]="passageiro.id">{{ passageiro.nome }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="origemId">Origem</label>
+        <select
+          id="origemId"
+          formControlName="origemId"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option [ngValue]="null">Selecione...</option>
+          @for (ponto of pontos(); track ponto.id) {
+            <option [ngValue]="ponto.id">{{ ponto.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="destinoId">Destino</label>
+        <select
+          id="destinoId"
+          formControlName="destinoId"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option [ngValue]="null">Selecione...</option>
+          @for (ponto of pontos(); track ponto.id) {
+            <option [ngValue]="ponto.id">{{ ponto.nome }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="motoristaId">Motorista</label>
+        <select
+          id="motoristaId"
+          formControlName="motoristaId"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option [ngValue]="null">A definir</option>
+          @for (motorista of motoristas(); track motorista.id) {
+            <option [ngValue]="motorista.id">{{ motorista.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="veiculoId">Veículo</label>
+        <select
+          id="veiculoId"
+          formControlName="veiculoId"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option [ngValue]="null">A definir</option>
+          @for (veiculo of veiculos(); track veiculo.id) {
+            <option [ngValue]="veiculo.id">{{ veiculo.placa }} — {{ veiculo.modelo }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="dataHora">Data e hora</label>
+        <input
+          id="dataHora"
+          type="datetime-local"
+          formControlName="dataHora"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="valor">Valor (R$)</label>
+        <input
+          id="valor"
+          type="number"
+          min="0"
+          step="0.01"
+          formControlName="valor"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="status">Status</label>
+        <select
+          id="status"
+          formControlName="status"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          @for (status of statusOpcoes; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (erro()) {
+      <p class="text-sm text-red-600">{{ erro() }}</p>
+    }
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="submit"
+        [disabled]="salvando()"
+        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-md"
+      >
+        {{ salvando() ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <a routerLink="/transfers" class="text-sm text-gray-600 hover:underline">Cancelar</a>
+    </div>
+  </form>
+</div>
