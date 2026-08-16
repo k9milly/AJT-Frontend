@@ -1,27 +1,65 @@
-# AjtFront
+# AJT-Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+Front-end do sistema receptivo da **AJT Viagens e Turismo** (antiga SOS Viale), desenvolvido em Angular 18 (standalone components) com Tailwind CSS. Consome a API REST do [AJT-Backend](https://github.com/guiPinheiroAfK/AJT-Backend).
 
-## Development server
+## Stack
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+| Camada | Tecnologia |
+| --- | --- |
+| Framework | Angular 18 (standalone components) |
+| Estilo | Tailwind CSS (principal) + Bootstrap |
+| Formulários | Angular Reactive Forms |
+| Autenticação | JWT (mockado nesta fase) |
 
-## Code scaffolding
+## Requisitos
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Node.js 18+
+- npm 9+
 
-## Build
+## Configuração rápida
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm install
+npm start
+```
 
-## Running unit tests
+A aplicação sobe por padrão em `http://localhost:4200`.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Estrutura do projeto
 
-## Running end-to-end tests
+```
+src/app/
+├── core/            # modelos, autenticação (guards, interceptor), dados mockados
+├── shared/          # componentes reutilizáveis (layout, dialogs)
+├── features/        # módulos de domínio (auth, passageiros, ...)
+├── app.routes.ts     # rotas principais (com children)
+└── app.config.ts      # configuração da aplicação (providers)
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## Status da entrega
 
-## Further help
+### Fase 1 — concluída
+- Autenticação (login mockado, guard de rotas)
+- CRUD de Passageiros (mockado, com persistência em `localStorage`)
+- Layout com navbar (Bootstrap) e sidebar (Tailwind)
+- Roteamento com rotas filhas (`children`)
+- Dialog de confirmação customizado em CSS (sem `window.confirm`)
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+### Usuários de teste
+| E-mail | Senha | Perfil |
+| --- | --- | --- |
+| admin@ajt.com | 123456 | ADMIN |
+| gerente@ajt.com | 123456 | GERENTE |
+| motorista@ajt.com | 123456 | MOTORISTA |
+
+## Scripts disponíveis
+
+| Comando | Descrição |
+| --- | --- |
+| `npm start` | inicia o servidor de desenvolvimento (`ng serve`) |
+| `npm run build` | gera o build de produção em `dist/` |
+| `npm test` | executa os testes unitários (Karma) |
+
+## Repositórios relacionados
+
+- Backend (Spring Boot): [AJT-Backend](https://github.com/guiPinheiroAfK/AJT-Backend)
