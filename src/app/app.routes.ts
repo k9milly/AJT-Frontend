@@ -36,6 +36,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/transfers/transfers.routes').then(m => m.TRANSFERS_ROUTES),
       },
+      {
+        path: 'ordens-servico',
+        loadChildren: () =>
+          import('./features/ordens-servico/ordens-servico.routes').then(m => m.ORDENS_SERVICO_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },
