@@ -1,0 +1,73 @@
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-bold text-gray-800">Ordens de Serviço</h1>
+  <a
+    routerLink="novo"
+    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md"
+  >
+    + Nova ordem de serviço
+  </a>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+  @if (carregando()) {
+    <p class="p-6 text-sm text-gray-500">Carregando...</p>
+  } @else if (ordens().length === 0) {
+    <p class="p-6 text-sm text-gray-500">Nenhuma ordem de serviço encontrada.</p>
+  } @else {
+    <table class="w-full text-sm text-left">
+      <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+        <tr>
+          <th class="px-4 py-3">Data</th>
+          <th class="px-4 py-3">Motorista</th>
+          <th class="px-4 py-3">Veículo</th>
+          <th class="px-4 py-3">Paradas</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3 text-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        @for (ordem of ordens(); track ordem.id) {
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-gray-800">{{ ordem.data | date: 'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ nomeMotorista(ordem.motoristaId) }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ placaVeiculo(ordem.veiculoId) }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ ordem.transferIds.length }} transfer(s)</td>
+            <td class="px-4 py-3">
+              @switch (ordem.status) {
+                @case ('ABERTA') {
+                  <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Aberta</span>
+                }
+                @case ('EM_ANDAMENTO') {
+                  <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Em andamento</span>
+                }
+                @case ('FINALIZADA') {
+                  <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Finalizada</span>
+                }
+              }
+            </td>
+            <td class="px-4 py-3 text-right space-x-3">
+              <a [routerLink]="[ordem.id, 'editar']" class="text-blue-600 hover:underline">Editar</a>
+              <button
+                type="button"
+                [disabled]="excluindoId() === ordem.id"
+                (click)="pedirExclusao(ordem)"
+                class="text-red-600 hover:underline disabled:opacity-50"
+              >
+                {{ excluindoId() === ordem.id ? 'Excluindo...' : 'Excluir' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-confirm-dialog
+  [aberto]="ordemParaExcluir() !== null"
+  titulo="Excluir ordem de serviço"
+  mensagem="Tem certeza que deseja excluir esta ordem de serviço? Essa ação não pode ser desfeita."
+  textoConfirmar="Excluir"
+  (cancelar)="cancelarExclusao()"
+  (confirmar)="confirmarExclusao()"
+/>

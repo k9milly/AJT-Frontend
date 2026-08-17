@@ -1,0 +1,81 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+  <span class="navbar-brand fw-bold">AJT Viagens e Turismo</span>
+  <div class="ms-auto d-flex align-items-center gap-3 text-white">
+    <span class="small">
+      {{ auth.usuarioAtual()?.nome }}
+      <span class="badge bg-secondary ms-1">{{ auth.usuarioAtual()?.perfil }}</span>
+    </span>
+    <button
+      type="button"
+      class="bg-transparent border-0 text-white underline text-sm hover:text-gray-300"
+      (click)="sair()"
+    >
+      Sair
+    </button>
+  </div>
+</nav>
+
+<div class="flex min-h-[calc(100vh-56px)] bg-gray-50">
+  <aside class="w-56 shrink-0 bg-white border-r border-gray-200 p-4">
+    <ul class="space-y-1">
+      <li>
+        <a
+          routerLink="/passageiros"
+          routerLinkActive="bg-blue-100 text-blue-700"
+          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Passageiros
+        </a>
+      </li>
+      <li>
+        <a
+          routerLink="/motoristas"
+          routerLinkActive="bg-blue-100 text-blue-700"
+          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Motoristas
+        </a>
+      </li>
+      <li>
+        <a
+          routerLink="/veiculos"
+          routerLinkActive="bg-blue-100 text-blue-700"
+          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Veículos
+        </a>
+      </li>
+      <li>
+        <a
+          routerLink="/pontos-coleta"
+          routerLinkActive="bg-blue-100 text-blue-700"
+          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Pontos de Coleta
+        </a>
+      </li>
+      <li>
+        <a
+          routerLink="/transfers"
+          routerLinkActive="bg-blue-100 text-blue-700"
+          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Transfers
+        </a>
+      </li>
+      <li>
+        <a
+          routerLink="/ordens-servico"
+          routerLinkActive="bg-blue-100 text-blue-700"
+          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Ordens de Serviço
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <main class="flex-1 p-6">
+    <router-outlet></router-outlet>
+  </main>
+</div>
