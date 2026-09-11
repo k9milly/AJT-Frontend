@@ -1,64 +1,181 @@
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-xl font-bold text-gray-800">Veículos</h1>
-  <a
-    routerLink="novo"
-    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md"
+<div class="space-y-6">
+
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div>
+      <p class="text-[#d9b83f] text-sm font-medium uppercase tracking-[0.18em] mb-2">
+        Gestão de Veículos
+      </p>
+
+      <h1 class="text-3xl font-bold text-white">
+        Veículos
+      </h1>
+
+      <p class="text-sm text-[#8f8f8f] mt-2">
+        Consulte, edite e gerencie os veículos cadastrados.
+      </p>
+    </div>
+
+    <a
+      routerLink="novo"
+      class="inline-flex items-center justify-center
+             h-12 px-5
+             rounded-lg
+             bg-gradient-to-r from-[#edca54] to-[#d8ae31]
+             text-[#111]
+             text-sm font-bold
+             no-underline
+             shadow-[0_10px_25px_rgba(218,181,54,0.18)]
+             transition
+             hover:brightness-105
+             active:scale-[0.99]"
+    >
+      + Novo veículo
+    </a>
+  </div>
+
+  <div>
+    <input
+      type="text"
+      [value]="termoBusca()"
+      (input)="termoBusca.set($any($event.target).value)"
+      placeholder="Buscar por placa ou modelo..."
+      class="w-full max-w-md h-12
+             rounded-lg
+             border border-[#3f3f3f]
+             bg-[#1d1d1d]
+             px-4
+             text-sm text-white
+             placeholder:text-[#6f6f6f]
+             outline-none
+             transition
+             focus:border-[#d9b83f]
+             focus:ring-2
+             focus:ring-[#d9b83f]/10"
+    />
+  </div>
+
+  <div
+    class="overflow-hidden
+           rounded-2xl
+           border border-[#333333]
+           bg-[#181818]
+           shadow-[0_18px_45px_rgba(0,0,0,0.28)]"
   >
-    + Novo veículo
-  </a>
-</div>
+    @if (carregando()) {
+      <p class="p-6 text-sm text-[#9f9f9f]">
+        Carregando...
+      </p>
 
-<div class="mb-4">
-  <input
-    type="text"
-    [value]="termoBusca()"
-    (input)="termoBusca.set($any($event.target).value)"
-    placeholder="Buscar por placa ou modelo..."
-    class="w-full max-w-sm rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-  />
-</div>
+    } @else if (veiculosFiltrados().length === 0) {
+      <p class="p-6 text-sm text-[#9f9f9f]">
+        Nenhum veículo encontrado.
+      </p>
 
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-  @if (carregando()) {
-    <p class="p-6 text-sm text-gray-500">Carregando...</p>
-  } @else if (veiculosFiltrados().length === 0) {
-    <p class="p-6 text-sm text-gray-500">Nenhum veículo encontrado.</p>
-  } @else {
-    <table class="w-full text-sm text-left">
-      <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-        <tr>
-          <th class="px-4 py-3">Placa</th>
-          <th class="px-4 py-3">Modelo</th>
-          <th class="px-4 py-3">Tipo</th>
-          <th class="px-4 py-3">Capacidade</th>
-          <th class="px-4 py-3">Motorista</th>
-          <th class="px-4 py-3 text-right">Ações</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        @for (veiculo of veiculosFiltrados(); track veiculo.id) {
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-800">{{ veiculo.placa }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ veiculo.modelo }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ veiculo.tipo }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ veiculo.capacidade }} lugares</td>
-            <td class="px-4 py-3 text-gray-600">{{ nomeMotorista(veiculo.motoristaId) }}</td>
-            <td class="px-4 py-3 text-right space-x-3">
-              <a [routerLink]="[veiculo.id, 'editar']" class="text-blue-600 hover:underline">Editar</a>
-              <button
-                type="button"
-                [disabled]="excluindoId() === veiculo.id"
-                (click)="pedirExclusao(veiculo)"
-                class="text-red-600 hover:underline disabled:opacity-50"
-              >
-                {{ excluindoId() === veiculo.id ? 'Excluindo...' : 'Excluir' }}
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+
+          <thead
+            class="bg-[#202020]
+                   text-[#9f9f9f]
+                   uppercase
+                   text-xs
+                   tracking-wide"
+          >
+            <tr>
+              <th class="px-6 py-4">Placa</th>
+              <th class="px-6 py-4">Modelo</th>
+              <th class="px-6 py-4">Tipo</th>
+              <th class="px-6 py-4">Capacidade</th>
+              <th class="px-6 py-4">Motorista</th>
+              <th class="px-6 py-4 text-right">Ações</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-[#2f2f2f]">
+            @for (veiculo of veiculosFiltrados(); track veiculo.id) {
+              <tr class="transition hover:bg-[#202020]">
+
+                <td class="px-6 py-4 font-medium text-white">
+                  {{ veiculo.placa }}
+                </td>
+
+                <td class="px-6 py-4 text-[#bcbcbc]">
+                  {{ veiculo.modelo }}
+                </td>
+
+                <td class="px-6 py-4">
+                  <span
+                    class="inline-flex items-center
+                           rounded-full
+                           border border-[#4a4a4a]
+                           bg-[#242424]
+                           px-3 py-1
+                           text-xs font-medium
+                           text-[#cfcfcf]"
+                  >
+                    {{ veiculo.tipo }}
+                  </span>
+                </td>
+
+                <td class="px-6 py-4 text-[#bcbcbc]">
+                  {{ veiculo.capacidade }} lugares
+                </td>
+
+                <td class="px-6 py-4 text-[#bcbcbc]">
+                  {{ nomeMotorista(veiculo.motoristaId) }}
+                </td>
+
+                <td class="px-6 py-4">
+                  <div class="flex items-center justify-end gap-3">
+
+                    <a
+                      [routerLink]="[veiculo.id, 'editar']"
+                      class="inline-flex items-center justify-center
+                             rounded-md
+                             border border-[#4b4b4b]
+                             px-3 py-2
+                             text-xs font-medium
+                             text-[#d6d6d6]
+                             no-underline
+                             transition
+                             hover:border-[#d9b83f]
+                             hover:text-[#d9b83f]"
+                    >
+                      Editar
+                    </a>
+
+                    <button
+                      type="button"
+                      [disabled]="excluindoId() === veiculo.id"
+                      (click)="pedirExclusao(veiculo)"
+                      class="inline-flex items-center justify-center
+                             rounded-md
+                             border border-red-500/30
+                             bg-red-500/5
+                             px-3 py-2
+                             text-xs font-medium
+                             text-red-400
+                             transition
+                             hover:bg-red-500/10
+                             hover:border-red-500/50
+                             disabled:opacity-50"
+                    >
+                      {{ excluindoId() === veiculo.id ? 'Excluindo...' : 'Excluir' }}
+                    </button>
+
+                  </div>
+                </td>
+
+              </tr>
+            }
+          </tbody>
+
+        </table>
+      </div>
+    }
+  </div>
+
 </div>
 
 <app-confirm-dialog

@@ -1,66 +1,207 @@
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-xl font-bold text-gray-800">Ordens de Serviço</h1>
-  <a
-    routerLink="novo"
-    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md"
-  >
-    + Nova ordem de serviço
-  </a>
-</div>
+<div class="space-y-6">
 
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-  @if (carregando()) {
-    <p class="p-6 text-sm text-gray-500">Carregando...</p>
-  } @else if (ordens().length === 0) {
-    <p class="p-6 text-sm text-gray-500">Nenhuma ordem de serviço encontrada.</p>
-  } @else {
-    <table class="w-full text-sm text-left">
-      <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-        <tr>
-          <th class="px-4 py-3">Data</th>
-          <th class="px-4 py-3">Motorista</th>
-          <th class="px-4 py-3">Veículo</th>
-          <th class="px-4 py-3">Paradas</th>
-          <th class="px-4 py-3">Status</th>
-          <th class="px-4 py-3 text-right">Ações</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        @for (ordem of ordens(); track ordem.id) {
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-800">{{ ordem.data | date: 'dd/MM/yyyy' }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ nomeMotorista(ordem.motoristaId) }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ placaVeiculo(ordem.veiculoId) }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ ordem.transferIds.length }} transfer(s)</td>
-            <td class="px-4 py-3">
-              @switch (ordem.status) {
-                @case ('ABERTA') {
-                  <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Aberta</span>
-                }
-                @case ('EM_ANDAMENTO') {
-                  <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Em andamento</span>
-                }
-                @case ('FINALIZADA') {
-                  <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Finalizada</span>
-                }
-              }
-            </td>
-            <td class="px-4 py-3 text-right space-x-3">
-              <a [routerLink]="[ordem.id, 'editar']" class="text-blue-600 hover:underline">Editar</a>
-              <button
-                type="button"
-                [disabled]="excluindoId() === ordem.id"
-                (click)="pedirExclusao(ordem)"
-                class="text-red-600 hover:underline disabled:opacity-50"
-              >
-                {{ excluindoId() === ordem.id ? 'Excluindo...' : 'Excluir' }}
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div>
+      <p class="text-[#d9b83f] text-sm font-medium uppercase tracking-[0.18em] mb-2">
+        Gestão de Ordens de Serviço
+      </p>
+
+      <h1 class="text-3xl font-bold text-white">
+        Ordens de Serviço
+      </h1>
+
+      <p class="text-sm text-[#8f8f8f] mt-2">
+        Consulte, acompanhe e gerencie as ordens de serviço da operação.
+      </p>
+    </div>
+
+    <a
+      routerLink="novo"
+      class="inline-flex items-center justify-center
+             h-12 px-5
+             rounded-lg
+             bg-gradient-to-r from-[#edca54] to-[#d8ae31]
+             text-[#111]
+             text-sm font-bold
+             no-underline
+             shadow-[0_10px_25px_rgba(218,181,54,0.18)]
+             transition
+             hover:brightness-105
+             active:scale-[0.99]"
+    >
+      + Nova ordem de serviço
+    </a>
+  </div>
+
+  <div
+    class="overflow-hidden
+           rounded-2xl
+           border border-[#333333]
+           bg-[#181818]
+           shadow-[0_18px_45px_rgba(0,0,0,0.28)]"
+  >
+    @if (carregando()) {
+      <p class="p-6 text-sm text-[#9f9f9f]">
+        Carregando...
+      </p>
+
+    } @else if (ordens().length === 0) {
+      <p class="p-6 text-sm text-[#9f9f9f]">
+        Nenhuma ordem de serviço encontrada.
+      </p>
+
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[900px] text-sm text-left">
+
+          <thead
+            class="bg-[#202020]
+                   text-[#9f9f9f]
+                   uppercase
+                   text-xs
+                   tracking-wide"
+          >
+            <tr>
+              <th class="px-6 py-4">Data</th>
+              <th class="px-6 py-4">Motorista</th>
+              <th class="px-6 py-4">Veículo</th>
+              <th class="px-6 py-4">Paradas</th>
+              <th class="px-6 py-4">Status</th>
+              <th class="px-6 py-4 text-right">Ações</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-[#2f2f2f]">
+            @for (ordem of ordens(); track ordem.id) {
+              <tr class="transition hover:bg-[#202020]">
+
+                <td class="px-6 py-4 font-medium text-white whitespace-nowrap">
+                  {{ ordem.data | date: 'dd/MM/yyyy' }}
+                </td>
+
+                <td class="px-6 py-4 text-[#bcbcbc]">
+                  {{ nomeMotorista(ordem.motoristaId) }}
+                </td>
+
+                <td class="px-6 py-4">
+                  <span
+                    class="inline-flex items-center
+                           rounded-full
+                           border border-[#4a4a4a]
+                           bg-[#242424]
+                           px-3 py-1
+                           text-xs font-medium
+                           text-[#d6d6d6]"
+                  >
+                    {{ placaVeiculo(ordem.veiculoId) }}
+                  </span>
+                </td>
+
+                <td class="px-6 py-4 text-[#bcbcbc]">
+                  <span class="font-medium text-white">
+                    {{ ordem.transferIds.length }}
+                  </span>
+                  transfer(s)
+                </td>
+
+                <td class="px-6 py-4">
+                  @switch (ordem.status) {
+
+                    @case ('ABERTA') {
+                      <span
+                        class="inline-flex items-center
+                               rounded-full
+                               border border-sky-500/20
+                               bg-sky-500/10
+                               px-3 py-1
+                               text-xs font-medium
+                               text-sky-400"
+                      >
+                        Aberta
+                      </span>
+                    }
+
+                    @case ('EM_ANDAMENTO') {
+                      <span
+                        class="inline-flex items-center
+                               rounded-full
+                               border border-[#d9b83f]/30
+                               bg-[#d9b83f]/10
+                               px-3 py-1
+                               text-xs font-medium
+                               text-[#edca54]"
+                      >
+                        Em andamento
+                      </span>
+                    }
+
+                    @case ('FINALIZADA') {
+                      <span
+                        class="inline-flex items-center
+                               rounded-full
+                               border border-green-500/20
+                               bg-green-500/10
+                               px-3 py-1
+                               text-xs font-medium
+                               text-green-400"
+                      >
+                        Finalizada
+                      </span>
+                    }
+
+                  }
+                </td>
+
+                <td class="px-6 py-4">
+                  <div class="flex items-center justify-end gap-3">
+
+                    <a
+                      [routerLink]="[ordem.id, 'editar']"
+                      class="inline-flex items-center justify-center
+                             rounded-md
+                             border border-[#4b4b4b]
+                             px-3 py-2
+                             text-xs font-medium
+                             text-[#d6d6d6]
+                             no-underline
+                             transition
+                             hover:border-[#d9b83f]
+                             hover:text-[#d9b83f]"
+                    >
+                      Editar
+                    </a>
+
+                    <button
+                      type="button"
+                      [disabled]="excluindoId() === ordem.id"
+                      (click)="pedirExclusao(ordem)"
+                      class="inline-flex items-center justify-center
+                             rounded-md
+                             border border-red-500/30
+                             bg-red-500/5
+                             px-3 py-2
+                             text-xs font-medium
+                             text-red-400
+                             transition
+                             hover:bg-red-500/10
+                             hover:border-red-500/50
+                             disabled:opacity-50"
+                    >
+                      {{ excluindoId() === ordem.id ? 'Excluindo...' : 'Excluir' }}
+                    </button>
+
+                  </div>
+                </td>
+
+              </tr>
+            }
+          </tbody>
+
+        </table>
+      </div>
+    }
+  </div>
+
 </div>
 
 <app-confirm-dialog

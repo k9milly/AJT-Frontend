@@ -1,72 +1,267 @@
-<div class="max-w-lg">
-  <h1 class="text-xl font-bold text-gray-800 mb-6">
-    {{ modoEdicao ? 'Editar motorista' : 'Novo motorista' }}
-  </h1>
+<div class="space-y-6">
 
-  <form [formGroup]="form" (ngSubmit)="salvar()" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+  <div>
+    <p class="text-[#d9b83f] text-sm font-medium uppercase tracking-[0.18em] mb-2">
+      Gestão de Motoristas
+    </p>
+
+    <h1 class="text-3xl font-bold text-white">
+      {{ modoEdicao ? 'Editar motorista' : 'Novo motorista' }}
+    </h1>
+
+    <p class="text-sm text-[#8f8f8f] mt-2">
+      {{
+        modoEdicao
+          ? 'Atualize as informações do motorista selecionado.'
+          : 'Cadastre um novo motorista para a operação da AJT Viagens.'
+      }}
+    </p>
+  </div>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="salvar()"
+    class="max-w-3xl
+           bg-[#181818]
+           border border-[#333333]
+           rounded-2xl
+           shadow-[0_18px_45px_rgba(0,0,0,0.28)]
+           p-7 md:p-8
+           space-y-6"
+  >
+
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1" for="nome">Nome completo</label>
+      <label
+        for="nome"
+        class="block text-sm font-medium text-[#d5d5d5] mb-2"
+      >
+        Nome completo
+      </label>
+
       <input
         id="nome"
         type="text"
         formControlName="nome"
-        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Digite o nome completo"
+        class="w-full h-12
+               rounded-lg
+               border border-[#444444]
+               bg-[#242424]
+               px-4
+               text-sm text-white
+               placeholder:text-[#6f6f6f]
+               outline-none
+               transition
+               focus:border-[#d9b83f]
+               focus:ring-2
+               focus:ring-[#d9b83f]/10"
       />
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="cnh">CNH</label>
+        <label
+          for="cnh"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          CNH
+        </label>
+
         <input
           id="cnh"
           type="text"
           formControlName="cnh"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Digite o número da CNH"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 placeholder:text-[#6f6f6f]
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="categoriaCnh">Categoria</label>
+        <label
+          for="categoriaCnh"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Categoria
+        </label>
+
         <select
           id="categoriaCnh"
           formControlName="categoriaCnh"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         >
           @for (categoria of categorias; track categoria) {
-            <option [value]="categoria">{{ categoria }}</option>
+            <option
+              [value]="categoria"
+              class="bg-[#242424] text-white"
+            >
+              {{ categoria }}
+            </option>
           }
         </select>
       </div>
+
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1" for="telefone">Telefone</label>
+      <label
+        for="telefone"
+        class="block text-sm font-medium text-[#d5d5d5] mb-2"
+      >
+        Telefone
+      </label>
+
       <input
         id="telefone"
         type="text"
         formControlName="telefone"
-        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="(00) 00000-0000"
+        class="w-full h-12
+               rounded-lg
+               border border-[#444444]
+               bg-[#242424]
+               px-4
+               text-sm text-white
+               placeholder:text-[#6f6f6f]
+               outline-none
+               transition
+               focus:border-[#d9b83f]
+               focus:ring-2
+               focus:ring-[#d9b83f]/10"
       />
     </div>
 
-    <div class="flex items-center gap-2">
-      <input id="ativo" type="checkbox" formControlName="ativo" class="rounded border-gray-300" />
-      <label class="text-sm text-gray-700" for="ativo">Motorista ativo</label>
+    <div
+      class="flex items-center justify-between
+             rounded-xl
+             border border-[#363636]
+             bg-[#202020]
+             px-4 py-4"
+    >
+      <div>
+        <p class="text-sm font-medium text-white">
+          Motorista ativo
+        </p>
+
+        <p class="text-xs text-[#858585] mt-1">
+          Motoristas inativos não ficam disponíveis para novas operações.
+        </p>
+      </div>
+
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input
+          id="ativo"
+          type="checkbox"
+          formControlName="ativo"
+          class="sr-only peer"
+        />
+
+        <div
+          class="w-11 h-6
+                 rounded-full
+                 bg-[#484848]
+                 transition
+                 peer-checked:bg-[#d9b83f]
+                 after:content-['']
+                 after:absolute
+                 after:top-[2px]
+                 after:left-[2px]
+                 after:h-5
+                 after:w-5
+                 after:rounded-full
+                 after:bg-white
+                 after:transition-all
+                 peer-checked:after:translate-x-5"
+        ></div>
+      </label>
     </div>
 
+    <!-- Erro -->
     @if (erro()) {
-      <p class="text-sm text-red-600">{{ erro() }}</p>
+      <div
+        class="rounded-lg
+               border border-red-500/30
+               bg-red-500/10
+               px-4 py-3"
+      >
+        <p class="text-sm text-red-400">
+          {{ erro() }}
+        </p>
+      </div>
     }
 
-    <div class="flex items-center gap-3 pt-2">
+    <!-- Botões -->
+    <div
+      class="flex flex-col-reverse sm:flex-row
+             sm:items-center sm:justify-end
+             gap-3
+             pt-2"
+    >
+      <a
+        routerLink="/motoristas"
+        class="inline-flex items-center justify-center
+               h-12
+               px-6
+               rounded-lg
+               border border-[#4a4a4a]
+               text-sm font-medium
+               text-[#c5c5c5]
+               no-underline
+               transition
+               hover:border-[#d9b83f]
+               hover:text-[#d9b83f]"
+      >
+        Cancelar
+      </a>
+
       <button
         type="submit"
         [disabled]="salvando()"
-        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-md"
+        class="inline-flex items-center justify-center
+               h-12
+               px-7
+               rounded-lg
+               bg-gradient-to-r
+               from-[#edca54]
+               to-[#d8ae31]
+               text-[#111]
+               text-sm font-bold
+               shadow-[0_10px_25px_rgba(218,181,54,0.18)]
+               transition
+               hover:brightness-105
+               active:scale-[0.99]
+               disabled:opacity-60
+               disabled:cursor-not-allowed"
       >
-        {{ salvando() ? 'Salvando...' : 'Salvar' }}
+        {{
+          salvando()
+            ? 'Salvando...'
+            : (modoEdicao ? 'Salvar alterações' : 'Cadastrar motorista')
+        }}
       </button>
-      <a routerLink="/motoristas" class="text-sm text-gray-600 hover:underline">Cancelar</a>
     </div>
+
   </form>
+
 </div>

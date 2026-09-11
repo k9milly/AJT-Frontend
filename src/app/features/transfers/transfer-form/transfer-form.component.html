@@ -1,133 +1,402 @@
-<div class="max-w-2xl">
-  <h1 class="text-xl font-bold text-gray-800 mb-6">
-    {{ modoEdicao ? 'Editar transfer' : 'Novo transfer' }}
-  </h1>
+<div class="space-y-6">
 
-  <form [formGroup]="form" (ngSubmit)="salvar()" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+  <div>
+    <p class="text-[#d9b83f] text-sm font-medium uppercase tracking-[0.18em] mb-2">
+      Gestão de Transfers
+    </p>
+
+    <h1 class="text-3xl font-bold text-white">
+      {{ modoEdicao ? 'Editar transfer' : 'Novo transfer' }}
+    </h1>
+
+    <p class="text-sm text-[#8f8f8f] mt-2">
+      {{
+        modoEdicao
+          ? 'Atualize as informações do transfer selecionado.'
+          : 'Cadastre um novo transfer para a operação da AJT Viagens.'
+      }}
+    </p>
+  </div>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="salvar()"
+    class="max-w-5xl
+           bg-[#181818]
+           border border-[#333333]
+           rounded-2xl
+           shadow-[0_18px_45px_rgba(0,0,0,0.28)]
+           p-7 md:p-8
+           space-y-6"
+  >
+
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1" for="passageiroId">Passageiro</label>
+      <label
+        for="passageiroId"
+        class="block text-sm font-medium text-[#d5d5d5] mb-2"
+      >
+        Passageiro
+      </label>
+
       <select
         id="passageiroId"
         formControlName="passageiroId"
-        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="w-full h-12
+               rounded-lg
+               border border-[#444444]
+               bg-[#242424]
+               px-4
+               text-sm text-white
+               outline-none
+               transition
+               focus:border-[#d9b83f]
+               focus:ring-2
+               focus:ring-[#d9b83f]/10"
       >
-        <option [ngValue]="null">Selecione...</option>
+        <option [ngValue]="null" class="bg-[#242424] text-[#8f8f8f]">
+          Selecione...
+        </option>
+
         @for (passageiro of passageiros(); track passageiro.id) {
-          <option [ngValue]="passageiro.id">{{ passageiro.nome }}</option>
+          <option
+            [ngValue]="passageiro.id"
+            class="bg-[#242424] text-white"
+          >
+            {{ passageiro.nome }}
+          </option>
         }
       </select>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="origemId">Origem</label>
+        <label
+          for="origemId"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Origem
+        </label>
+
         <select
           id="origemId"
           formControlName="origemId"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         >
-          <option [ngValue]="null">Selecione...</option>
+          <option [ngValue]="null" class="bg-[#242424] text-[#8f8f8f]">
+            Selecione...
+          </option>
+
           @for (ponto of pontos(); track ponto.id) {
-            <option [ngValue]="ponto.id">{{ ponto.nome }}</option>
+            <option
+              [ngValue]="ponto.id"
+              class="bg-[#242424] text-white"
+            >
+              {{ ponto.nome }}
+            </option>
           }
         </select>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="destinoId">Destino</label>
+        <label
+          for="destinoId"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Destino
+        </label>
+
         <select
           id="destinoId"
           formControlName="destinoId"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         >
-          <option [ngValue]="null">Selecione...</option>
+          <option [ngValue]="null" class="bg-[#242424] text-[#8f8f8f]">
+            Selecione...
+          </option>
+
           @for (ponto of pontos(); track ponto.id) {
-            <option [ngValue]="ponto.id">{{ ponto.nome }}</option>
+            <option
+              [ngValue]="ponto.id"
+              class="bg-[#242424] text-white"
+            >
+              {{ ponto.nome }}
+            </option>
           }
         </select>
       </div>
+
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="motoristaId">Motorista</label>
+        <label
+          for="motoristaId"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Motorista
+        </label>
+
         <select
           id="motoristaId"
           formControlName="motoristaId"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         >
-          <option [ngValue]="null">A definir</option>
+          <option [ngValue]="null" class="bg-[#242424] text-[#8f8f8f]">
+            A definir
+          </option>
+
           @for (motorista of motoristas(); track motorista.id) {
-            <option [ngValue]="motorista.id">{{ motorista.nome }}</option>
+            <option
+              [ngValue]="motorista.id"
+              class="bg-[#242424] text-white"
+            >
+              {{ motorista.nome }}
+            </option>
           }
         </select>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="veiculoId">Veículo</label>
+        <label
+          for="veiculoId"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Veículo
+        </label>
+
         <select
           id="veiculoId"
           formControlName="veiculoId"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         >
-          <option [ngValue]="null">A definir</option>
+          <option [ngValue]="null" class="bg-[#242424] text-[#8f8f8f]">
+            A definir
+          </option>
+
           @for (veiculo of veiculos(); track veiculo.id) {
-            <option [ngValue]="veiculo.id">{{ veiculo.placa }} — {{ veiculo.modelo }}</option>
+            <option
+              [ngValue]="veiculo.id"
+              class="bg-[#242424] text-white"
+            >
+              {{ veiculo.placa }} — {{ veiculo.modelo }}
+            </option>
           }
         </select>
       </div>
+
     </div>
 
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="dataHora">Data e hora</label>
+        <label
+          for="dataHora"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Data e hora
+        </label>
+
         <input
           id="dataHora"
           type="datetime-local"
           formControlName="dataHora"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="valor">Valor (R$)</label>
+        <label
+          for="valor"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Valor (R$)
+        </label>
+
         <input
           id="valor"
           type="number"
           min="0"
           step="0.01"
           formControlName="valor"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="0,00"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 placeholder:text-[#6f6f6f]
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="status">Status</label>
+        <label
+          for="status"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Status
+        </label>
+
         <select
           id="status"
           formControlName="status"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         >
           @for (status of statusOpcoes; track status) {
-            <option [value]="status">{{ status }}</option>
+            <option
+              [value]="status"
+              class="bg-[#242424] text-white"
+            >
+              {{ status }}
+            </option>
           }
         </select>
       </div>
+
     </div>
 
+    <div
+      class="rounded-xl
+             border border-[#353535]
+             bg-[#202020]
+             px-4 py-4"
+    >
+      <p class="text-sm text-[#bcbcbc]">
+        Motorista e veículo podem ficar como
+        <span class="text-[#d9b83f] font-medium">“A definir”</span>
+        durante o agendamento e serem atribuídos posteriormente.
+      </p>
+    </div>
+
+
     @if (erro()) {
-      <p class="text-sm text-red-600">{{ erro() }}</p>
+      <div
+        class="rounded-lg
+               border border-red-500/30
+               bg-red-500/10
+               px-4 py-3"
+      >
+        <p class="text-sm text-red-400">
+          {{ erro() }}
+        </p>
+      </div>
     }
 
-    <div class="flex items-center gap-3 pt-2">
+    <div
+      class="flex flex-col-reverse sm:flex-row
+             sm:items-center sm:justify-end
+             gap-3
+             pt-2"
+    >
+      <a
+        routerLink="/transfers"
+        class="inline-flex items-center justify-center
+               h-12 px-6
+               rounded-lg
+               border border-[#4a4a4a]
+               text-sm font-medium
+               text-[#c5c5c5]
+               no-underline
+               transition
+               hover:border-[#d9b83f]
+               hover:text-[#d9b83f]"
+      >
+        Cancelar
+      </a>
+
       <button
         type="submit"
         [disabled]="salvando()"
-        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-md"
+        class="inline-flex items-center justify-center
+               h-12 px-7
+               rounded-lg
+               bg-gradient-to-r
+               from-[#edca54]
+               to-[#d8ae31]
+               text-[#111]
+               text-sm font-bold
+               shadow-[0_10px_25px_rgba(218,181,54,0.18)]
+               transition
+               hover:brightness-105
+               active:scale-[0.99]
+               disabled:opacity-60
+               disabled:cursor-not-allowed"
       >
-        {{ salvando() ? 'Salvando...' : 'Salvar' }}
+        {{
+          salvando()
+            ? 'Salvando...'
+            : (modoEdicao ? 'Salvar alterações' : 'Cadastrar transfer')
+        }}
       </button>
-      <a routerLink="/transfers" class="text-sm text-gray-600 hover:underline">Cancelar</a>
     </div>
+
   </form>
+
 </div>

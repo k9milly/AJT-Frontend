@@ -1,81 +1,251 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-  <span class="navbar-brand fw-bold">AJT Viagens e Turismo</span>
-  <div class="ms-auto d-flex align-items-center gap-3 text-white">
-    <span class="small">
-      {{ auth.usuarioAtual()?.nome }}
-      <span class="badge bg-secondary ms-1">{{ auth.usuarioAtual()?.perfil }}</span>
-    </span>
-    <button
-      type="button"
-      class="bg-transparent border-0 text-white underline text-sm hover:text-gray-300"
-      (click)="sair()"
+<div class="min-h-screen bg-[#101010] text-white">
+
+  <header
+    class="h-20 px-6 lg:px-8
+           flex items-center justify-between
+           border-b border-[#2c2c2c]
+           bg-[#121212]"
+  >
+    <div class="flex items-center gap-3">
+
+      <div
+        class="w-10 h-10 rounded-full
+               border border-[#d9b83f]
+               flex items-center justify-center
+               text-[#d9b83f] text-lg"
+      >
+        ◉
+      </div>
+
+      <div>
+        <h1 class="text-lg font-bold tracking-wide text-white">
+          AJT Viagens
+        </h1>
+
+        <p class="text-xs text-[#8f8f8f]">
+          Painel Administrativo
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+
+      <div class="hidden sm:block text-right">
+        <p class="text-sm font-medium text-white">
+          {{ auth.usuarioAtual()?.nome }}
+        </p>
+
+        <p class="text-xs text-[#d9b83f] uppercase tracking-wider">
+          {{ auth.usuarioAtual()?.perfil }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="sair()"
+        class="h-10 px-4
+               rounded-lg
+               border border-[#3d3d3d]
+               bg-transparent
+               text-sm text-[#cfcfcf]
+               transition
+               outline-none
+               ring-0
+               focus:outline-none
+               focus:ring-0
+               focus-visible:outline-none
+               focus-visible:ring-0
+               hover:border-[#d9b83f]
+               hover:text-[#d9b83f]"
+      >
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <div class="flex min-h-[calc(100vh-80px)]">
+
+    <aside
+      class="w-64 shrink-0
+             bg-[#151515]
+             border-r border-[#2c2c2c]
+             px-4 py-6"
     >
-      Sair
-    </button>
+      <p
+        class="px-3 mb-3
+               text-[11px]
+               uppercase
+               tracking-[0.18em]
+               text-[#6f6f6f]"
+      >
+        Navegação
+      </p>
+
+      <nav>
+        <ul class="space-y-2">
+
+          <li>
+            <a
+              routerLink="/passageiros"
+              routerLinkActive="!bg-[#242424] !text-[#e1bf48] !border-[#d9b83f]"
+              class="flex items-center
+                     px-4 py-3
+                     rounded-xl
+                     border border-transparent
+                     text-sm font-medium
+                     text-[#b8b8b8]
+                     no-underline
+                     transition
+                     outline-none
+                     ring-0
+                     focus:outline-none
+                     focus:ring-0
+                     focus-visible:outline-none
+                     focus-visible:ring-0
+                     hover:bg-[#202020]
+                     hover:text-white"
+            >
+              Passageiros
+            </a>
+          </li>
+
+          <li>
+            <a
+              routerLink="/motoristas"
+              routerLinkActive="!bg-[#242424] !text-[#e1bf48] !border-[#d9b83f]"
+              class="flex items-center
+                     px-4 py-3
+                     rounded-xl
+                     border border-transparent
+                     text-sm font-medium
+                     text-[#b8b8b8]
+                     no-underline
+                     transition
+                     outline-none
+                     ring-0
+                     focus:outline-none
+                     focus:ring-0
+                     focus-visible:outline-none
+                     focus-visible:ring-0
+                     hover:bg-[#202020]
+                     hover:text-white"
+            >
+              Motoristas
+            </a>
+          </li>
+
+          <li>
+            <a
+              routerLink="/veiculos"
+              routerLinkActive="!bg-[#242424] !text-[#e1bf48] !border-[#d9b83f]"
+              class="flex items-center
+                     px-4 py-3
+                     rounded-xl
+                     border border-transparent
+                     text-sm font-medium
+                     text-[#b8b8b8]
+                     no-underline
+                     transition
+                     outline-none
+                     ring-0
+                     focus:outline-none
+                     focus:ring-0
+                     focus-visible:outline-none
+                     focus-visible:ring-0
+                     hover:bg-[#202020]
+                     hover:text-white"
+            >
+              Veículos
+            </a>
+          </li>
+
+          <li>
+            <a
+              routerLink="/pontos-coleta"
+              routerLinkActive="!bg-[#242424] !text-[#e1bf48] !border-[#d9b83f]"
+              class="flex items-center
+                     px-4 py-3
+                     rounded-xl
+                     border border-transparent
+                     text-sm font-medium
+                     text-[#b8b8b8]
+                     no-underline
+                     transition
+                     outline-none
+                     ring-0
+                     focus:outline-none
+                     focus:ring-0
+                     focus-visible:outline-none
+                     focus-visible:ring-0
+                     hover:bg-[#202020]
+                     hover:text-white"
+            >
+              Pontos de Coleta
+            </a>
+          </li>
+
+          <li>
+            <a
+              routerLink="/transfers"
+              routerLinkActive="!bg-[#242424] !text-[#e1bf48] !border-[#d9b83f]"
+              class="flex items-center
+                     px-4 py-3
+                     rounded-xl
+                     border border-transparent
+                     text-sm font-medium
+                     text-[#b8b8b8]
+                     no-underline
+                     transition
+                     outline-none
+                     ring-0
+                     focus:outline-none
+                     focus:ring-0
+                     focus-visible:outline-none
+                     focus-visible:ring-0
+                     hover:bg-[#202020]
+                     hover:text-white"
+            >
+              Transfers
+            </a>
+          </li>
+
+          <li>
+            <a
+              routerLink="/ordens-servico"
+              routerLinkActive="!bg-[#242424] !text-[#e1bf48] !border-[#d9b83f]"
+              class="flex items-center
+                     px-4 py-3
+                     rounded-xl
+                     border border-transparent
+                     text-sm font-medium
+                     text-[#b8b8b8]
+                     no-underline
+                     transition
+                     outline-none
+                     ring-0
+                     focus:outline-none
+                     focus:ring-0
+                     focus-visible:outline-none
+                     focus-visible:ring-0
+                     hover:bg-[#202020]
+                     hover:text-white"
+            >
+              Ordens de Serviço
+            </a>
+          </li>
+
+        </ul>
+      </nav>
+    </aside>
+
+    <main
+      class="flex-1
+             min-w-0
+             bg-[#111111]
+             p-6 lg:p-10"
+    >
+      <router-outlet></router-outlet>
+    </main>
+
   </div>
-</nav>
-
-<div class="flex min-h-[calc(100vh-56px)] bg-gray-50">
-  <aside class="w-56 shrink-0 bg-white border-r border-gray-200 p-4">
-    <ul class="space-y-1">
-      <li>
-        <a
-          routerLink="/passageiros"
-          routerLinkActive="bg-blue-100 text-blue-700"
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-        >
-          Passageiros
-        </a>
-      </li>
-      <li>
-        <a
-          routerLink="/motoristas"
-          routerLinkActive="bg-blue-100 text-blue-700"
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-        >
-          Motoristas
-        </a>
-      </li>
-      <li>
-        <a
-          routerLink="/veiculos"
-          routerLinkActive="bg-blue-100 text-blue-700"
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-        >
-          Veículos
-        </a>
-      </li>
-      <li>
-        <a
-          routerLink="/pontos-coleta"
-          routerLinkActive="bg-blue-100 text-blue-700"
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-        >
-          Pontos de Coleta
-        </a>
-      </li>
-      <li>
-        <a
-          routerLink="/transfers"
-          routerLinkActive="bg-blue-100 text-blue-700"
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-        >
-          Transfers
-        </a>
-      </li>
-      <li>
-        <a
-          routerLink="/ordens-servico"
-          routerLinkActive="bg-blue-100 text-blue-700"
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-        >
-          Ordens de Serviço
-        </a>
-      </li>
-    </ul>
-  </aside>
-
-  <main class="flex-1 p-6">
-    <router-outlet></router-outlet>
-  </main>
 </div>

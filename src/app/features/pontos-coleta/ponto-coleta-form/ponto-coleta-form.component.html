@@ -1,67 +1,218 @@
-<div class="max-w-lg">
-  <h1 class="text-xl font-bold text-gray-800 mb-6">
-    {{ modoEdicao ? 'Editar ponto de coleta' : 'Novo ponto de coleta' }}
-  </h1>
+<div class="space-y-6">
 
-  <form [formGroup]="form" (ngSubmit)="salvar()" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
-    <div class="grid grid-cols-2 gap-4">
+  <div>
+    <p class="text-[#d9b83f] text-sm font-medium uppercase tracking-[0.18em] mb-2">
+      Gestão de Pontos de Coleta
+    </p>
+
+    <h1 class="text-3xl font-bold text-white">
+      {{ modoEdicao ? 'Editar ponto de coleta' : 'Novo ponto de coleta' }}
+    </h1>
+
+    <p class="text-sm text-[#8f8f8f] mt-2">
+      {{
+        modoEdicao
+          ? 'Atualize as informações do ponto de coleta selecionado.'
+          : 'Cadastre um novo ponto de coleta para a operação da AJT Viagens.'
+      }}
+    </p>
+  </div>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="salvar()"
+    class="max-w-3xl
+           bg-[#181818]
+           border border-[#333333]
+           rounded-2xl
+           shadow-[0_18px_45px_rgba(0,0,0,0.28)]
+           p-7 md:p-8
+           space-y-6"
+  >
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="nome">Nome</label>
+        <label
+          for="nome"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Nome
+        </label>
+
         <input
           id="nome"
           type="text"
           formControlName="nome"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex.: Aeroporto Internacional"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 placeholder:text-[#6f6f6f]
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="tipo">Tipo</label>
+        <label
+          for="tipo"
+          class="block text-sm font-medium text-[#d5d5d5] mb-2"
+        >
+          Tipo
+        </label>
+
         <select
           id="tipo"
           formControlName="tipo"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full h-12
+                 rounded-lg
+                 border border-[#444444]
+                 bg-[#242424]
+                 px-4
+                 text-sm text-white
+                 outline-none
+                 transition
+                 focus:border-[#d9b83f]
+                 focus:ring-2
+                 focus:ring-[#d9b83f]/10"
         >
           @for (tipo of tipos; track tipo) {
-            <option [value]="tipo">{{ tipo }}</option>
+            <option
+              [value]="tipo"
+              class="bg-[#242424] text-white"
+            >
+              {{ tipo }}
+            </option>
           }
         </select>
       </div>
+
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1" for="endereco">Endereço</label>
+      <label
+        for="endereco"
+        class="block text-sm font-medium text-[#d5d5d5] mb-2"
+      >
+        Endereço
+      </label>
+
       <input
         id="endereco"
         type="text"
         formControlName="endereco"
-        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Ex.: Av. das Cataratas, 1234"
+        class="w-full h-12
+               rounded-lg
+               border border-[#444444]
+               bg-[#242424]
+               px-4
+               text-sm text-white
+               placeholder:text-[#6f6f6f]
+               outline-none
+               transition
+               focus:border-[#d9b83f]
+               focus:ring-2
+               focus:ring-[#d9b83f]/10"
       />
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1" for="cidade">Cidade</label>
+      <label
+        for="cidade"
+        class="block text-sm font-medium text-[#d5d5d5] mb-2"
+      >
+        Cidade
+      </label>
+
       <input
         id="cidade"
         type="text"
         formControlName="cidade"
-        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Ex.: Foz do Iguaçu"
+        class="w-full h-12
+               rounded-lg
+               border border-[#444444]
+               bg-[#242424]
+               px-4
+               text-sm text-white
+               placeholder:text-[#6f6f6f]
+               outline-none
+               transition
+               focus:border-[#d9b83f]
+               focus:ring-2
+               focus:ring-[#d9b83f]/10"
       />
     </div>
 
     @if (erro()) {
-      <p class="text-sm text-red-600">{{ erro() }}</p>
+      <div
+        class="rounded-lg
+               border border-red-500/30
+               bg-red-500/10
+               px-4 py-3"
+      >
+        <p class="text-sm text-red-400">
+          {{ erro() }}
+        </p>
+      </div>
     }
 
-    <div class="flex items-center gap-3 pt-2">
+    <div
+      class="flex flex-col-reverse sm:flex-row
+             sm:items-center sm:justify-end
+             gap-3
+             pt-2"
+    >
+      <a
+        routerLink="/pontos-coleta"
+        class="inline-flex items-center justify-center
+               h-12 px-6
+               rounded-lg
+               border border-[#4a4a4a]
+               text-sm font-medium
+               text-[#c5c5c5]
+               no-underline
+               transition
+               hover:border-[#d9b83f]
+               hover:text-[#d9b83f]"
+      >
+        Cancelar
+      </a>
+
       <button
         type="submit"
         [disabled]="salvando()"
-        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-md"
+        class="inline-flex items-center justify-center
+               h-12 px-7
+               rounded-lg
+               bg-gradient-to-r
+               from-[#edca54]
+               to-[#d8ae31]
+               text-[#111]
+               text-sm font-bold
+               shadow-[0_10px_25px_rgba(218,181,54,0.18)]
+               transition
+               hover:brightness-105
+               active:scale-[0.99]
+               disabled:opacity-60
+               disabled:cursor-not-allowed"
       >
-        {{ salvando() ? 'Salvando...' : 'Salvar' }}
+        {{
+          salvando()
+            ? 'Salvando...'
+            : (modoEdicao ? 'Salvar alterações' : 'Cadastrar ponto')
+        }}
       </button>
-      <a routerLink="/pontos-coleta" class="text-sm text-gray-600 hover:underline">Cancelar</a>
     </div>
+
   </form>
+
 </div>
