@@ -5,15 +5,13 @@
            px-12 py-14 flex flex-col"
   >
 
-    <div class="flex justify-center mb-7">
-      <div
-        class="w-14 h-14 flex items-center justify-center
-               text-[#e6c04d] text-4xl"
-      >
-        ◉
-      </div>
+    <div class="flex justify-center mb-6">
+      <img
+        src="/logo.png"
+        alt="Logo AJT Viagens"
+        class="w-24 h-24 object-contain"
+      />
     </div>
-
 
     <h1
       class="text-center text-[#e6c04d] text-[28px] font-bold leading-tight"
@@ -32,7 +30,7 @@
       (ngSubmit)="entrar()"
       class="flex flex-col"
     >
-   
+
       <div class="mb-6">
         <label
           for="email"
@@ -53,7 +51,6 @@
         />
       </div>
 
-
       <div class="mb-6">
         <label
           for="senha"
@@ -73,6 +70,7 @@
                  focus:ring-2 focus:ring-[#e6c04d]/10"
         />
       </div>
+
 
       @if (erro()) {
         <p class="text-sm text-red-400 mb-4">
@@ -97,7 +95,6 @@
         {{ carregando() ? 'Entrando...' : 'Entrar' }}
       </button>
 
-
       <a
         href="/"
         class="text-center text-[#a9a9a9] text-[18px]
@@ -106,6 +103,7 @@
       >
         ← Voltar para o Site
       </a>
+
     </form>
   </div>
 </div>
