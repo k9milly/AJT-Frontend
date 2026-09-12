@@ -68,7 +68,7 @@ export class PontoColetaFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.salvando.set(false);
-        this.router.navigate(['/pontos-coleta']);
+        this.router.navigate(['/admin/pontos-coleta']);
       },
       error: (err: Error) => {
         this.salvando.set(false);

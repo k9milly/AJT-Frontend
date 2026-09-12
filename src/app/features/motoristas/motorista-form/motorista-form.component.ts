@@ -69,7 +69,7 @@ export class MotoristaFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.salvando.set(false);
-        this.router.navigate(['/motoristas']);
+      this.router.navigate(['/admin/motoristas']);
       },
       error: (err: Error) => {
         this.salvando.set(false);

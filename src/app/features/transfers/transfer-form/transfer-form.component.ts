@@ -94,7 +94,7 @@ export class TransferFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.salvando.set(false);
-        this.router.navigate(['/transfers']);
+        this.router.navigate(['/admin/transfers']);
       },
       error: (err: Error) => {
         this.salvando.set(false);

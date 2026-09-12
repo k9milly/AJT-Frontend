@@ -111,7 +111,7 @@ export class OrdemServicoFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.salvando.set(false);
-        this.router.navigate(['/ordens-servico']);
+      this.router.navigate(['/admin/ordens-servico']);
       },
       error: (err: Error) => {
         this.salvando.set(false);

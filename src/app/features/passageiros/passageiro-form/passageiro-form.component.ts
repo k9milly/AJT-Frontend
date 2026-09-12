@@ -88,7 +88,7 @@ export class PassageiroFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.salvando.set(false);
-        this.router.navigate(['/passageiros']);
+        this.router.navigate(['/admin/passageiros']);
       },
       error: (err: Error) => {
         this.salvando.set(false);

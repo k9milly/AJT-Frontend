@@ -75,7 +75,7 @@ export class VeiculoFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.salvando.set(false);
-        this.router.navigate(['/veiculos']);
+        this.router.navigate(['/admin/veiculos']);
       },
       error: (err: Error) => {
         this.salvando.set(false);
