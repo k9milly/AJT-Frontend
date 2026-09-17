@@ -1,0 +1,185 @@
+<div class="max-w-6xl p-5 sm:p-6">
+
+  <!-- cabecalho -->
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3 animate-surgir">
+    <div>
+      <h2 class="text-lg font-semibold text-foreground">Veículos</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">Frota disponível para os transfers.</p>
+    </div>
+
+    @if (podeEscrever()) {
+      <button type="button" class="ajt-botao-primario" (click)="abrirCadastro()">
+        <app-icone nome="mais" class="size-3.5" /> Novo veículo
+      </button>
+    }
+  </div>
+
+  @if (erro()) {
+    <div class="ajt-alerta-erro mb-4">{{ erro() }}</div>
+  }
+
+  <!-- filtros -->
+  <div class="ajt-card mb-5 animate-surgir" style="animation-delay: 40ms">
+    <form class="flex flex-wrap items-center gap-3 p-4" (submit)="$event.preventDefault(); buscar()">
+      <div class="relative w-full max-w-xs">
+        <app-icone nome="busca" class="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          class="ajt-campo pl-8 uppercase placeholder:normal-case"
+          placeholder="Buscar pela placa"
+          [value]="termoBusca()"
+          (input)="termoBusca.set($any($event.target).value)"
+        />
+      </div>
+      <button type="submit" class="ajt-botao-secundario">Buscar</button>
+      @if (buscaAtiva()) {
+        <button type="button" class="text-sm text-muted-foreground hover:text-foreground" (click)="limparBusca()">Limpar</button>
+      }
+      <span class="ajt-dado ml-auto text-xs text-muted-foreground">
+        {{ pagina()?.totalElementos ?? 0 }} veículo(s)
+      </span>
+    </form>
+  </div>
+
+  <!-- tabela -->
+  <div class="ajt-card overflow-hidden animate-surgir" style="animation-delay: 80ms">
+    @if (carregando()) {
+      <app-tabela-skeleton [colunas]="5" />
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="ajt-tabela">
+          <thead>
+            <tr>
+              <th>Veículo</th>
+              <th>Placa</th>
+              <th>Tipo</th>
+              <th>Capacidade</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (veiculo of pagina()?.conteudo; track veiculo.id) {
+              <tr>
+                <td>
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex size-7 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                      <app-icone nome="van" class="size-3.5" />
+                    </div>
+                    <div>
+                      <p class="font-medium">{{ veiculo.label }}</p>
+                      <p class="text-[11px] text-muted-foreground">{{ veiculo.marca || 'Marca não informada' }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="ajt-dado inline-flex rounded border border-border px-1.5 py-0.5 text-[12px] tracking-wider">
+                    {{ veiculo.placa }}
+                  </span>
+                </td>
+                <td class="text-muted-foreground">{{ veiculo.tipo || '—' }}</td>
+                <td class="ajt-dado text-muted-foreground">{{ veiculo.capacidade }} lugares</td>
+                <td class="whitespace-nowrap text-right">
+                  @if (podeEscrever()) {
+                    <button type="button" class="ajt-botao-icone" title="Editar" (click)="abrirEdicao(veiculo)">
+                      <app-icone nome="lapis" class="size-3.5" />
+                    </button>
+                  }
+                  @if (podeExcluir()) {
+                    <button type="button" class="ajt-botao-icone hover:!text-destructive" title="Excluir" (click)="paraExcluir.set(veiculo)">
+                      <app-icone nome="lixeira" class="size-3.5" />
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="!py-10 text-center text-xs !text-muted-foreground">Nenhum veículo encontrado.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!buscaAtiva()) {
+        <app-paginacao [pagina]="pagina()" (mudarPagina)="carregar($event)" />
+      }
+    }
+  </div>
+</div>
+
+<!-- ===================== cadastro/edicao ===================== -->
+<app-modal
+  [aberto]="modalAberto()"
+  [titulo]="editando() ? 'Editar veículo' : 'Novo veículo'"
+  (fechar)="fecharModal()"
+>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="space-y-4" novalidate>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label for="label" class="ajt-rotulo">Identificação</label>
+        <input id="label" type="text" formControlName="label" placeholder="Ex.: Van 01" class="ajt-campo"
+               [class.ajt-campo-invalido]="form.controls.label.touched && form.controls.label.invalid" />
+        @if (form.controls.label.touched && form.controls.label.invalid) {
+          <p class="ajt-erro-campo">Informe a identificação (até 50 caracteres).</p>
+        }
+      </div>
+
+      <div>
+        <label for="placa" class="ajt-rotulo">Placa</label>
+        <input id="placa" type="text" formControlName="placa" placeholder="ABC1D23" class="ajt-campo ajt-dado uppercase"
+               [class.ajt-campo-invalido]="form.controls.placa.touched && form.controls.placa.invalid" />
+        @if (form.controls.placa.touched && form.controls.placa.invalid) {
+          <p class="ajt-erro-campo">Informe a placa (até 10 caracteres).</p>
+        }
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label for="tipo" class="ajt-rotulo">Tipo</label>
+        <select id="tipo" formControlName="tipo" class="ajt-campo">
+          <option value="">Não informado</option>
+          @for (tipo of tipos(); track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="capacidade" class="ajt-rotulo">Capacidade (lugares)</label>
+        <input id="capacidade" type="number" min="1" formControlName="capacidade" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.capacidade.touched && form.controls.capacidade.invalid" />
+        @if (form.controls.capacidade.touched && form.controls.capacidade.invalid) {
+          <p class="ajt-erro-campo">Informe uma capacidade maior que zero.</p>
+        }
+      </div>
+    </div>
+
+    <div>
+      <label for="marca" class="ajt-rotulo">Marca</label>
+      <input id="marca" type="text" formControlName="marca" placeholder="Ex.: Mercedes-Benz" class="ajt-campo" />
+    </div>
+
+    @if (erroFormulario()) {
+      <div class="ajt-alerta-erro">{{ erroFormulario() }}</div>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" class="ajt-botao-secundario" (click)="fecharModal()">Cancelar</button>
+      <button type="submit" class="ajt-botao-primario" [disabled]="salvando()">
+        {{ salvando() ? 'Salvando...' : (editando() ? 'Salvar alterações' : 'Cadastrar') }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ===================== exclusao ===================== -->
+<app-confirm-dialog
+  [aberto]="paraExcluir() !== null"
+  titulo="Excluir veículo"
+  [mensagem]="'Excluir o veículo ' + (paraExcluir()?.placa ?? '') + '? Veículos vinculados a uma ordem de serviço não podem ser removidos.'"
+  textoConfirmar="Excluir"
+  [processando]="excluindo()"
+  (cancelar)="paraExcluir.set(null)"
+  (confirmar)="confirmarExclusao()"
+/>

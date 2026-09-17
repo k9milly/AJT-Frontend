@@ -1,0 +1,125 @@
+<div class="ajt-app flex h-screen w-full bg-background">
+
+  <!-- fundo escuro atras da gaveta (so no celular) -->
+  @if (menuAberto()) {
+    <div class="fixed inset-0 z-40 bg-black/50 lg:hidden" (click)="menuAberto.set(false)"></div>
+  }
+
+  <!-- ===================== menu lateral ===================== -->
+  <aside
+    class="fixed inset-y-0 left-0 z-50 flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground
+           transition-transform duration-200 lg:static lg:translate-x-0"
+    [class.translate-x-0]="menuAberto()"
+    [class.-translate-x-full]="!menuAberto()"
+  >
+    <!-- marca -->
+    <div class="flex items-center gap-2.5 px-4 py-4">
+      <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/5">
+        <img src="/logo.png" alt="" class="size-7 object-contain" />
+      </div>
+
+      <div class="flex flex-col leading-none">
+        <span class="text-[14px] font-bold text-white">AJT Viagens</span>
+        <span class="mt-1 text-[10px] text-sidebar-muted">Sistema receptivo</span>
+      </div>
+
+      <button
+        type="button"
+        class="ml-auto flex size-7 items-center justify-center rounded-md text-sidebar-muted hover:bg-white/5 hover:text-white lg:hidden"
+        aria-label="Fechar menu"
+        (click)="menuAberto.set(false)"
+      >
+        <app-icone nome="fechar" class="size-4" />
+      </button>
+    </div>
+
+    <div class="mx-4 mb-3 h-px bg-sidebar-border"></div>
+
+    <!-- secoes (ja filtradas pelo perfil do usuario) -->
+    <nav class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pb-4">
+      @for (secao of secoesVisiveis(); track secao.titulo) {
+        <div class="flex flex-col gap-0.5">
+          <span class="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
+            {{ secao.titulo }}
+          </span>
+
+          @for (item of secao.itens; track item.rota) {
+            <a
+              [routerLink]="item.rota"
+              routerLinkActive="!bg-sidebar-active !text-white"
+              class="flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-sidebar-foreground
+                     no-underline transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <app-icone [nome]="item.icone" class="size-4" />
+              <span>{{ item.rotulo }}</span>
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <!-- atalho pro site publico -->
+    <div class="border-t border-sidebar-border px-3 py-3">
+      <a
+        href="/"
+        class="flex items-center gap-2.5 rounded-md px-3 py-2 text-[12px] text-sidebar-muted no-underline
+               transition-colors hover:bg-white/5 hover:text-white"
+      >
+        <app-icone nome="voltar" class="size-3.5" />
+        Ir para o site
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===================== area principal ===================== -->
+  <div class="flex min-w-0 flex-1 flex-col">
+
+    <!-- barra superior -->
+    <header class="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 sm:px-5">
+      <div class="flex items-center gap-2">
+        <button type="button" class="ajt-botao-icone -ml-1 lg:hidden" aria-label="Abrir menu" (click)="menuAberto.set(true)">
+          <app-icone nome="menu" class="size-[18px]" />
+        </button>
+        <h1 class="text-[15px] font-semibold text-foreground">{{ tituloPagina() }}</h1>
+      </div>
+
+      <div class="flex items-center gap-1.5 sm:gap-3">
+        <!-- usuario logado -->
+        <div class="hidden flex-col items-end leading-none sm:flex">
+          <span class="text-xs font-medium text-foreground">{{ auth.nomeExibicao() }}</span>
+          <span class="mt-1 text-[10px] text-muted-foreground">{{ rotuloPerfil() }}</span>
+        </div>
+
+        <div class="flex size-8 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
+          {{ iniciais() }}
+        </div>
+
+        <div class="mx-1 hidden h-6 w-px bg-border sm:block"></div>
+
+        <button
+          type="button"
+          class="ajt-botao-icone"
+          [title]="tema.escuro() ? 'Modo claro' : 'Modo escuro'"
+          (click)="tema.alternar()"
+        >
+          <app-icone [nome]="tema.escuro() ? 'sol' : 'lua'" class="size-4" />
+        </button>
+
+        <a routerLink="/trocar-senha" class="ajt-botao-icone" title="Trocar senha">
+          <app-icone nome="chave" class="size-4" />
+        </a>
+
+        <button type="button" class="ajt-botao-icone hover:!text-destructive" title="Sair" (click)="sair()">
+          <app-icone nome="sair" class="size-4" />
+        </button>
+      </div>
+    </header>
+
+    <!-- conteudo da rota -->
+    <main class="flex-1 overflow-y-auto bg-background">
+      <router-outlet />
+    </main>
+  </div>
+
+  <app-toasts />
+</div>

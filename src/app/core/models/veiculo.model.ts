@@ -1,10 +1,15 @@
-export type TipoVeiculo = 'VAN' | 'MICRO_ONIBUS' | 'ONIBUS' | 'CARRO';
+// tipos sugeridos no formulario; no backend o campo e texto livre (ate 50 caracteres)
+export const TIPOS_VEICULO: string[] = ['VAN', 'SEDAN', 'SUV', 'MICRO_ONIBUS', 'ONIBUS'];
 
+// veiculo como o backend devolve (VeiculoResponseDTO)
+// "label" e o apelido interno do veiculo, ex: "Van 01"
 export interface Veiculo {
   id: number;
+  label: string;
   placa: string;
-  modelo: string;
-  tipo: TipoVeiculo;
   capacidade: number;
-  motoristaId: number | null;
+  tipo: string | null;
+  marca: string | null;
 }
+
+export type VeiculoRequest = Omit<Veiculo, 'id'>;

@@ -1,46 +1,159 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-  <div class="w-full max-w-sm bg-white rounded-xl shadow-md p-8">
-    <h1 class="text-2xl font-bold text-gray-800 mb-1">AJT Viagens e Turismo</h1>
-    <p class="text-sm text-gray-500 mb-6">Acesse o sistema receptivo</p>
+<!-- canvas unico escuro atras das duas metades: a diferenca entre elas e so o conteudo, nao a cor -->
+<div class="ajt-app relative min-h-screen overflow-hidden bg-login-bg text-login-foreground">
 
-    <form [formGroup]="form" (ngSubmit)="entrar()" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="email">E-mail</label>
-        <input
-          id="email"
-          type="email"
-          formControlName="email"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="seu@email.com"
-        />
+  <!-- brilho dourado de fundo -->
+  <div
+    class="pointer-events-none absolute -top-24 left-1/4 size-[620px] rounded-full opacity-[0.10]"
+    style="background: radial-gradient(circle, #e6c04d 0%, transparent 70%)"
+  ></div>
+
+  <div class="relative flex min-h-screen flex-col lg:flex-row">
+
+    <!-- ===================== metade da marca ===================== -->
+    <div class="relative flex flex-1 flex-col justify-center px-6 py-10 lg:px-16">
+      <div class="mx-auto w-full max-w-md animate-surgir">
+
+        <div class="mb-9 flex items-center gap-2.5">
+          <img src="/logo.png" alt="Logo AJT Viagens" class="size-10 object-contain" />
+          <div class="flex flex-col leading-none">
+            <span class="text-[17px] font-bold">AJT Viagens</span>
+            <span class="mt-1 text-[11px] text-login-muted">Sistema receptivo</span>
+          </div>
+        </div>
+
+        <h1 class="mb-3 text-3xl font-bold leading-[1.15] lg:text-[2.5rem]">
+          Do desembarque ao hotel,<br />
+          <em class="italic text-sidebar-accent">tudo no horário.</em>
+        </h1>
+
+        <p class="mb-9 max-w-sm text-sm text-login-muted">
+          Transfers, ordens de serviço e a rota de cada motorista num só lugar.
+        </p>
+
+        <!-- cartao ilustrativo (exemplo estatico, nao e dado real) -->
+        <div
+          class="hidden max-w-sm rounded-xl border border-login-border bg-login-surface p-4 shadow-2xl animate-surgir sm:block"
+          style="animation-delay: 120ms"
+        >
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-login-muted">Transfer</span>
+            <span class="ajt-dado text-[11px] text-login-muted">OS #128</span>
+          </div>
+
+          <div class="flex items-center justify-between border-b border-login-border/70 py-2.5">
+            <div class="flex items-center gap-3">
+              <div class="flex size-8 items-center justify-center rounded-full bg-white/5 text-sidebar-accent">
+                <app-icone nome="aviao" class="size-4" />
+              </div>
+              <div>
+                <p class="text-sm font-semibold">Aeroporto → Hotel das Cataratas</p>
+                <p class="ajt-dado text-xs text-login-muted">20/09 · 14:30 · Van 01</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3">
+            <span class="text-xs text-login-muted">Status</span>
+            <span class="inline-flex items-center gap-1.5 rounded-md bg-status-success/15 px-2 py-0.5 text-[11px] font-medium text-[#4ade80]">
+              <span class="size-1.5 rounded-full bg-[#4ade80]"></span>
+              Confirmado
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="senha">Senha</label>
-        <input
-          id="senha"
-          type="password"
-          formControlName="senha"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="••••••••"
-        />
+      <div class="mt-10 hidden text-[11px] text-login-muted lg:block">
+        Acesso restrito à equipe AJT Viagens.
       </div>
+    </div>
 
-      @if (erro()) {
-        <p class="text-sm text-red-600">{{ erro() }}</p>
-      }
-
-      <button
-        type="submit"
-        [disabled]="carregando()"
-        class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium rounded-md py-2 text-sm transition-colors"
+    <!-- ===================== metade do formulario ===================== -->
+    <div class="relative flex flex-1 items-center justify-center border-t border-login-border px-6 py-10 lg:border-l lg:border-t-0 lg:px-16">
+      <form
+        [formGroup]="form"
+        (ngSubmit)="entrar()"
+        class="w-full max-w-[21rem] animate-surgir"
+        style="animation-delay: 60ms"
+        novalidate
       >
-        {{ carregando() ? 'Entrando...' : 'Entrar' }}
-      </button>
+        <h2 class="mb-1 text-xl font-bold">Entrar no painel</h2>
+        <p class="mb-6 text-sm text-login-muted">Use o usuário e a senha fornecidos pelo administrador.</p>
 
-      <p class="text-xs text-gray-400 text-center pt-2">
-        Usuários de teste: admin&#64;ajt.com / gerente&#64;ajt.com / motorista&#64;ajt.com — senha 123456
-      </p>
-    </form>
+        <!-- usuario -->
+        <label for="username" class="mb-1.5 block text-xs font-medium text-login-muted">Usuário</label>
+        <div class="relative mb-4">
+          <app-icone nome="usuario" class="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-login-muted" />
+          <input
+            id="username"
+            type="text"
+            autocomplete="username"
+            autofocus
+            formControlName="username"
+            class="w-full rounded-lg border border-login-border bg-login-surface py-2.5 pl-9 pr-3.5 text-sm text-login-foreground
+                   outline-none transition-colors focus:border-sidebar-accent"
+          />
+          @if (form.controls.username.touched && form.controls.username.invalid) {
+            <p class="mt-1 text-[11px] text-[#f87171]">Informe o usuário.</p>
+          }
+        </div>
+
+        <!-- senha -->
+        <label for="senha" class="mb-1.5 block text-xs font-medium text-login-muted">Senha</label>
+        <div class="relative mb-6">
+          <app-icone nome="cadeado" class="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-login-muted" />
+          <input
+            id="senha"
+            [type]="mostrarSenha() ? 'text' : 'password'"
+            autocomplete="current-password"
+            formControlName="senha"
+            class="w-full rounded-lg border border-login-border bg-login-surface py-2.5 pl-9 pr-10 text-sm text-login-foreground
+                   outline-none transition-colors focus:border-sidebar-accent"
+          />
+          <button
+            type="button"
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-login-muted hover:text-login-foreground"
+            [attr.aria-label]="mostrarSenha() ? 'Ocultar senha' : 'Mostrar senha'"
+            (click)="mostrarSenha.set(!mostrarSenha())"
+          >
+            <app-icone nome="olho" class="size-4" />
+          </button>
+          @if (form.controls.senha.touched && form.controls.senha.invalid) {
+            <p class="mt-1 text-[11px] text-[#f87171]">Informe a senha.</p>
+          }
+        </div>
+
+        <!-- aviso de sessao expirada (vem do interceptor) -->
+        @if (aviso()) {
+          <div class="mb-4 rounded-lg bg-[#4a3306] px-3 py-2 text-xs text-[#fbbf24]">
+            {{ aviso() }}
+          </div>
+        }
+
+        <!-- erro de login: credenciais, bloqueio por tentativas (429) ou backend fora do ar -->
+        @if (erro()) {
+          <div class="mb-4 rounded-lg bg-[#451a1a] px-3 py-2 text-xs text-[#f87171]">
+            {{ erro() }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="carregando()"
+          class="w-full rounded-full bg-sidebar-accent py-2.5 text-sm font-semibold text-[#1a1206]
+                 transition-all hover:brightness-110 disabled:opacity-50"
+        >
+          {{ carregando() ? 'Entrando...' : 'Entrar' }}
+        </button>
+
+        <a
+          routerLink="/"
+          class="mt-6 flex items-center justify-center gap-1.5 text-xs text-login-muted no-underline transition-colors hover:text-login-foreground"
+        >
+          <app-icone nome="voltar" class="size-3.5" />
+          Voltar para o site
+        </a>
+      </form>
+    </div>
+
   </div>
 </div>

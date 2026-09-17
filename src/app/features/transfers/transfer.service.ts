@@ -1,61 +1,51 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
-import { Transfer } from '../../core/models/transfer.model';
-import { TRANSFERS_MOCK } from '../../core/mock/transfers.mock';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Pagina, ParametrosPagina } from '../../core/models/api.model';
+import { StatusTransfer, Transfer, TransferRequest } from '../../core/models/transfer.model';
+import { montarParametros } from '../../core/http/parametros';
 
-const STORAGE_KEY = 'ajt_transfers';
-
+// acesso a /api/transfers
+// leitura: todos os perfis | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
 @Injectable({ providedIn: 'root' })
 export class TransferService {
-  private transfers = signal<Transfer[]>(this.carregar());
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/transfers`;
 
-  listar(): Observable<Transfer[]> {
-    return of(this.transfers()).pipe(delay(250));
+  listar(pagina: ParametrosPagina = {}): Observable<Pagina<Transfer>> {
+    return this.http.get<Pagina<Transfer>>(this.base, { params: montarParametros(pagina) });
   }
 
-  buscarPorId(id: number): Observable<Transfer | undefined> {
-    return of(this.transfers().find(t => t.id === id)).pipe(delay(150));
+  buscarPorId(id: number): Observable<Transfer> {
+    return this.http.get<Transfer>(`${this.base}/${id}`);
   }
 
-  criar(dados: Omit<Transfer, 'id'>): Observable<Transfer> {
-    const novo: Transfer = { ...dados, id: this.proximoId() };
-    const lista = [...this.transfers(), novo];
-    return of(novo).pipe(delay(250), tap(() => this.salvar(lista)));
+  buscarPorStatus(status: StatusTransfer, pagina: ParametrosPagina = {}): Observable<Pagina<Transfer>> {
+    return this.http.get<Pagina<Transfer>>(`${this.base}/buscar`, {
+      params: montarParametros(pagina, { status }),
+    });
   }
 
-  atualizar(id: number, dados: Omit<Transfer, 'id'>): Observable<Transfer> {
-    const existe = this.transfers().some(t => t.id === id);
-    if (!existe) {
-      return throwError(() => new Error('Transfer não encontrado')).pipe(delay(250));
-    }
-
-    const atualizado: Transfer = { ...dados, id };
-    const lista = this.transfers().map(t => (t.id === id ? atualizado : t));
-    return of(atualizado).pipe(delay(250), tap(() => this.salvar(lista)));
+  // com moeda estrangeira e sem valorBase, o backend consulta o cambio antes de salvar
+  criar(dados: TransferRequest): Observable<Transfer> {
+    return this.http.post<Transfer>(this.base, dados);
   }
 
+  atualizar(id: number, dados: TransferRequest): Observable<Transfer> {
+    return this.http.put<Transfer>(`${this.base}/${id}`, dados);
+  }
+
+  // vincula (ou desvincula, com null) o transfer a uma ordem de servico
+  // o backend nao tem PATCH que aceite osId nulo, entao reenvia o transfer inteiro via PUT.
+  // o valorBase atual vai junto pra o backend nao reconverter o valor com a cotacao de hoje
+  alterarOrdemServico(transfer: Transfer, osId: number | null): Observable<Transfer> {
+    const { id, ...dados } = transfer;
+    return this.atualizar(id, { ...dados, osId });
+  }
+
+  // remove tambem os pontos de coleta do transfer (cascade no banco)
   excluir(id: number): Observable<void> {
-    const lista = this.transfers().filter(t => t.id !== id);
-    return of(void 0).pipe(delay(250), tap(() => this.salvar(lista)));
-  }
-
-  private proximoId(): number {
-    const ids = this.transfers().map(t => t.id);
-    return ids.length ? Math.max(...ids) + 1 : 1;
-  }
-
-  private salvar(lista: Transfer[]): void {
-    this.transfers.set(lista);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-  }
-
-  private carregar(): Transfer[] {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(TRANSFERS_MOCK));
-    return TRANSFERS_MOCK;
+    return this.http.delete<void>(`${this.base}/${id}`);
   }
 }

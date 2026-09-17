@@ -1,61 +1,41 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
-import { Veiculo } from '../../core/models/veiculo.model';
-import { VEICULOS_MOCK } from '../../core/mock/veiculos.mock';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Pagina, ParametrosPagina } from '../../core/models/api.model';
+import { Veiculo, VeiculoRequest } from '../../core/models/veiculo.model';
+import { montarParametros } from '../../core/http/parametros';
 
-const STORAGE_KEY = 'ajt_veiculos';
-
+// acesso a /api/veiculos
+// leitura: todos os perfis | escrita e exclusao: ADMIN, GERENTE
 @Injectable({ providedIn: 'root' })
 export class VeiculoService {
-  private veiculos = signal<Veiculo[]>(this.carregar());
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/veiculos`;
 
-  listar(): Observable<Veiculo[]> {
-    return of(this.veiculos()).pipe(delay(250));
+  listar(pagina: ParametrosPagina = {}): Observable<Pagina<Veiculo>> {
+    return this.http.get<Pagina<Veiculo>>(this.base, { params: montarParametros(pagina) });
   }
 
-  buscarPorId(id: number): Observable<Veiculo | undefined> {
-    return of(this.veiculos().find(v => v.id === id)).pipe(delay(150));
+  buscarPorId(id: number): Observable<Veiculo> {
+    return this.http.get<Veiculo>(`${this.base}/${id}`);
   }
 
-  criar(dados: Omit<Veiculo, 'id'>): Observable<Veiculo> {
-    const novo: Veiculo = { ...dados, id: this.proximoId() };
-    const lista = [...this.veiculos(), novo];
-    return of(novo).pipe(delay(250), tap(() => this.salvar(lista)));
+  // busca exata por placa; devolve 404 quando nao encontra
+  buscarPorPlaca(placa: string): Observable<Veiculo> {
+    return this.http.get<Veiculo>(`${this.base}/buscar`, { params: montarParametros({}, { placa }) });
   }
 
-  atualizar(id: number, dados: Omit<Veiculo, 'id'>): Observable<Veiculo> {
-    const existe = this.veiculos().some(v => v.id === id);
-    if (!existe) {
-      return throwError(() => new Error('Veículo não encontrado')).pipe(delay(250));
-    }
-
-    const atualizado: Veiculo = { ...dados, id };
-    const lista = this.veiculos().map(v => (v.id === id ? atualizado : v));
-    return of(atualizado).pipe(delay(250), tap(() => this.salvar(lista)));
+  criar(dados: VeiculoRequest): Observable<Veiculo> {
+    return this.http.post<Veiculo>(this.base, dados);
   }
 
+  atualizar(id: number, dados: VeiculoRequest): Observable<Veiculo> {
+    return this.http.put<Veiculo>(`${this.base}/${id}`, dados);
+  }
+
+  // devolve 409 se o veiculo estiver vinculado a alguma ordem de servico
   excluir(id: number): Observable<void> {
-    const lista = this.veiculos().filter(v => v.id !== id);
-    return of(void 0).pipe(delay(250), tap(() => this.salvar(lista)));
-  }
-
-  private proximoId(): number {
-    const ids = this.veiculos().map(v => v.id);
-    return ids.length ? Math.max(...ids) + 1 : 1;
-  }
-
-  private salvar(lista: Veiculo[]): void {
-    this.veiculos.set(lista);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-  }
-
-  private carregar(): Veiculo[] {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(VEICULOS_MOCK));
-    return VEICULOS_MOCK;
+    return this.http.delete<void>(`${this.base}/${id}`);
   }
 }

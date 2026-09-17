@@ -1,6 +1,245 @@
-/* Bootstrap importado apenas para o componente de navbar (requisito da entrega). */
-@import "bootstrap/dist/css/bootstrap.min.css";
+/*
+ * o bootstrap (usado so na navbar da landing page) saiu daqui e virou um bundle separado
+ * (angular.json -> styles -> "bootstrap"). ele e ligado so na landing pelo guard em
+ * core/layout/estilos-site.ts, porque varias classes dele tem o mesmo nome das do tailwind
+ * (bg-primary, border, p-4, gap-3...) com !important e escala diferente, e quebravam o painel.
+ */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * design tokens do painel administrativo
+ * ------------------------------------------------------------------------------
+ * mesma base visual do lancamentosVendas e do autonomousapi: paleta neutra (zinc) e um unico
+ * acento de cor. aqui o acento e o dourado da marca ajt (o mesmo da landing page), entao
+ * qualquer cor forte na tela significa algo (status, alerta, acao) e nao so decoracao.
+ *
+ * formato "r g b" (sem rgb()) pra o tailwind conseguir aplicar opacidade: bg-primary/10.
+ * as classes que usam esses tokens so existem no painel; a landing page nao e afetada.
+ */
+:root {
+  --background: 244 244 245;
+  --foreground: 24 24 27;
+  --card: 255 255 255;
+
+  --border: 228 228 231;
+  --input: 212 212 216;
+  --ring: 82 82 91;
+
+  --muted: 241 241 242;
+  --muted-foreground: 100 100 107;
+
+  --primary: 38 38 43;
+  --primary-foreground: 250 250 250;
+  --primary-hover: 58 58 65;
+
+  --secondary: 239 239 241;
+  --secondary-foreground: 38 38 43;
+
+  /* dourado ajt */
+  --accent: 184 145 30;
+  --accent-foreground: 26 18 6;
+
+  --destructive: 185 28 28;
+
+  /* semantica de status compartilhada entre transfer, os e parada */
+  --status-info: 29 78 216;
+  --status-info-bg: 239 246 255;
+  --status-warning: 180 83 9;
+  --status-warning-bg: 255 251 235;
+  --status-success: 21 128 61;
+  --status-success-bg: 236 253 243;
+  --status-danger: 185 28 28;
+  --status-danger-bg: 254 242 242;
+  --status-neutral: 82 82 91;
+  --status-neutral-bg: 244 244 245;
+
+  --sidebar: 26 26 29;
+  --sidebar-foreground: 210 210 214;
+  --sidebar-muted: 141 141 149;
+  --sidebar-border: 58 58 65;
+  --sidebar-active: 44 44 49;
+  --sidebar-accent: 230 192 77;
+
+  /* canvas da tela de login: sempre escuro, independente do tema escolhido no painel */
+  --login-bg: 20 20 22;
+  --login-surface: 28 28 31;
+  --login-border: 43 43 48;
+  --login-foreground: 244 244 245;
+  --login-muted: 152 152 159;
+}
+
+/* modo escuro: mesma paleta invertida, ligado pela classe .dark no <html> (TemaService) */
+.dark {
+  --background: 24 24 27;
+  --foreground: 244 244 245;
+  --card: 35 35 39;
+
+  --border: 49 49 54;
+  --input: 63 63 70;
+  --ring: 161 161 170;
+
+  --muted: 39 39 43;
+  --muted-foreground: 161 161 170;
+
+  --primary: 228 228 231;
+  --primary-foreground: 24 24 27;
+  --primary-hover: 207 207 211;
+
+  --secondary: 44 44 49;
+  --secondary-foreground: 228 228 231;
+
+  --accent: 230 192 77;
+  --accent-foreground: 26 18 6;
+
+  --destructive: 239 68 68;
+
+  --status-info: 96 165 250;
+  --status-info-bg: 30 58 95;
+  --status-warning: 251 191 36;
+  --status-warning-bg: 74 51 6;
+  --status-success: 74 222 128;
+  --status-success-bg: 20 50 31;
+  --status-danger: 248 113 113;
+  --status-danger-bg: 69 26 26;
+  --status-neutral: 161 161 170;
+  --status-neutral-bg: 39 39 43;
+
+  --sidebar: 16 16 18;
+  --sidebar-active: 35 35 39;
+
+  /* calendario/relogio nativos dos inputs date/time tambem em modo escuro */
+  color-scheme: dark;
+}
+
+/*
+ * componentes reutilizaveis do painel
+ * ------------------------------------------------------------------------------
+ * so os elementos que se repetem em toda tela (campo, botao, tabela). o resto fica com
+ * utilitarios do tailwind direto no template, como nos projetos de referencia.
+ * prefixo "ajt-" de proposito: a landing usa bootstrap, que ja tem .btn, .card, .modal etc.
+ */
+@layer components {
+
+  /* raiz de toda tela do painel: fonte, cor de texto e suavizacao */
+  .ajt-app {
+    @apply font-painel text-foreground antialiased;
+    font-size: 14px;
+    letter-spacing: -0.006em;
+  }
+
+  /* datas, horas, valores e documentos: fonte mono com numeros alinhados */
+  .ajt-dado {
+    @apply font-dados;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ----- campos ----- */
+
+  .ajt-rotulo {
+    @apply mb-1.5 block text-xs font-medium text-muted-foreground;
+  }
+
+  .ajt-campo {
+    @apply w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground
+           placeholder:text-muted-foreground/70 outline-none transition-colors
+           focus:border-ring focus:ring-2 focus:ring-ring/10
+           disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .ajt-campo-invalido {
+    @apply border-status-danger focus:border-status-danger focus:ring-status-danger/10;
+  }
+
+  .ajt-erro-campo {
+    @apply mt-1 text-[11px] text-status-danger;
+  }
+
+  .ajt-ajuda {
+    @apply mt-1 text-[11px] text-muted-foreground;
+  }
+
+  /* ----- botoes ----- */
+
+  .ajt-botao {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium
+           no-underline transition-all disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .ajt-botao-primario {
+    @apply ajt-botao bg-primary text-primary-foreground hover:bg-primary-hover hover:-translate-y-0.5
+           disabled:hover:translate-y-0;
+  }
+
+  .ajt-botao-secundario {
+    @apply ajt-botao bg-secondary text-secondary-foreground hover:bg-muted;
+  }
+
+  .ajt-botao-perigo {
+    @apply ajt-botao bg-destructive text-white hover:brightness-110;
+  }
+
+  /* botao so com icone (topbar, acoes da tabela) */
+  .ajt-botao-icone {
+    @apply inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors
+           hover:bg-secondary hover:text-foreground disabled:opacity-40;
+  }
+
+  /* acao em texto dentro da tabela (editar, excluir) */
+  .ajt-link-acao {
+    @apply text-xs font-medium text-foreground no-underline hover:underline disabled:opacity-50;
+  }
+
+  /* ----- cartoes e tabelas ----- */
+
+  .ajt-card {
+    @apply rounded-lg border border-border bg-card shadow-sm transition-shadow duration-200;
+  }
+
+  .ajt-tabela {
+    @apply w-full text-[13px];
+  }
+
+  .ajt-tabela thead tr {
+    @apply border-b border-border;
+  }
+
+  .ajt-tabela th {
+    @apply px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .ajt-tabela td {
+    @apply px-5 py-3 align-middle text-foreground;
+  }
+
+  .ajt-tabela tbody tr {
+    @apply border-b border-border transition-colors last:border-0 hover:bg-muted/50;
+  }
+
+  /* ----- mensagens ----- */
+
+  .ajt-alerta-erro {
+    @apply rounded-md bg-status-danger-bg px-3 py-2 text-xs text-status-danger;
+  }
+
+  .ajt-alerta-aviso {
+    @apply rounded-md bg-status-warning-bg px-3 py-2 text-xs text-status-warning;
+  }
+}
+
+/* barra de rolagem discreta dentro do painel */
+.ajt-app ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ajt-app ::-webkit-scrollbar-thumb {
+  background: rgb(var(--input));
+  border-radius: 8px;
+}
+
+.ajt-app ::-webkit-scrollbar-track {
+  background: transparent;
+}

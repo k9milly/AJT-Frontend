@@ -1,0 +1,187 @@
+<div class="max-w-6xl p-5 sm:p-6">
+
+  <!-- cabecalho -->
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3 animate-surgir">
+    <div>
+      <h2 class="text-lg font-semibold text-foreground">Ordens de serviço</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">A rota do dia de cada motorista, com as paradas e os transfers.</p>
+    </div>
+
+    @if (podeEscrever()) {
+      <button type="button" class="ajt-botao-primario" (click)="abrirCadastro()">
+        <app-icone nome="mais" class="size-3.5" /> Nova ordem de serviço
+      </button>
+    }
+  </div>
+
+  @if (erro()) {
+    <div class="ajt-alerta-erro mb-4">{{ erro() }}</div>
+  }
+
+  <!-- filtros: status como abas -->
+  <div class="mb-4 flex flex-wrap gap-2 text-sm animate-surgir" style="animation-delay: 40ms">
+    <button
+      type="button"
+      [class]="'rounded-md px-3 py-1.5 transition-colors ' + (filtroStatus() === '' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-muted')"
+      (click)="filtrarPorStatus('')"
+    >
+      Todas
+    </button>
+    @for (status of statusOpcoes; track status) {
+      <button
+        type="button"
+        [class]="'rounded-md px-3 py-1.5 transition-colors ' + (filtroStatus() === status ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-muted')"
+        (click)="filtrarPorStatus(status)"
+      >
+        {{ rotuloStatus[status] }}
+      </button>
+    }
+    <span class="ajt-dado ml-auto self-center text-xs text-muted-foreground">
+      {{ pagina()?.totalElementos ?? 0 }} OS
+    </span>
+  </div>
+
+  <!-- tabela (a linha inteira abre o detalhe) -->
+  <div class="ajt-card overflow-hidden animate-surgir" style="animation-delay: 80ms">
+    @if (carregando()) {
+      <app-tabela-skeleton [colunas]="5" />
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="ajt-tabela min-w-[760px]">
+          <thead>
+            <tr>
+              <th>OS</th>
+              <th>Data</th>
+              <th>Motorista</th>
+              <th>Veículo</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ordem of pagina()?.conteudo; track ordem.id) {
+              <tr class="cursor-pointer" (click)="abrirDetalhe(ordem)">
+                <td class="ajt-dado font-semibold">#{{ ordem.id }}</td>
+                <td class="ajt-dado">{{ formatarData(ordem.dataServico) }}</td>
+                <td>
+                  @if (nomeMotorista(ordem.motoristaId); as nome) {
+                    <div class="flex items-center gap-2">
+                      <div class="flex size-6 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-secondary-foreground">
+                        {{ iniciais(nome) }}
+                      </div>
+                      {{ nome }}
+                    </div>
+                  } @else {
+                    <span class="text-xs text-status-warning">Sem motorista</span>
+                  }
+                </td>
+                <td class="text-muted-foreground">
+                  @if (descricaoVeiculo(ordem.veiculoId); as veiculo) {
+                    <span class="ajt-dado text-xs">{{ veiculo }}</span>
+                  } @else {
+                    <span class="text-xs text-status-warning">Sem veículo</span>
+                  }
+                </td>
+                <td>
+                  <app-status-badge [tom]="tomDoStatus(ordem.status)" [rotulo]="rotuloStatus[ordem.status]" />
+                </td>
+                <td class="whitespace-nowrap text-right">
+                  <a [routerLink]="['/admin/ordens-servico', ordem.id]" class="ajt-botao-icone" title="Ver rota" (click)="$event.stopPropagation()">
+                    <app-icone nome="olho" class="size-3.5" />
+                  </a>
+                  @if (podeEscrever()) {
+                    <button type="button" class="ajt-botao-icone" title="Editar" (click)="abrirEdicao(ordem, $event)">
+                      <app-icone nome="lapis" class="size-3.5" />
+                    </button>
+                  }
+                  @if (podeExcluir()) {
+                    <button type="button" class="ajt-botao-icone hover:!text-destructive" title="Excluir" (click)="pedirExclusao(ordem, $event)">
+                      <app-icone nome="lixeira" class="size-3.5" />
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="!py-10 text-center text-xs !text-muted-foreground">Nenhuma ordem de serviço encontrada.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-paginacao [pagina]="pagina()" (mudarPagina)="carregar($event)" />
+    }
+  </div>
+</div>
+
+<!-- ===================== cadastro/edicao ===================== -->
+<app-modal
+  [aberto]="modalAberto()"
+  [titulo]="editando() ? 'Editar OS #' + editando()!.id : 'Nova ordem de serviço'"
+  (fechar)="fecharModal()"
+>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="space-y-4" novalidate>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label for="dataServico" class="ajt-rotulo">Data do serviço</label>
+        <input id="dataServico" type="date" formControlName="dataServico" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.dataServico.touched && form.controls.dataServico.invalid" />
+        @if (form.controls.dataServico.touched && form.controls.dataServico.invalid) {
+          <p class="ajt-erro-campo">Informe a data.</p>
+        }
+      </div>
+
+      <div>
+        <label for="status" class="ajt-rotulo">Status</label>
+        <select id="status" formControlName="status" class="ajt-campo">
+          @for (status of statusOpcoes; track status) {
+            <option [value]="status">{{ rotuloStatus[status] }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label for="motoristaId" class="ajt-rotulo">Motorista</label>
+      <select id="motoristaId" formControlName="motoristaId" class="ajt-campo">
+        <option [ngValue]="null">Definir depois</option>
+        @for (motorista of motoristas(); track motorista.id) {
+          <option [ngValue]="motorista.id">{{ motorista.nome }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label for="veiculoId" class="ajt-rotulo">Veículo</label>
+      <select id="veiculoId" formControlName="veiculoId" class="ajt-campo">
+        <option [ngValue]="null">Definir depois</option>
+        @for (veiculo of veiculos(); track veiculo.id) {
+          <option [ngValue]="veiculo.id">{{ veiculo.label }} · {{ veiculo.placa }} ({{ veiculo.capacidade }} lugares)</option>
+        }
+      </select>
+    </div>
+
+    @if (erroFormulario()) {
+      <div class="ajt-alerta-erro">{{ erroFormulario() }}</div>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" class="ajt-botao-secundario" (click)="fecharModal()">Cancelar</button>
+      <button type="submit" class="ajt-botao-primario" [disabled]="salvando()">
+        {{ salvando() ? 'Salvando...' : (editando() ? 'Salvar alterações' : 'Criar e montar rota') }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ===================== exclusao ===================== -->
+<app-confirm-dialog
+  [aberto]="paraExcluir() !== null"
+  titulo="Excluir ordem de serviço"
+  [mensagem]="'Excluir a OS #' + (paraExcluir()?.id ?? '') + '? As paradas serão removidas. Se ainda houver transfers vinculados, desvincule-os antes.'"
+  textoConfirmar="Excluir"
+  [processando]="excluindo()"
+  (cancelar)="paraExcluir.set(null)"
+  (confirmar)="confirmarExclusao()"
+/>

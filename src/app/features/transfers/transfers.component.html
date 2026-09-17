@@ -1,0 +1,255 @@
+<div class="max-w-6xl p-5 sm:p-6">
+
+  <!-- cabecalho -->
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3 animate-surgir">
+    <div>
+      <h2 class="text-lg font-semibold text-foreground">Transfers</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">Deslocamentos agendados, do pedido até a conclusão.</p>
+    </div>
+
+    @if (podeEscrever()) {
+      <button type="button" class="ajt-botao-primario" (click)="abrirCadastro()">
+        <app-icone nome="mais" class="size-3.5" /> Novo transfer
+      </button>
+    }
+  </div>
+
+  @if (erro()) {
+    <div class="ajt-alerta-erro mb-4">{{ erro() }}</div>
+  }
+
+  <!-- filtros: status como abas, igual a pesquisa de vendas do lancamentosVendas -->
+  <div class="mb-4 flex flex-wrap gap-2 text-sm animate-surgir" style="animation-delay: 40ms">
+    <button
+      type="button"
+      [class]="'rounded-md px-3 py-1.5 transition-colors ' + (filtroStatus() === '' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-muted')"
+      (click)="filtrarPorStatus('')"
+    >
+      Todos
+    </button>
+    @for (status of statusOpcoes; track status) {
+      <button
+        type="button"
+        [class]="'rounded-md px-3 py-1.5 transition-colors ' + (filtroStatus() === status ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-muted')"
+        (click)="filtrarPorStatus(status)"
+      >
+        {{ rotuloStatus[status] }}
+      </button>
+    }
+    <span class="ajt-dado ml-auto self-center text-xs text-muted-foreground">
+      {{ pagina()?.totalElementos ?? 0 }} transfer(s)
+    </span>
+  </div>
+
+  <!-- tabela -->
+  <div class="ajt-card overflow-hidden animate-surgir" style="animation-delay: 80ms">
+    @if (carregando()) {
+      <app-tabela-skeleton [colunas]="6" />
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="ajt-tabela min-w-[860px]">
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Rota</th>
+              <th class="!text-right">Valor</th>
+              <th>Status</th>
+              <th>OS</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (transfer of pagina()?.conteudo; track transfer.id) {
+              <tr>
+                <td class="whitespace-nowrap">
+                  <p class="ajt-dado font-medium">{{ formatarData(transfer.dataTransfer) }}</p>
+                  <p class="ajt-dado text-[11px] text-muted-foreground">{{ formatarHora(transfer.horaTransfer) }}</p>
+                </td>
+
+                <td>
+                  <p class="font-medium">{{ transfer.origem }}</p>
+                  <p class="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <app-icone nome="avancar" class="size-3" /> {{ transfer.destino }}
+                  </p>
+                </td>
+
+                <!-- valor em reais; quando a moeda original e outra, mostra tambem o valor negociado -->
+                <td class="whitespace-nowrap text-right">
+                  <p class="ajt-dado">{{ formatarMoeda(transfer.valorBase, moedaBase) }}</p>
+                  @if (transfer.moedaOrigem && transfer.moedaOrigem !== moedaBase) {
+                    <p class="ajt-dado text-[11px] text-muted-foreground">
+                      {{ formatarMoeda(transfer.valorOriginal, transfer.moedaOrigem) }}
+                    </p>
+                  }
+                </td>
+
+                <td>
+                  <app-status-badge [tom]="tomDoStatus(transfer.status)" [rotulo]="rotuloStatus[transfer.status]" />
+                </td>
+
+                <td>
+                  @if (transfer.osId) {
+                    <a [routerLink]="['/admin/ordens-servico', transfer.osId]" class="ajt-dado text-xs text-foreground underline-offset-2 hover:underline">
+                      #{{ transfer.osId }}
+                    </a>
+                  } @else {
+                    <span class="text-muted-foreground">—</span>
+                  }
+                </td>
+
+                <td class="whitespace-nowrap text-right">
+                  <!-- pontos de coleta sao filhos do transfer -->
+                  <a
+                    routerLink="/admin/pontos-coleta"
+                    [queryParams]="{ transferId: transfer.id }"
+                    class="ajt-botao-icone"
+                    title="Pontos de coleta"
+                  >
+                    <app-icone nome="pino" class="size-3.5" />
+                  </a>
+                  @if (podeEscrever()) {
+                    <button type="button" class="ajt-botao-icone" title="Editar" (click)="abrirEdicao(transfer)">
+                      <app-icone nome="lapis" class="size-3.5" />
+                    </button>
+                  }
+                  @if (podeExcluir()) {
+                    <button type="button" class="ajt-botao-icone hover:!text-destructive" title="Excluir" (click)="paraExcluir.set(transfer)">
+                      <app-icone nome="lixeira" class="size-3.5" />
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="!py-10 text-center text-xs !text-muted-foreground">Nenhum transfer encontrado.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-paginacao [pagina]="pagina()" (mudarPagina)="carregar($event)" />
+    }
+  </div>
+</div>
+
+<!-- ===================== cadastro/edicao ===================== -->
+<app-modal
+  [aberto]="modalAberto()"
+  [titulo]="editando() ? 'Editar transfer' : 'Novo transfer'"
+  largura="larga"
+  (fechar)="fecharModal()"
+>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="space-y-4" novalidate>
+
+    <!-- quando -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="dataTransfer" class="ajt-rotulo">Data</label>
+        <input id="dataTransfer" type="date" formControlName="dataTransfer" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.dataTransfer.touched && form.controls.dataTransfer.invalid" />
+        @if (form.controls.dataTransfer.touched && form.controls.dataTransfer.invalid) {
+          <p class="ajt-erro-campo">Informe a data.</p>
+        }
+      </div>
+
+      <div>
+        <label for="horaTransfer" class="ajt-rotulo">Hora</label>
+        <input id="horaTransfer" type="time" formControlName="horaTransfer" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.horaTransfer.touched && form.controls.horaTransfer.invalid" />
+        @if (form.controls.horaTransfer.touched && form.controls.horaTransfer.invalid) {
+          <p class="ajt-erro-campo">Informe a hora.</p>
+        }
+      </div>
+
+      <div>
+        <label for="status" class="ajt-rotulo">Status</label>
+        <select id="status" formControlName="status" class="ajt-campo">
+          @for (status of statusOpcoes; track status) {
+            <option [value]="status">{{ rotuloStatus[status] }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- rota -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label for="origem" class="ajt-rotulo">Origem</label>
+        <input id="origem" type="text" formControlName="origem" placeholder="Ex.: Aeroporto de Foz do Iguaçu" class="ajt-campo"
+               [class.ajt-campo-invalido]="form.controls.origem.touched && form.controls.origem.invalid" />
+        @if (form.controls.origem.touched && form.controls.origem.invalid) {
+          <p class="ajt-erro-campo">Informe a origem (até 100 caracteres).</p>
+        }
+      </div>
+
+      <div>
+        <label for="destino" class="ajt-rotulo">Destino</label>
+        <input id="destino" type="text" formControlName="destino" placeholder="Ex.: Hotel das Cataratas" class="ajt-campo"
+               [class.ajt-campo-invalido]="form.controls.destino.touched && form.controls.destino.invalid" />
+        @if (form.controls.destino.touched && form.controls.destino.invalid) {
+          <p class="ajt-erro-campo">Informe o destino (até 100 caracteres).</p>
+        }
+      </div>
+    </div>
+
+    <!-- valor -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-[8rem_1fr]">
+      <div>
+        <label for="moedaOrigem" class="ajt-rotulo">Moeda</label>
+        <select id="moedaOrigem" formControlName="moedaOrigem" class="ajt-campo ajt-dado">
+          @for (moeda of moedas(); track moeda) {
+            <option [value]="moeda">{{ moeda }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="valor" class="ajt-rotulo">Valor</label>
+        <input id="valor" type="number" min="0" step="0.01" formControlName="valor" placeholder="0,00" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.valor.touched && form.controls.valor.invalid" />
+        @if (form.controls.valor.touched && form.controls.valor.invalid) {
+          <p class="ajt-erro-campo">Informe um valor válido (não negativo).</p>
+        } @else if (moedaSelecionada() !== moedaBase) {
+          <p class="ajt-ajuda">O valor em reais é calculado com a cotação do dia ao salvar.</p>
+        }
+      </div>
+    </div>
+
+    <!-- ordem de servico (vinculo opcional) -->
+    <div>
+      <label for="osId" class="ajt-rotulo">Ordem de serviço</label>
+      <select id="osId" formControlName="osId" class="ajt-campo">
+        <option [ngValue]="null">Sem ordem de serviço</option>
+        @for (ordem of ordensServico(); track ordem.id) {
+          <option [ngValue]="ordem.id">
+            OS #{{ ordem.id }} · {{ formatarData(ordem.dataServico) }} · {{ rotuloStatusOs[ordem.status] }}
+          </option>
+        }
+      </select>
+      <p class="ajt-ajuda">Ao vincular, o transfer entra na rota do motorista daquela OS.</p>
+    </div>
+
+    @if (erroFormulario()) {
+      <div class="ajt-alerta-erro">{{ erroFormulario() }}</div>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" class="ajt-botao-secundario" (click)="fecharModal()">Cancelar</button>
+      <button type="submit" class="ajt-botao-primario" [disabled]="salvando()">
+        {{ salvando() ? 'Salvando...' : (editando() ? 'Salvar alterações' : 'Cadastrar') }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ===================== exclusao ===================== -->
+<app-confirm-dialog
+  [aberto]="paraExcluir() !== null"
+  titulo="Excluir transfer"
+  mensagem="Excluir este transfer? Os pontos de coleta dele também serão removidos."
+  textoConfirmar="Excluir"
+  [processando]="excluindo()"
+  (cancelar)="paraExcluir.set(null)"
+  (confirmar)="confirmarExclusao()"
+/>
