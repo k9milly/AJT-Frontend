@@ -27,17 +27,16 @@ const TAMANHO_PAGINA = 20;
 // escolhido, mostra so os pontos dele na ordem da rota (lista "filha", sem paginacao no backend).
 // a tela de transfers abre esta ja filtrada via ?transferId=...
 @Component({
-  selector: 'app-pontos-coleta',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    PaginacaoComponent,
-    TabelaSkeletonComponent,
-  ],
-  templateUrl: './pontos-coleta.component.html',
+    selector: 'app-pontos-coleta',
+    imports: [
+        ReactiveFormsModule,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        PaginacaoComponent,
+        TabelaSkeletonComponent,
+    ],
+    templateUrl: './pontos-coleta.component.html'
 })
 export class PontosColetaComponent implements OnInit {
   private service = inject(PontoColetaService);

@@ -20,10 +20,9 @@ const CLASSE_ICONE: Record<TomCard, string> = {
 // cartao de indicador (kpi) do painel: faixa colorida no topo, numero grande e icone
 // "valor" nulo mostra um placeholder pulsando enquanto a api nao respondeu
 @Component({
-  selector: 'app-stat-card',
-  standalone: true,
-  imports: [IconeComponent],
-  template: `
+    selector: 'app-stat-card',
+    imports: [IconeComponent],
+    template: `
     <div class="ajt-card overflow-hidden hover:shadow-md">
       <div [class]="'h-1 ' + classeBarra()"></div>
       <div class="flex items-start justify-between gap-3 p-4">
@@ -48,7 +47,7 @@ const CLASSE_ICONE: Record<TomCard, string> = {
         }
       </div>
     </div>
-  `,
+  `
 })
 export class StatCardComponent {
   rotulo = input('');

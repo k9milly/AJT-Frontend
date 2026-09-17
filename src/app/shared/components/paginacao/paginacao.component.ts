@@ -11,10 +11,9 @@ import { IconeComponent } from '../icone/icone.component';
 // uso:
 // <app-paginacao [pagina]="pagina()" (mudarPagina)="carregar($event)" />
 @Component({
-  selector: 'app-paginacao',
-  standalone: true,
-  imports: [IconeComponent],
-  template: `
+    selector: 'app-paginacao',
+    imports: [IconeComponent],
+    template: `
     @if (pagina(); as p) {
       @if (p.totalPaginas > 1) {
         <div class="flex items-center justify-between gap-3 border-t border-border px-5 py-3 text-xs text-muted-foreground">
@@ -46,7 +45,7 @@ import { IconeComponent } from '../icone/icone.component';
         </div>
       }
     }
-  `,
+  `
 })
 export class PaginacaoComponent {
   pagina = input<Pagina<unknown> | null>(null);

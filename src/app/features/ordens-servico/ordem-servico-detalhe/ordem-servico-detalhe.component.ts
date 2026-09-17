@@ -55,17 +55,16 @@ import {
 // limitacao conhecida: o backend nao tem "transfers por os", entao os transfers sao lidos da
 // listagem geral (100 mais recentes, limite de pagina) e filtrados aqui pelo osId.
 @Component({
-  selector: 'app-ordem-servico-detalhe',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    StatusBadgeComponent,
-  ],
-  templateUrl: './ordem-servico-detalhe.component.html',
+    selector: 'app-ordem-servico-detalhe',
+    imports: [
+        ReactiveFormsModule,
+        RouterLink,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        StatusBadgeComponent,
+    ],
+    templateUrl: './ordem-servico-detalhe.component.html'
 })
 export class OrdemServicoDetalheComponent implements OnInit {
   private route = inject(ActivatedRoute);

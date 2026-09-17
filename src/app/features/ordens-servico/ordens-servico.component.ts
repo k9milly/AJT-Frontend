@@ -34,19 +34,18 @@ const TAMANHO_PAGINA = 20;
 // a os agrupa os transfers de um motorista + veiculo num dia. as paradas e os transfers
 // vinculados sao gerenciados na tela de detalhe (/admin/ordens-servico/:id).
 @Component({
-  selector: 'app-ordens-servico',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    PaginacaoComponent,
-    StatusBadgeComponent,
-    TabelaSkeletonComponent,
-  ],
-  templateUrl: './ordens-servico.component.html',
+    selector: 'app-ordens-servico',
+    imports: [
+        ReactiveFormsModule,
+        RouterLink,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        PaginacaoComponent,
+        StatusBadgeComponent,
+        TabelaSkeletonComponent,
+    ],
+    templateUrl: './ordens-servico.component.html'
 })
 export class OrdensServicoComponent implements OnInit {
   private service = inject(OrdemServicoService);
