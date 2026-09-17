@@ -229,6 +229,128 @@
   }
 }
 
+/*
+ * identidade visual do site (landing page)
+ * ------------------------------------------------------------------------------
+ * botoes e links de navegacao com um jeito proprio, diferente do painel administrativo
+ * (que e mais neutro/utilitario de proposito). prefixo "ajt-site-" pra nao colidir com
+ * ".ajt-botao-*" do painel nem com as classes do bootstrap (.btn, .card...).
+ *
+ * formato pilula (bem arredondado) — minimalista de proposito; a identidade vem da
+ * interacao (o "levantar" no hover do primario, o preenchimento varrendo no contornado),
+ * nao da forma. repete nos dois estilos abaixo pra virar uma familia reconhecivel.
+ */
+@layer components {
+
+  .ajt-site-btn {
+    @apply relative inline-flex items-center justify-center gap-2 h-12 px-8
+           rounded-full
+           font-identidade font-bold no-underline
+           transition-all duration-300;
+    /* cria um contexto de empilhamento local, pra o "::before" do botao contornado
+       (abaixo) nunca vazar por cima de elementos vizinhos fora do botao */
+    z-index: 0;
+  }
+
+  /* botao principal (cta): preenchido a ouro, "levanta" no hover em vez de so mudar de cor */
+  .ajt-site-btn-primario {
+    @apply ajt-site-btn text-[#141210];
+    background: linear-gradient(135deg, #f3d574, #d9b83f);
+    box-shadow: 0 8px 20px rgba(217, 184, 63, 0.25);
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ajt-site-btn-primario:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 34px rgba(217, 184, 63, 0.4);
+  }
+
+  .ajt-site-btn-primario:active {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(217, 184, 63, 0.35);
+  }
+
+  /* botao secundario (contornado, so pra fundo escuro): o preenchimento "varre" da
+     esquerda pra direita no hover, como um ima puxando a cor pro botao */
+  .ajt-site-btn-outline {
+    @apply ajt-site-btn text-white overflow-hidden;
+    border: 2px solid rgba(230, 192, 77, 0.55);
+    /* cor e borda no mesmo ritmo do preenchimento (::before, 0.55s logo abaixo) —
+       sem isso o texto escurecia antes do fundo terminar de varrer */
+    transition: color 0.55s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ajt-site-btn-outline::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: #e6c04d;
+    transform: scaleX(0);
+    transform-origin: left;
+    /* um pouco mais devagar que o padrao (pedido explicito: "hover mais lento") */
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ajt-site-btn-outline:hover {
+    color: #141210;
+    border-color: #e6c04d;
+  }
+
+  .ajt-site-btn-outline:hover::before {
+    transform: scaleX(1);
+  }
+
+  /* link de navegacao (header e rodape): linha fina que cresce da esquerda pra
+     direita colada no texto no hover (bem perto da baseline, nao "flutuando") */
+  .ajt-site-nav-link {
+    @apply relative inline-block pb-0.5 no-underline transition-colors duration-200;
+  }
+
+  .ajt-site-nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 1px;
+    width: 100%;
+    background: #e6c04d;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ajt-site-nav-link:hover::after {
+    transform: scaleX(1);
+  }
+}
+
+/*
+ * entrada dos textos ao rolar a pagina ("textbox subindo")
+ * ------------------------------------------------------------------------------
+ * ligada pela RevealDirective (atributo appReveal, em shared/directives): o elemento
+ * nasce baixo e transparente e sobe ate o lugar assim que 15% dele fica visivel na tela.
+ * quem tem preferencia do sistema por menos movimento nao ve a animacao, so o resultado.
+ */
+.ajt-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ajt-reveal-ativo {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ajt-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* barra de rolagem discreta dentro do painel */
 .ajt-app ::-webkit-scrollbar {
   width: 8px;
