@@ -39,17 +39,16 @@ export function formatarCpf(valorDigitado: string): string {
 // leitura: todos os perfis | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
 // o documento e cifrado no banco, mas volta legivel da api: e dado sensivel (lgpd)
 @Component({
-  selector: 'app-passageiros',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    PaginacaoComponent,
-    TabelaSkeletonComponent,
-  ],
-  templateUrl: './passageiros.component.html',
+    selector: 'app-passageiros',
+    imports: [
+        ReactiveFormsModule,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        PaginacaoComponent,
+        TabelaSkeletonComponent,
+    ],
+    templateUrl: './passageiros.component.html'
 })
 export class PassageirosComponent implements OnInit {
   private service = inject(PassageiroService);

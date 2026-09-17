@@ -1,4 +1,5 @@
 import { Component, HostListener, input, output } from '@angular/core';
+import { MdbRippleModule } from 'mdb-angular-ui-kit/ripple';
 import { IconeComponent } from '../icone/icone.component';
 
 // ---------------------------------------------------------------
@@ -11,10 +12,9 @@ import { IconeComponent } from '../icone/icone.component';
 //   mensagem="Essa ação não pode ser desfeita."
 //   (cancelar)="..." (confirmar)="..." />
 @Component({
-  selector: 'app-confirm-dialog',
-  standalone: true,
-  imports: [IconeComponent],
-  template: `
+    selector: 'app-confirm-dialog',
+    imports: [IconeComponent, MdbRippleModule],
+    template: `
     @if (aberto()) {
       <div
         class="ajt-app fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 animate-aparecer"
@@ -34,17 +34,24 @@ import { IconeComponent } from '../icone/icone.component';
           <p class="mb-5 text-sm text-muted-foreground">{{ mensagem() }}</p>
 
           <div class="flex justify-end gap-2">
-            <button type="button" class="ajt-botao-secundario" (click)="cancelar.emit()">
+            <button type="button" mdbRipple rippleColor="dark" class="ajt-botao-secundario" (click)="cancelar.emit()">
               Cancelar
             </button>
-            <button type="button" class="ajt-botao-perigo" [disabled]="processando()" (click)="confirmar.emit()">
+            <button
+              type="button"
+              mdbRipple
+              rippleColor="light"
+              class="ajt-botao-perigo"
+              [disabled]="processando()"
+              (click)="confirmar.emit()"
+            >
               {{ processando() ? 'Aguarde...' : textoConfirmar() }}
             </button>
           </div>
         </div>
       </div>
     }
-  `,
+  `
 })
 export class ConfirmDialogComponent {
   aberto = input(false);

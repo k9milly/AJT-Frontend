@@ -46,19 +46,18 @@ const TAMANHO_PAGINA = 20;
 // - na edicao, se valor e moeda nao mudaram, o valorBase antigo e reenviado pra nao
 //   reconverter com a cotacao de hoje um valor que ja foi fechado em outro dia
 @Component({
-  selector: 'app-transfers',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    PaginacaoComponent,
-    StatusBadgeComponent,
-    TabelaSkeletonComponent,
-  ],
-  templateUrl: './transfers.component.html',
+    selector: 'app-transfers',
+    imports: [
+        ReactiveFormsModule,
+        RouterLink,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        PaginacaoComponent,
+        StatusBadgeComponent,
+        TabelaSkeletonComponent,
+    ],
+    templateUrl: './transfers.component.html'
 })
 export class TransfersComponent implements OnInit {
   private service = inject(TransferService);

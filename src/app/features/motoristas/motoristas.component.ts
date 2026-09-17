@@ -21,17 +21,16 @@ const TAMANHO_PAGINA = 20;
 // ---------------------------------------------------------------
 // leitura: todos os perfis | escrita e exclusao: ADMIN, GERENTE
 @Component({
-  selector: 'app-motoristas',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    PaginacaoComponent,
-    TabelaSkeletonComponent,
-  ],
-  templateUrl: './motoristas.component.html',
+    selector: 'app-motoristas',
+    imports: [
+        ReactiveFormsModule,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        PaginacaoComponent,
+        TabelaSkeletonComponent,
+    ],
+    templateUrl: './motoristas.component.html'
 })
 export class MotoristasComponent implements OnInit {
   private service = inject(MotoristaService);

@@ -21,17 +21,16 @@ const TAMANHO_PAGINA = 20;
 // ---------------------------------------------------------------
 // leitura: todos os perfis | escrita e exclusao: ADMIN, GERENTE
 @Component({
-  selector: 'app-veiculos',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    PaginacaoComponent,
-    TabelaSkeletonComponent,
-  ],
-  templateUrl: './veiculos.component.html',
+    selector: 'app-veiculos',
+    imports: [
+        ReactiveFormsModule,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        PaginacaoComponent,
+        TabelaSkeletonComponent,
+    ],
+    templateUrl: './veiculos.component.html'
 })
 export class VeiculosComponent implements OnInit {
   private service = inject(VeiculoService);

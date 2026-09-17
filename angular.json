@@ -36,6 +36,11 @@
                 "bundleName": "bootstrap",
                 "inject": true
               },
+              {
+                "input": "src/mdb-theme.scss",
+                "bundleName": "mdb-theme",
+                "inject": true
+              },
               "src/styles.css"
             ],
             "scripts": []
@@ -45,8 +50,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "700kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "950kB",
+                  "maximumError": "1.2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -103,6 +108,11 @@
               {
                 "input": "node_modules/bootstrap/dist/css/bootstrap.min.css",
                 "bundleName": "bootstrap",
+                "inject": true
+              },
+              {
+                "input": "src/mdb-theme.scss",
+                "bundleName": "mdb-theme",
                 "inject": true
               },
               "src/styles.css"

@@ -36,18 +36,17 @@ const DESCRICAO_PERFIL: Record<Perfil, string> = {
 // - na edicao, senha em branco mantem a atual; preenchida redefine (e obriga nova troca)
 // - desativar o usuario derruba a sessao dele na proxima chamada a api
 @Component({
-  selector: 'app-usuarios',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ConfirmDialogComponent,
-    IconeComponent,
-    ModalComponent,
-    PaginacaoComponent,
-    StatusBadgeComponent,
-    TabelaSkeletonComponent,
-  ],
-  templateUrl: './usuarios.component.html',
+    selector: 'app-usuarios',
+    imports: [
+        ReactiveFormsModule,
+        ConfirmDialogComponent,
+        IconeComponent,
+        ModalComponent,
+        PaginacaoComponent,
+        StatusBadgeComponent,
+        TabelaSkeletonComponent,
+    ],
+    templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent implements OnInit {
   private service = inject(UsuarioService);

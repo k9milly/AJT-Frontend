@@ -38,10 +38,9 @@ const ITENS_POR_LISTA = 5;
 // paginadas por status (pedindo so 1 item, o suficiente pra ler o total sem trafegar dados).
 // as listas mostram o que precisa de acao: transfers sem os e os ainda abertas.
 @Component({
-  selector: 'app-painel',
-  standalone: true,
-  imports: [RouterLink, IconeComponent, StatCardComponent, StatusBadgeComponent],
-  templateUrl: './painel.component.html',
+    selector: 'app-painel',
+    imports: [RouterLink, IconeComponent, StatCardComponent, StatusBadgeComponent],
+    templateUrl: './painel.component.html'
 })
 export class PainelComponent implements OnInit {
   private transferService = inject(TransferService);
