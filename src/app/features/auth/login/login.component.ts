@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MdbRippleModule } from 'mdb-angular-ui-kit/ripple';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MENSAGENS_ERRO, mensagemDeErro } from '../../../core/http/erro-api';
 import { IconeComponent } from '../../../shared/components/icone/icone.component';
@@ -10,10 +11,9 @@ import { IconeComponent } from '../../../shared/components/icone/icone.component
 // igual ao lancamentosVendas; o fundo nao muda com o tema claro/escuro do painel.
 // depois de entrar: se o backend pedir troca de senha vai pra /trocar-senha, senao pro painel
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, IconeComponent],
-  templateUrl: './login.component.html',
+    selector: 'app-login',
+    imports: [ReactiveFormsModule, RouterLink, IconeComponent, MdbRippleModule],
+    templateUrl: './login.component.html'
 })
 export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);

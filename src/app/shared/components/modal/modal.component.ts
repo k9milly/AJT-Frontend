@@ -1,4 +1,5 @@
 import { Component, HostListener, input, output } from '@angular/core';
+import { MdbRippleModule } from 'mdb-angular-ui-kit/ripple';
 import { IconeComponent } from '../icone/icone.component';
 
 // ---------------------------------------------------------------
@@ -13,10 +14,9 @@ import { IconeComponent } from '../icone/icone.component';
 //   ...conteudo...
 // </app-modal>
 @Component({
-  selector: 'app-modal',
-  standalone: true,
-  imports: [IconeComponent],
-  template: `
+    selector: 'app-modal',
+    imports: [IconeComponent, MdbRippleModule],
+    template: `
     @if (aberto()) {
       <div
         class="ajt-app fixed inset-0 z-50 flex items-end justify-center bg-black/50 animate-aparecer sm:items-center sm:p-4"
@@ -32,7 +32,15 @@ import { IconeComponent } from '../icone/icone.component';
         >
           <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
             <h3 class="text-sm font-semibold text-foreground">{{ titulo() }}</h3>
-            <button type="button" class="ajt-botao-icone -mr-2" aria-label="Fechar" (click)="fechar.emit()">
+            <button
+              type="button"
+              mdbRipple
+              rippleColor="dark"
+              [rippleRadius]="20"
+              class="ajt-botao-icone -mr-2"
+              aria-label="Fechar"
+              (click)="fechar.emit()"
+            >
               <app-icone nome="fechar" class="size-4" />
             </button>
           </div>
@@ -43,7 +51,7 @@ import { IconeComponent } from '../icone/icone.component';
         </div>
       </div>
     }
-  `,
+  `
 })
 export class ModalComponent {
   aberto = input(false);

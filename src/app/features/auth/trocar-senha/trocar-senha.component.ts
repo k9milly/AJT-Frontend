@@ -7,6 +7,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
+import { MdbRippleModule } from 'mdb-angular-ui-kit/ripple';
 import { AuthService } from '../../../core/auth/auth.service';
 import { mensagemDeErro } from '../../../core/http/erro-api';
 import { NotificacaoService } from '../../../core/services/notificacao.service';
@@ -24,10 +26,10 @@ export function senhasIguaisValidator(grupo: AbstractControl): ValidationErrors 
 // 1. obrigatoria: o login devolveu trocarSenha = true (ex: admin do seed ou usuario criado pelo admin)
 // 2. voluntaria: o usuario clicou em "trocar senha" no topo do painel
 @Component({
-  selector: 'app-trocar-senha',
-  standalone: true,
-  imports: [ReactiveFormsModule, IconeComponent],
-  templateUrl: './trocar-senha.component.html',
+    selector: 'app-trocar-senha',
+    imports: [ReactiveFormsModule, IconeComponent, MdbFormsModule, MdbRippleModule],
+    templateUrl: './trocar-senha.component.html',
+    styleUrl: './trocar-senha.component.scss'
 })
 export class TrocarSenhaComponent {
   private fb = inject(FormBuilder);

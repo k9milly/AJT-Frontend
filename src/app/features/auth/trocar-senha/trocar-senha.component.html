@@ -26,30 +26,20 @@
       }
     </p>
 
-    <!-- senha atual -->
-    <label for="senhaAtual" class="mb-1.5 block text-xs font-medium text-login-muted">Senha atual</label>
-    <input
-      id="senhaAtual"
-      type="password"
-      autocomplete="current-password"
-      formControlName="senhaAtual"
-      class="mb-1 w-full rounded-lg border border-login-border bg-login-bg px-3.5 py-2.5 text-sm text-login-foreground
-             outline-none transition-colors focus:border-sidebar-accent"
-    />
+    <!-- senha atual (mdb-angular: mdb-form-control com label flutuante) -->
+    <mdb-form-control class="ajt-mdb-campo mb-1">
+      <input mdbInput id="senhaAtual" type="password" autocomplete="current-password" formControlName="senhaAtual" class="form-control" />
+      <label mdbLabel for="senhaAtual" class="form-label">Senha atual</label>
+    </mdb-form-control>
     @if (form.controls.senhaAtual.touched && form.controls.senhaAtual.invalid) {
       <p class="text-[11px] text-[#f87171]">Informe a senha atual.</p>
     }
 
     <!-- nova senha -->
-    <label for="novaSenha" class="mb-1.5 mt-4 block text-xs font-medium text-login-muted">Nova senha</label>
-    <input
-      id="novaSenha"
-      type="password"
-      autocomplete="new-password"
-      formControlName="novaSenha"
-      class="mb-1 w-full rounded-lg border border-login-border bg-login-bg px-3.5 py-2.5 text-sm text-login-foreground
-             outline-none transition-colors focus:border-sidebar-accent"
-    />
+    <mdb-form-control class="ajt-mdb-campo mb-1 mt-4">
+      <input mdbInput id="novaSenha" type="password" autocomplete="new-password" formControlName="novaSenha" class="form-control" />
+      <label mdbLabel for="novaSenha" class="form-label">Nova senha</label>
+    </mdb-form-control>
     @if (form.controls.novaSenha.touched && form.controls.novaSenha.invalid) {
       <p class="text-[11px] text-[#f87171]">A nova senha deve ter entre 8 e 72 caracteres.</p>
     } @else {
@@ -57,15 +47,10 @@
     }
 
     <!-- confirmacao -->
-    <label for="confirmacao" class="mb-1.5 mt-4 block text-xs font-medium text-login-muted">Confirmar nova senha</label>
-    <input
-      id="confirmacao"
-      type="password"
-      autocomplete="new-password"
-      formControlName="confirmacao"
-      class="mb-1 w-full rounded-lg border border-login-border bg-login-bg px-3.5 py-2.5 text-sm text-login-foreground
-             outline-none transition-colors focus:border-sidebar-accent"
-    />
+    <mdb-form-control class="ajt-mdb-campo mb-1 mt-4">
+      <input mdbInput id="confirmacao" type="password" autocomplete="new-password" formControlName="confirmacao" class="form-control" />
+      <label mdbLabel for="confirmacao" class="form-label">Confirmar nova senha</label>
+    </mdb-form-control>
     @if (form.controls.confirmacao.touched && form.hasError('senhasDiferentes')) {
       <p class="text-[11px] text-[#f87171]">As senhas não conferem.</p>
     }
@@ -76,6 +61,8 @@
 
     <button
       type="submit"
+      mdbRipple
+      rippleColor="dark"
       [disabled]="salvando()"
       class="mt-6 w-full rounded-full bg-sidebar-accent py-2.5 text-sm font-semibold text-[#1a1206]
              transition-all hover:brightness-110 disabled:opacity-50"
@@ -86,6 +73,8 @@
     <!-- na troca obrigatoria nao existe "voltar pro painel": a saida e deslogar -->
     <button
       type="button"
+      mdbRipple
+      rippleColor="light"
       class="mt-3 w-full py-2 text-xs text-login-muted transition-colors hover:text-login-foreground"
       (click)="authService.precisaTrocarSenha() ? sair() : voltar()"
     >

@@ -1,0 +1,17 @@
+// ---------------------------------------------------------------
+// tema do mdb-angular-ui-kit (usado nos componentes mdb: form-control, modal, ripple)
+// ---------------------------------------------------------------
+// desligamos o "!important" das classes utilitarias do bootstrap que o mdb importa por
+// baixo dos panos (border, shadow-sm, mt-3, gap-4...) porque elas tem o MESMO NOME de
+// classes do tailwind e, com !important, sempre ganhavam por cima independente da ordem
+// de carregamento — foi exatamente esse bug que forcou a gente a desligar o bootstrap.min.css
+// inteiro em core/layout/estilos-site.ts. sem !important, o css que carrega por ultimo
+// (tailwind, em src/styles.css) e que decide, entao mantemos este arquivo ANTES dele no
+// angular.json.
+//
+// esse bundle nao entra no que o estilos-site.ts desativa (o seletor la procura link[href
+// contendo "bootstrap"]) porque o nome do bundle aqui e "mdb-theme", nao "bootstrap" —
+// ele precisa ficar sempre ligado pros componentes mdb (login/trocar-senha, modais) renderizarem certo.
+$enable-important-utilities: false;
+
+@import 'mdb-angular-ui-kit/assets/scss/mdb.free.scss';

@@ -1,0 +1,36 @@
+// ---------------------------------------------------------------
+// tema escuro dos campos mdb-angular (mdb-form-control) nesta tela
+// ---------------------------------------------------------------
+// o mdb-form-control desenha o "notch" (borda com o label flutuante) no template
+// proprio dele, entao o encapsulamento normal do angular nao alcanca — por isso o
+// ::ng-deep aqui, sempre preso ao :host pra nao vazar pra fora desta tela.
+:host ::ng-deep .ajt-mdb-campo {
+  --mdb-form-outline-border: rgb(var(--login-border));
+  --mdb-form-outline-color: rgb(var(--login-foreground));
+
+  &.form-outline .form-control {
+    color: rgb(var(--login-foreground));
+    background-color: rgb(var(--login-bg));
+  }
+
+  &.form-outline .form-notch-leading,
+  &.form-outline .form-notch-middle,
+  &.form-outline .form-notch-trailing {
+    border-color: rgb(var(--login-border));
+  }
+
+  &.form-outline .form-label {
+    color: rgb(var(--login-muted));
+  }
+
+  &.form-outline:focus-within .form-notch-leading,
+  &.form-outline:focus-within .form-notch-middle,
+  &.form-outline:focus-within .form-notch-trailing {
+    border-color: rgb(var(--sidebar-accent));
+    border-width: 2px;
+  }
+
+  &.form-outline:focus-within .form-label {
+    color: rgb(var(--sidebar-accent));
+  }
+}
