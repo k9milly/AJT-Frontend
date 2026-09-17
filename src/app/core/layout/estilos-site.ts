@@ -3,32 +3,27 @@ import { inject } from '@angular/core';
 import { CanActivateFn } from '@angular/router';
 
 // ---------------------------------------------------------------
-// liga/desliga o css do bootstrap conforme a area do sistema
+// mantem o css do bootstrap desligado em todo o sistema
 // ---------------------------------------------------------------
 // por que existe:
-// a landing page usa bootstrap na navbar; o painel usa so tailwind. as duas bibliotecas tem
-// classes com o mesmo nome (bg-primary, border, rounded, p-4, mb-3, gap-3...) e o bootstrap
-// marca as dele com !important e usa outra escala de espacamento. com os dois ativos ao mesmo
-// tempo, o painel ficava com cor azul, bordas claras e espacamentos errados.
+// o bundle do bootstrap (angular.json -> styles) fica incluido no index.html, mas nunca e
+// realmente usado: nenhuma tela (nem a landing) usa um componente de verdade dele, so
+// markup proprio em tailwind. o problema e que o bootstrap gera classes utilitarias com o
+// MESMO NOME de varias do tailwind (border, shadow-sm, mt-3, gap-4, bg-primary...) marcadas
+// com !important, e ele ganhava da nossa por baixo dos panos mesmo sem a gente usar nada
+// dele de proposito — foi assim que a borda dos cards e o hover dos botoes da landing
+// saiam cinza-claro em vez de dourado, entre outros efeitos colaterais silenciosos.
 //
-// como funciona:
-// o angular.json gera o bootstrap num arquivo proprio (bootstrap.css) ja incluido no index.html.
-// em vez de baixar/remover o arquivo a cada navegacao, so alternamos o atributo "disabled" do
-// <link>: e instantaneo e nao pisca a tela. a landing page em si nao foi alterada.
+// solucao: manter o link do bootstrap sempre desabilitado (nunca ligar), em qualquer rota.
+// se um dia precisar mesmo de um componente do bootstrap em algum lugar, o certo e reativar
+// so ali (com este mesmo guard) e revisar as colisoes de nome antes.
 
-function alternarBootstrap(documento: Document, ativo: boolean): void {
+function desligarBootstrap(documento: Document): void {
   const links = documento.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href*="bootstrap"]');
-  links.forEach(link => (link.disabled = !ativo));
+  links.forEach(link => (link.disabled = true));
 }
 
-// usado na rota da landing page: garante o bootstrap ligado
-export const comBootstrapGuard: CanActivateFn = () => {
-  alternarBootstrap(inject(DOCUMENT), true);
-  return true;
-};
-
-// usado no login, troca de senha e painel: desliga o bootstrap
 export const semBootstrapGuard: CanActivateFn = () => {
-  alternarBootstrap(inject(DOCUMENT), false);
+  desligarBootstrap(inject(DOCUMENT));
   return true;
 };

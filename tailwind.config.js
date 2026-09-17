@@ -59,11 +59,6 @@ module.exports = {
       fontFamily: {
         painel: ['Inter', 'system-ui', 'sans-serif'],
         dados: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
-        // fonte "cheinha"/arredondada usada nos titulos e botoes (painel e site) pra
-        // dar identidade propria ao sistema, sem trocar a fonte de texto corrido (mais
-        // dificil de ler em bloco). se nao for chapa o suficiente, proxima candidata e
-        // a "Baloo 2" (mesma familia de uso, so trocar aqui e no link do index.html)
-        identidade: ['Comfortaa', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'surgir': {
