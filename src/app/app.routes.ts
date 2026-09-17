@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { authGuard, sessaoAtivaGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
-import { comBootstrapGuard, semBootstrapGuard } from './core/layout/estilos-site';
+import { semBootstrapGuard } from './core/layout/estilos-site';
 
 import { HomeComponent } from './features/site/home/home.component';
 
@@ -14,7 +14,10 @@ export const routes: Routes = [
     path: '',
     component: HomeComponent,
     pathMatch: 'full',
-    canActivate: [comBootstrapGuard],
+    // o bootstrap nao e mais ligado em lugar nenhum (ver estilos-site.ts): a landing
+    // nao usa nenhum componente real dele, so classes utilitarias que colidiam com as
+    // do tailwind (border, shadow-sm, mt-3, gap-4...) e o bootstrap ganhava por usar !important
+    canActivate: [semBootstrapGuard],
   },
 
   {

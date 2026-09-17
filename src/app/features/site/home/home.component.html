@@ -29,40 +29,35 @@
 
       <a
         href="#inicio"
-        class="text-[#c4c4c4] no-underline
-               hover:text-[#e6c04d] transition"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
       >
         Início
       </a>
 
       <a
         href="#sobre"
-        class="text-[#c4c4c4] no-underline
-               hover:text-[#e6c04d] transition"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
       >
         Sobre
       </a>
 
       <a
         href="#servicos"
-        class="text-[#c4c4c4] no-underline
-               hover:text-[#e6c04d] transition"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
       >
         Serviços
       </a>
 
       <a
         href="#diferenciais"
-        class="text-[#c4c4c4] no-underline
-               hover:text-[#e6c04d] transition"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
       >
         Por que a AJT?
       </a>
 
       <a
         href="#contato"
-        class="text-[#c4c4c4] no-underline
-               hover:text-[#e6c04d] transition"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
       >
         Contato
       </a>
@@ -75,7 +70,8 @@
 
     <section
       id="inicio"
-      class="min-h-[650px]
+      class="relative overflow-hidden
+             min-h-[650px]
              flex items-center
              px-6 lg:px-12
              bg-gradient-to-br
@@ -83,11 +79,18 @@
              via-[#171717]
              to-[#232323]"
     >
-      <div class="max-w-6xl mx-auto w-full">
+      <!-- brilho de fundo, so pra dar profundidade (mesmo recurso da tela de login) -->
+      <div
+        class="pointer-events-none absolute -top-32 right-0 size-[560px] rounded-full opacity-[0.14]"
+        style="background: radial-gradient(circle, #e6c04d 0%, transparent 70%)"
+      ></div>
 
-        <div class="max-w-3xl">
+      <div class="relative max-w-6xl mx-auto w-full">
+
+        <div class="max-w-4xl">
 
           <p
+            appReveal
             class="text-[#e6c04d]
                    text-sm font-semibold
                    uppercase tracking-[0.22em]
@@ -97,10 +100,11 @@
           </p>
 
           <h2
-            class="text-4xl md:text-6xl
+            [appReveal]="80"
+            class="text-balance text-4xl md:text-6xl
                    text-white
                    font-bold
-                   leading-tight"
+                   leading-[1.15]"
           >
             Conforto, segurança e experiências que tornam sua viagem
             <span class="text-[#e6c04d]">
@@ -109,6 +113,7 @@
           </h2>
 
           <p
+            [appReveal]="160"
             class="text-[#b7b7b7]
                    text-lg md:text-xl
                    leading-8
@@ -119,38 +124,13 @@
             aproveitar Foz do Iguaçu com tranquilidade do início ao fim.
           </p>
 
-          <div class="flex flex-wrap gap-4 mt-8">
+          <div [appReveal]="240" class="flex flex-wrap gap-4 mt-8">
 
-            <a
-              href="#servicos"
-              class="inline-flex items-center justify-center
-                     h-12 px-7
-                     rounded-lg
-                     bg-gradient-to-r
-                     from-[#efcb5a]
-                     to-[#dfb638]
-                     text-[#111]
-                     font-bold
-                     no-underline
-                     transition
-                     hover:brightness-105"
-            >
+            <a href="#servicos" class="ajt-site-btn-primario">
               Conheça nossos serviços
             </a>
 
-            <a
-              href="#contato"
-              class="inline-flex items-center justify-center
-                     h-12 px-7
-                     rounded-lg
-                     border border-[#666]
-                     text-white
-                     font-semibold
-                     no-underline
-                     transition
-                     hover:border-[#e6c04d]
-                     hover:text-[#e6c04d]"
-            >
+            <a href="#contato" class="ajt-site-btn-outline">
               Fale com a AJT
             </a>
 
@@ -174,6 +154,7 @@
         <div>
 
           <p
+            appReveal
             class="text-[#b69120]
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
@@ -182,6 +163,7 @@
           </p>
 
           <h2
+            [appReveal]="80"
             class="text-3xl md:text-4xl
                    font-bold
                    text-[#181818]
@@ -191,6 +173,7 @@
           </h2>
 
           <p
+            [appReveal]="140"
             class="text-[#5e5e5e]
                    text-lg
                    leading-8
@@ -202,6 +185,7 @@
           </p>
 
           <p
+            [appReveal]="200"
             class="text-[#6b6b6b]
                    leading-7
                    mt-4"
@@ -219,11 +203,14 @@
         >
 
           <div
+            [appReveal]="0"
             class="bg-white
                    border border-[#e5e0d5]
                    rounded-2xl
                    p-6
-                   shadow-sm"
+                   shadow-sm
+                   transition-shadow
+                   hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#b69120]">
               Segurança
@@ -236,11 +223,14 @@
 
 
           <div
+            [appReveal]="80"
             class="bg-white
                    border border-[#e5e0d5]
                    rounded-2xl
                    p-6
-                   shadow-sm"
+                   shadow-sm
+                   transition-shadow
+                   hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#b69120]">
               Conforto
@@ -253,11 +243,14 @@
 
 
           <div
+            [appReveal]="160"
             class="bg-white
                    border border-[#e5e0d5]
                    rounded-2xl
                    p-6
-                   shadow-sm"
+                   shadow-sm
+                   transition-shadow
+                   hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#b69120]">
               Pontualidade
@@ -270,11 +263,14 @@
 
 
           <div
+            [appReveal]="240"
             class="bg-white
                    border border-[#e5e0d5]
                    rounded-2xl
                    p-6
-                   shadow-sm"
+                   shadow-sm
+                   transition-shadow
+                   hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#b69120]">
               Atendimento
@@ -300,6 +296,7 @@
         <div class="max-w-2xl">
 
           <p
+            appReveal
             class="text-[#b69120]
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
@@ -308,6 +305,7 @@
           </p>
 
           <h2
+            [appReveal]="80"
             class="text-3xl md:text-4xl
                    font-bold
                    text-[#181818]
@@ -317,6 +315,7 @@
           </h2>
 
           <p
+            [appReveal]="140"
             class="text-[#666]
                    mt-5
                    leading-7"
@@ -337,6 +336,7 @@
         >
 
           <div
+            [appReveal]="0"
             class="bg-white
                    border border-[#dedede]
                    rounded-2xl
@@ -349,11 +349,11 @@
           >
 
             <div
-              class="w-12 h-12
-                     rounded-xl
+              class="w-14 h-14
+                     rounded-full
+                     border-2 border-[#e6c04d]
                      flex items-center justify-center
-                     bg-[#fff4c9]
-                     text-[#a88410]
+                     text-[#b69120]
                      text-2xl
                      mb-5"
             >
@@ -388,6 +388,7 @@
           </div>
 
           <div
+            [appReveal]="80"
             class="bg-white
                    border border-[#dedede]
                    rounded-2xl
@@ -400,11 +401,11 @@
           >
 
             <div
-              class="w-12 h-12
-                     rounded-xl
+              class="w-14 h-14
+                     rounded-full
+                     border-2 border-[#e6c04d]
                      flex items-center justify-center
-                     bg-[#fff4c9]
-                     text-[#a88410]
+                     text-[#b69120]
                      text-2xl
                      mb-5"
             >
@@ -441,6 +442,7 @@
 
 
           <div
+            [appReveal]="160"
             class="bg-white
                    border border-[#dedede]
                    rounded-2xl
@@ -453,11 +455,11 @@
           >
 
             <div
-              class="w-12 h-12
-                     rounded-xl
+              class="w-14 h-14
+                     rounded-full
+                     border-2 border-[#e6c04d]
                      flex items-center justify-center
-                     bg-[#fff4c9]
-                     text-[#a88410]
+                     text-[#b69120]
                      text-2xl
                      mb-5"
             >
@@ -492,6 +494,7 @@
           </div>
 
           <div
+            [appReveal]="240"
             class="bg-white
                    border border-[#dedede]
                    rounded-2xl
@@ -504,11 +507,11 @@
           >
 
             <div
-              class="w-12 h-12
-                     rounded-xl
+              class="w-14 h-14
+                     rounded-full
+                     border-2 border-[#e6c04d]
                      flex items-center justify-center
-                     bg-[#fff4c9]
-                     text-[#a88410]
+                     text-[#b69120]
                      text-2xl
                      mb-5"
             >
@@ -559,6 +562,7 @@
         <div class="text-center max-w-2xl mx-auto">
 
           <p
+            appReveal
             class="text-[#e6c04d]
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
@@ -567,6 +571,7 @@
           </p>
 
           <h2
+            [appReveal]="80"
             class="text-3xl md:text-4xl
                    font-bold
                    mt-3"
@@ -584,10 +589,15 @@
         >
 
           <div
+            [appReveal]="0"
             class="bg-[#202020]
                    border border-[#333]
                    rounded-2xl
-                   p-7"
+                   p-7
+                   transition
+                   hover:-translate-y-1
+                   hover:border-[#e6c04d]/60
+                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
             <h3 class="text-[#e6c04d] font-bold text-lg">
               Atendimento personalizado
@@ -601,10 +611,15 @@
 
 
           <div
+            [appReveal]="80"
             class="bg-[#202020]
                    border border-[#333]
                    rounded-2xl
-                   p-7"
+                   p-7
+                   transition
+                   hover:-translate-y-1
+                   hover:border-[#e6c04d]/60
+                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
             <h3 class="text-[#e6c04d] font-bold text-lg">
               Experiência local
@@ -618,10 +633,15 @@
 
 
           <div
+            [appReveal]="160"
             class="bg-[#202020]
                    border border-[#333]
                    rounded-2xl
-                   p-7"
+                   p-7
+                   transition
+                   hover:-translate-y-1
+                   hover:border-[#e6c04d]/60
+                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
             <h3 class="text-[#e6c04d] font-bold text-lg">
               Praticidade
@@ -653,6 +673,7 @@
         <div>
 
           <p
+            appReveal
             class="text-[#b69120]
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
@@ -661,6 +682,7 @@
           </p>
 
           <h2
+            [appReveal]="80"
             class="text-3xl md:text-4xl
                    font-bold
                    text-[#181818]
@@ -670,6 +692,7 @@
           </h2>
 
           <p
+            [appReveal]="140"
             class="text-[#666]
                    mt-5
                    leading-7
@@ -683,6 +706,7 @@
 
 
         <div
+          [appReveal]="100"
           class="bg-[#f7f7f7]
                  border border-[#e1e1e1]
                  rounded-2xl
@@ -760,16 +784,7 @@
             href="https://wa.me/5545999180277"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center justify-center
-                   mt-8
-                   h-12 px-7
-                   rounded-lg
-                   bg-[#181818]
-                   text-white
-                   font-bold
-                   no-underline
-                   transition
-                   hover:bg-[#b69120]"
+            class="ajt-site-btn-primario mt-8 w-full"
           >
             Falar pelo WhatsApp
           </a>
@@ -837,40 +852,32 @@
           Navegação
         </h3>
 
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col items-start gap-3">
 
           <a
             href="#inicio"
-            class="text-sm text-[#999]
-                   no-underline
-                   hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
           >
             Início
           </a>
 
           <a
             href="#sobre"
-            class="text-sm text-[#999]
-                   no-underline
-                   hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
           >
             Sobre
           </a>
 
           <a
             href="#servicos"
-            class="text-sm text-[#999]
-                   no-underline
-                   hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
           >
             Serviços
           </a>
 
           <a
             href="#contato"
-            class="text-sm text-[#999]
-                   no-underline
-                   hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
           >
             Contato
           </a>
@@ -894,19 +901,8 @@
           Área exclusiva para a equipe AJT.
         </p>
 
-        <a
-          routerLink="/login"
-          class="inline-flex items-center justify-center
-                 h-11 px-6
-                 rounded-lg
-                 border border-[#d9b83f]
-                 text-[#e6c04d]
-                 font-semibold
-                 no-underline
-                 transition
-                 hover:bg-[#e6c04d]
-                 hover:text-[#111]"
-        >
+        <!-- link secundario do rodape: mais discreto que os ctas (padding e fonte menores) -->
+        <a routerLink="/login" class="ajt-site-btn-outline px-5 py-2.5 text-sm font-medium">
           Acessar Admin
         </a>
 
