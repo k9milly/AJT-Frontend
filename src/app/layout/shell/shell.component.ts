@@ -6,7 +6,6 @@ import { AuthService } from '../../core/auth/auth.service';
 import { Recurso } from '../../core/auth/permissoes';
 import { TemaService } from '../../core/services/tema.service';
 import { IconeComponent, NomeIcone } from '../../shared/components/icone/icone.component';
-import { ToastsComponent } from '../../shared/components/toasts/toasts.component';
 import { ROTULO_PERFIL, iniciais } from '../../shared/utils/rotulos';
 
 interface ItemMenu {
@@ -66,10 +65,9 @@ const SECOES_MOTORISTA: SecaoMenu[] = [
 
 // layout autenticado: menu lateral + barra superior + conteudo da rota
 @Component({
-  selector: 'app-shell',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IconeComponent, ToastsComponent],
-  templateUrl: './shell.component.html',
+    selector: 'app-shell',
+    imports: [RouterOutlet, RouterLink, RouterLinkActive, IconeComponent],
+    templateUrl: './shell.component.html'
 })
 export class ShellComponent implements OnInit {
   private router = inject(Router);
