@@ -1,61 +1,40 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
-import { PontoColeta } from '../../core/models/ponto-coleta.model';
-import { PONTOS_COLETA_MOCK } from '../../core/mock/pontos-coleta.mock';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Pagina, ParametrosPagina } from '../../core/models/api.model';
+import { PontoColeta, PontoColetaRequest } from '../../core/models/ponto-coleta.model';
+import { montarParametros } from '../../core/http/parametros';
 
-const STORAGE_KEY = 'ajt_pontos_coleta';
-
+// acesso a /api/pontos-coleta
+// leitura: todos os perfis | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
 @Injectable({ providedIn: 'root' })
 export class PontoColetaService {
-  private pontos = signal<PontoColeta[]>(this.carregar());
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/pontos-coleta`;
 
-  listar(): Observable<PontoColeta[]> {
-    return of(this.pontos()).pipe(delay(250));
+  listar(pagina: ParametrosPagina = {}): Observable<Pagina<PontoColeta>> {
+    return this.http.get<Pagina<PontoColeta>>(this.base, { params: montarParametros(pagina) });
   }
 
-  buscarPorId(id: number): Observable<PontoColeta | undefined> {
-    return of(this.pontos().find(p => p.id === id)).pipe(delay(150));
+  // lista "filha": array simples, sem paginacao, ja ordenado pela ordem da parada
+  listarPorTransfer(transferId: number): Observable<PontoColeta[]> {
+    return this.http.get<PontoColeta[]>(`${this.base}/transfer/${transferId}`);
   }
 
-  criar(dados: Omit<PontoColeta, 'id'>): Observable<PontoColeta> {
-    const novo: PontoColeta = { ...dados, id: this.proximoId() };
-    const lista = [...this.pontos(), novo];
-    return of(novo).pipe(delay(250), tap(() => this.salvar(lista)));
+  buscarPorId(id: number): Observable<PontoColeta> {
+    return this.http.get<PontoColeta>(`${this.base}/${id}`);
   }
 
-  atualizar(id: number, dados: Omit<PontoColeta, 'id'>): Observable<PontoColeta> {
-    const existe = this.pontos().some(p => p.id === id);
-    if (!existe) {
-      return throwError(() => new Error('Ponto de coleta não encontrado')).pipe(delay(250));
-    }
+  criar(dados: PontoColetaRequest): Observable<PontoColeta> {
+    return this.http.post<PontoColeta>(this.base, dados);
+  }
 
-    const atualizado: PontoColeta = { ...dados, id };
-    const lista = this.pontos().map(p => (p.id === id ? atualizado : p));
-    return of(atualizado).pipe(delay(250), tap(() => this.salvar(lista)));
+  atualizar(id: number, dados: PontoColetaRequest): Observable<PontoColeta> {
+    return this.http.put<PontoColeta>(`${this.base}/${id}`, dados);
   }
 
   excluir(id: number): Observable<void> {
-    const lista = this.pontos().filter(p => p.id !== id);
-    return of(void 0).pipe(delay(250), tap(() => this.salvar(lista)));
-  }
-
-  private proximoId(): number {
-    const ids = this.pontos().map(p => p.id);
-    return ids.length ? Math.max(...ids) + 1 : 1;
-  }
-
-  private salvar(lista: PontoColeta[]): void {
-    this.pontos.set(lista);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-  }
-
-  private carregar(): PontoColeta[] {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(PONTOS_COLETA_MOCK));
-    return PONTOS_COLETA_MOCK;
+    return this.http.delete<void>(`${this.base}/${id}`);
   }
 }

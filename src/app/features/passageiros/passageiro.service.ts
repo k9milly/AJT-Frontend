@@ -1,61 +1,42 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
-import { Passageiro } from '../../core/models/passageiro.model';
-import { PASSAGEIROS_MOCK } from '../../core/mock/passageiros.mock';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Pagina, ParametrosPagina } from '../../core/models/api.model';
+import { Passageiro, PassageiroRequest } from '../../core/models/passageiro.model';
+import { montarParametros } from '../../core/http/parametros';
 
-const STORAGE_KEY = 'ajt_passageiros';
-
+// acesso a /api/passageiros
+// leitura: todos os perfis | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
 @Injectable({ providedIn: 'root' })
 export class PassageiroService {
-  private passageiros = signal<Passageiro[]>(this.carregar());
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/passageiros`;
 
-  listar(): Observable<Passageiro[]> {
-    return of(this.passageiros()).pipe(delay(250));
+  listar(pagina: ParametrosPagina = {}): Observable<Pagina<Passageiro>> {
+    return this.http.get<Pagina<Passageiro>>(this.base, { params: montarParametros(pagina) });
   }
 
-  buscarPorId(id: number): Observable<Passageiro | undefined> {
-    return of(this.passageiros().find(p => p.id === id)).pipe(delay(150));
+  buscarPorId(id: number): Observable<Passageiro> {
+    return this.http.get<Passageiro>(`${this.base}/${id}`);
   }
 
-  criar(dados: Omit<Passageiro, 'id'>): Observable<Passageiro> {
-    const novo: Passageiro = { ...dados, id: this.proximoId() };
-    const lista = [...this.passageiros(), novo];
-    return of(novo).pipe(delay(250), tap(() => this.salvar(lista)));
+  // unico filtro que o backend oferece pra passageiros (ignora maiusculas/minusculas)
+  buscarPorNacionalidade(nacionalidade: string, pagina: ParametrosPagina = {}): Observable<Pagina<Passageiro>> {
+    return this.http.get<Pagina<Passageiro>>(`${this.base}/buscar`, {
+      params: montarParametros(pagina, { nacionalidade }),
+    });
   }
 
-  atualizar(id: number, dados: Omit<Passageiro, 'id'>): Observable<Passageiro> {
-    const existe = this.passageiros().some(p => p.id === id);
-    if (!existe) {
-      return throwError(() => new Error('Passageiro não encontrado')).pipe(delay(250));
-    }
+  criar(dados: PassageiroRequest): Observable<Passageiro> {
+    return this.http.post<Passageiro>(this.base, dados);
+  }
 
-    const atualizado: Passageiro = { ...dados, id };
-    const lista = this.passageiros().map(p => (p.id === id ? atualizado : p));
-    return of(atualizado).pipe(delay(250), tap(() => this.salvar(lista)));
+  atualizar(id: number, dados: PassageiroRequest): Observable<Passageiro> {
+    return this.http.put<Passageiro>(`${this.base}/${id}`, dados);
   }
 
   excluir(id: number): Observable<void> {
-    const lista = this.passageiros().filter(p => p.id !== id);
-    return of(void 0).pipe(delay(250), tap(() => this.salvar(lista)));
-  }
-
-  private proximoId(): number {
-    const ids = this.passageiros().map(p => p.id);
-    return ids.length ? Math.max(...ids) + 1 : 1;
-  }
-
-  private salvar(lista: Passageiro[]): void {
-    this.passageiros.set(lista);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-  }
-
-  private carregar(): Passageiro[] {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(PASSAGEIROS_MOCK));
-    return PASSAGEIROS_MOCK;
+    return this.http.delete<void>(`${this.base}/${id}`);
   }
 }

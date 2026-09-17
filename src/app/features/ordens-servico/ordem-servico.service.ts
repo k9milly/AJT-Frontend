@@ -1,61 +1,48 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
-import { OrdemServico } from '../../core/models/ordem-servico.model';
-import { ORDENS_SERVICO_MOCK } from '../../core/mock/ordens-servico.mock';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Pagina, ParametrosPagina } from '../../core/models/api.model';
+import { OrdemServico, OrdemServicoRequest, StatusOrdemServico } from '../../core/models/ordem-servico.model';
+import { montarParametros } from '../../core/http/parametros';
 
-const STORAGE_KEY = 'ajt_ordens_servico';
-
+// acesso a /api/ordens-servico
+// leitura: todos os perfis | escrita e exclusao: ADMIN, GERENTE
 @Injectable({ providedIn: 'root' })
 export class OrdemServicoService {
-  private ordens = signal<OrdemServico[]>(this.carregar());
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/ordens-servico`;
 
-  listar(): Observable<OrdemServico[]> {
-    return of(this.ordens()).pipe(delay(250));
+  listar(pagina: ParametrosPagina = {}): Observable<Pagina<OrdemServico>> {
+    return this.http.get<Pagina<OrdemServico>>(this.base, { params: montarParametros(pagina) });
   }
 
-  buscarPorId(id: number): Observable<OrdemServico | undefined> {
-    return of(this.ordens().find(o => o.id === id)).pipe(delay(150));
+  buscarPorId(id: number): Observable<OrdemServico> {
+    return this.http.get<OrdemServico>(`${this.base}/${id}`);
   }
 
-  criar(dados: Omit<OrdemServico, 'id'>): Observable<OrdemServico> {
-    const novo: OrdemServico = { ...dados, id: this.proximoId() };
-    const lista = [...this.ordens(), novo];
-    return of(novo).pipe(delay(250), tap(() => this.salvar(lista)));
+  buscarPorStatus(status: StatusOrdemServico, pagina: ParametrosPagina = {}): Observable<Pagina<OrdemServico>> {
+    return this.http.get<Pagina<OrdemServico>>(`${this.base}/buscar`, {
+      params: montarParametros(pagina, { status }),
+    });
   }
 
-  atualizar(id: number, dados: Omit<OrdemServico, 'id'>): Observable<OrdemServico> {
-    const existe = this.ordens().some(o => o.id === id);
-    if (!existe) {
-      return throwError(() => new Error('Ordem de serviço não encontrada')).pipe(delay(250));
-    }
-
-    const atualizado: OrdemServico = { ...dados, id };
-    const lista = this.ordens().map(o => (o.id === id ? atualizado : o));
-    return of(atualizado).pipe(delay(250), tap(() => this.salvar(lista)));
+  criar(dados: OrdemServicoRequest): Observable<OrdemServico> {
+    return this.http.post<OrdemServico>(this.base, dados);
   }
 
+  atualizar(id: number, dados: OrdemServicoRequest): Observable<OrdemServico> {
+    return this.http.put<OrdemServico>(`${this.base}/${id}`, dados);
+  }
+
+  // troca so o status, reenviando o resto da os como esta (PUT exige o corpo completo)
+  alterarStatus(ordem: OrdemServico, status: StatusOrdemServico): Observable<OrdemServico> {
+    const { id, ...dados } = ordem;
+    return this.atualizar(id, { ...dados, status });
+  }
+
+  // remove tambem as paradas da os (cascade no banco); devolve 409 se houver transfer vinculado
   excluir(id: number): Observable<void> {
-    const lista = this.ordens().filter(o => o.id !== id);
-    return of(void 0).pipe(delay(250), tap(() => this.salvar(lista)));
-  }
-
-  private proximoId(): number {
-    const ids = this.ordens().map(o => o.id);
-    return ids.length ? Math.max(...ids) + 1 : 1;
-  }
-
-  private salvar(lista: OrdemServico[]): void {
-    this.ordens.set(lista);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-  }
-
-  private carregar(): OrdemServico[] {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ORDENS_SERVICO_MOCK));
-    return ORDENS_SERVICO_MOCK;
+    return this.http.delete<void>(`${this.base}/${id}`);
   }
 }
