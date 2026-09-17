@@ -1,0 +1,359 @@
+<div class="max-w-6xl p-5 sm:p-6">
+
+  <a routerLink="/admin/ordens-servico" class="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground no-underline hover:text-foreground">
+    <app-icone nome="voltar" class="size-3.5" /> Ordens de serviço
+  </a>
+
+  @if (carregando()) {
+    <!-- esqueleto da pagina -->
+    <div class="space-y-4">
+      <div class="h-20 rounded-lg bg-muted animate-pulsar"></div>
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div class="h-72 rounded-lg bg-muted animate-pulsar lg:col-span-2"></div>
+        <div class="h-72 rounded-lg bg-muted animate-pulsar"></div>
+      </div>
+    </div>
+
+  } @else if (erro()) {
+    <div class="ajt-alerta-erro flex items-center justify-between gap-3">
+      <span>{{ erro() }}</span>
+      <button type="button" class="ajt-link-acao !text-status-danger" (click)="carregar()">Tentar de novo</button>
+    </div>
+
+  } @else {
+  @if (ordem(); as os) {
+
+    <!-- ===================== cabecalho da os ===================== -->
+    <div class="ajt-card mb-5 flex flex-wrap items-center justify-between gap-4 p-5 animate-surgir">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h2 class="ajt-dado text-xl font-semibold text-foreground">OS #{{ os.id }}</h2>
+          <app-status-badge [tom]="tomDoStatus(os.status)" [rotulo]="rotuloStatusOs[os.status]" />
+        </div>
+
+        <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+          <span class="flex items-center gap-1.5">
+            <app-icone nome="calendario" class="size-3.5" />
+            <span class="ajt-dado">{{ formatarData(os.dataServico) }}</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <app-icone nome="cracha" class="size-3.5" />
+            @if (motorista(); as m) {
+              {{ m.nome }}
+            } @else if (os.motoristaId) {
+              Motorista #{{ os.motoristaId }}
+            } @else {
+              <span class="text-status-warning">Sem motorista</span>
+            }
+          </span>
+          <span class="flex items-center gap-1.5">
+            <app-icone nome="van" class="size-3.5" />
+            @if (veiculo(); as v) {
+              {{ v.label }} · <span class="ajt-dado">{{ v.placa }}</span> · {{ v.capacidade }} lugares
+            } @else if (os.veiculoId) {
+              Veículo #{{ os.veiculoId }}
+            } @else {
+              <span class="text-status-warning">Sem veículo</span>
+            }
+          </span>
+        </div>
+      </div>
+
+      @if (podeEditarOs()) {
+        <div class="w-48">
+          <label for="statusOs" class="ajt-rotulo">Status da OS</label>
+          <select
+            #seletorStatusOs
+            id="statusOs"
+            class="ajt-campo"
+            [disabled]="alterandoStatusOs()"
+            (change)="alterarStatusOs(seletorStatusOs)"
+          >
+            @for (status of statusOsOpcoes; track status) {
+              <option [value]="status" [selected]="status === os.status">{{ rotuloStatusOs[status] }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+
+      <!-- ===================== rota (paradas) ===================== -->
+      <div class="ajt-card animate-surgir lg:col-span-2" style="animation-delay: 60ms">
+        <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <div>
+            <h3 class="text-sm font-semibold text-foreground">Rota</h3>
+            <p class="text-[11px] text-muted-foreground">{{ paradas().length }} parada(s), na ordem em que o motorista passa.</p>
+          </div>
+          @if (podeEditarParadas()) {
+            <button type="button" class="ajt-botao-secundario !px-3 !py-1.5 text-xs" (click)="abrirNovaParada()">
+              <app-icone nome="mais" class="size-3" /> Parada
+            </button>
+          }
+        </div>
+
+        @if (!paradas().length) {
+          <div class="flex flex-col items-center gap-2 px-5 py-12 text-center">
+            <app-icone nome="bandeira" class="size-6 text-muted-foreground" />
+            <p class="text-xs text-muted-foreground">Nenhuma parada na rota ainda.</p>
+            @if (podeEditarParadas()) {
+              <button type="button" class="ajt-link-acao mt-1" (click)="abrirNovaParada()">Adicionar a primeira parada</button>
+            }
+          </div>
+        } @else {
+          <ol class="relative px-5 py-4">
+            @for (parada of paradas(); track parada.id; let ultima = $last) {
+              <li class="relative flex gap-4 pb-5" [class.pb-0]="ultima">
+                <!-- linha vertical ligando as paradas -->
+                @if (!ultima) {
+                  <span class="absolute left-[13px] top-8 h-[calc(100%-1.5rem)] w-px bg-border"></span>
+                }
+
+                <span
+                  class="ajt-dado relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                  [class]="parada.statusParada === 'CONCLUIDA' ? 'bg-status-success-bg text-status-success' : 'bg-secondary text-secondary-foreground'"
+                >
+                  {{ parada.ordemParada }}
+                </span>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <p class="font-medium text-foreground">{{ parada.localParada }}</p>
+                      <p class="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11px] text-muted-foreground">
+                        <span class="ajt-dado flex items-center gap-1">
+                          <app-icone nome="relogio" class="size-3" /> {{ formatarHora(parada.horarioPrevisto) }}
+                        </span>
+                        @if (parada.acao) {
+                          <span>{{ rotuloAcao[parada.acao] }}</span>
+                        }
+                      </p>
+                    </div>
+
+                    <div class="flex items-center gap-1">
+                      @if (podeAlterarStatusParada()) {
+                        <select
+                          #seletorStatusParada
+                          class="ajt-campo !w-36 !py-1 text-xs"
+                          [attr.aria-label]="'Status da parada ' + parada.ordemParada"
+                          [disabled]="alterandoParadaId() === parada.id"
+                          (change)="alterarStatusParada(parada, seletorStatusParada)"
+                        >
+                          @for (status of statusParadaOpcoes; track status) {
+                            <option [value]="status" [selected]="status === parada.statusParada">{{ rotuloStatusParada[status] }}</option>
+                          }
+                        </select>
+                      } @else {
+                        <app-status-badge [tom]="tomDoStatus(parada.statusParada)" [rotulo]="rotuloStatusParada[parada.statusParada]" />
+                      }
+
+                      @if (podeEditarParadas()) {
+                        <button type="button" class="ajt-botao-icone" title="Editar parada" (click)="abrirEdicaoParada(parada)">
+                          <app-icone nome="lapis" class="size-3.5" />
+                        </button>
+                      }
+                      @if (podeExcluirParadas()) {
+                        <button type="button" class="ajt-botao-icone hover:!text-destructive" title="Remover parada" (click)="paradaParaExcluir.set(parada)">
+                          <app-icone nome="lixeira" class="size-3.5" />
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  @if (parada.transferIds.length) {
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                      @for (transferId of parada.transferIds; track transferId) {
+                        <span class="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
+                          <span class="ajt-dado font-medium text-foreground">#{{ transferId }}</span>
+                          {{ descricaoTransfer(transferId) }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </div>
+
+      <!-- ===================== transfers vinculados ===================== -->
+      <div class="ajt-card h-fit animate-surgir" style="animation-delay: 120ms">
+        <div class="border-b border-border px-5 py-3.5">
+          <h3 class="text-sm font-semibold text-foreground">Transfers da OS</h3>
+          <p class="text-[11px] text-muted-foreground">{{ transfersVinculados().length }} vinculado(s)</p>
+        </div>
+
+        @if (!transfersVinculados().length) {
+          <p class="px-5 py-6 text-center text-xs text-muted-foreground">Nenhum transfer vinculado.</p>
+        } @else {
+          <ul class="divide-y divide-border">
+            @for (transfer of transfersVinculados(); track transfer.id) {
+              <li class="flex items-start justify-between gap-2 px-5 py-3">
+                <div class="min-w-0">
+                  <p class="truncate text-[13px] font-medium text-foreground">
+                    <span class="ajt-dado text-muted-foreground">#{{ transfer.id }}</span> {{ transfer.origem }}
+                  </p>
+                  <p class="truncate text-[11px] text-muted-foreground">→ {{ transfer.destino }}</p>
+                  <p class="ajt-dado mt-0.5 text-[11px] text-muted-foreground">
+                    {{ formatarData(transfer.dataTransfer) }} · {{ formatarHora(transfer.horaTransfer) }}
+                  </p>
+                </div>
+                @if (podeVincularTransfers()) {
+                  <button
+                    type="button"
+                    class="ajt-botao-icone shrink-0"
+                    title="Desvincular da OS"
+                    [disabled]="alterandoTransferId() === transfer.id"
+                    (click)="desvincularTransfer(transfer)"
+                  >
+                    <app-icone nome="fechar" class="size-3.5" />
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        @if (podeVincularTransfers()) {
+          <div class="border-t border-border p-4">
+            <label for="vincular" class="ajt-rotulo">Vincular transfer sem OS</label>
+            <select
+              #seletorTransfer
+              id="vincular"
+              class="ajt-campo"
+              [disabled]="!transfersDisponiveis().length || alterandoTransferId() !== null"
+              (change)="vincularTransfer(seletorTransfer.value); seletorTransfer.value = ''"
+            >
+              <option value="">
+                {{ transfersDisponiveis().length ? 'Selecione...' : 'Nenhum transfer disponível' }}
+              </option>
+              @for (transfer of transfersDisponiveis(); track transfer.id) {
+                <option [value]="transfer.id">
+                  #{{ transfer.id }} · {{ formatarData(transfer.dataTransfer) }} · {{ transfer.origem }} → {{ transfer.destino }}
+                </option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+    </div>
+  }
+  }
+</div>
+
+<!-- ===================== cadastro/edicao de parada ===================== -->
+<app-modal
+  [aberto]="modalAberto()"
+  [titulo]="editandoParada() ? 'Editar parada' : 'Nova parada'"
+  largura="larga"
+  (fechar)="fecharModal()"
+>
+  <form [formGroup]="form" (ngSubmit)="salvarParada()" class="space-y-4" novalidate>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-[6rem_1fr]">
+      <div>
+        <label for="ordemParada" class="ajt-rotulo">Ordem</label>
+        <input id="ordemParada" type="number" min="1" formControlName="ordemParada" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.ordemParada.touched && form.controls.ordemParada.invalid" />
+      </div>
+
+      <div>
+        <label for="localParada" class="ajt-rotulo">Local</label>
+        <input id="localParada" type="text" formControlName="localParada" placeholder="Ex.: Aeroporto — portão 2" class="ajt-campo"
+               [class.ajt-campo-invalido]="form.controls.localParada.touched && form.controls.localParada.invalid" />
+        @if (form.controls.localParada.touched && form.controls.localParada.invalid) {
+          <p class="ajt-erro-campo">Informe o local (até 100 caracteres).</p>
+        }
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="horarioPrevisto" class="ajt-rotulo">Horário previsto</label>
+        <input id="horarioPrevisto" type="time" formControlName="horarioPrevisto" class="ajt-campo ajt-dado" />
+      </div>
+
+      <div>
+        <label for="acao" class="ajt-rotulo">Ação</label>
+        <select id="acao" formControlName="acao" class="ajt-campo">
+          <option [ngValue]="null">Não informada</option>
+          @for (acao of acoesParada; track acao) {
+            <option [ngValue]="acao">{{ rotuloAcao[acao] }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="statusParada" class="ajt-rotulo">Status</label>
+        <select id="statusParada" formControlName="statusParada" class="ajt-campo">
+          @for (status of statusParadaOpcoes; track status) {
+            <option [value]="status">{{ rotuloStatusParada[status] }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label for="latitude" class="ajt-rotulo">Latitude (opcional)</label>
+        <input id="latitude" type="number" step="any" formControlName="latitude" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.latitude.touched && form.controls.latitude.invalid" />
+      </div>
+      <div>
+        <label for="longitude" class="ajt-rotulo">Longitude (opcional)</label>
+        <input id="longitude" type="number" step="any" formControlName="longitude" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.longitude.touched && form.controls.longitude.invalid" />
+      </div>
+    </div>
+
+    <!-- transfers que embarcam/desembarcam nesta parada (so os vinculados a esta os) -->
+    <div>
+      <p class="ajt-rotulo">Transfers nesta parada</p>
+      @if (!transfersVinculados().length) {
+        <p class="rounded-md border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+          Vincule transfers à OS para escolher quais passam por esta parada.
+        </p>
+      } @else {
+        <div class="max-h-48 divide-y divide-border overflow-y-auto rounded-md border border-border">
+          @for (transfer of transfersVinculados(); track transfer.id) {
+            <label class="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/50">
+              <input
+                type="checkbox"
+                class="size-4 accent-current"
+                [checked]="transferMarcado(transfer.id)"
+                (change)="alternarTransfer(transfer.id, $any($event.target).checked)"
+              />
+              <span class="min-w-0 flex-1 truncate text-[13px] text-foreground">
+                <span class="ajt-dado text-muted-foreground">#{{ transfer.id }}</span> {{ transfer.origem }} → {{ transfer.destino }}
+              </span>
+              <span class="ajt-dado text-[11px] text-muted-foreground">{{ formatarHora(transfer.horaTransfer) }}</span>
+            </label>
+          }
+        </div>
+      }
+    </div>
+
+    @if (erroFormulario()) {
+      <div class="ajt-alerta-erro">{{ erroFormulario() }}</div>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" class="ajt-botao-secundario" (click)="fecharModal()">Cancelar</button>
+      <button type="submit" class="ajt-botao-primario" [disabled]="salvando()">
+        {{ salvando() ? 'Salvando...' : (editandoParada() ? 'Salvar alterações' : 'Adicionar parada') }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ===================== exclusao de parada ===================== -->
+<app-confirm-dialog
+  [aberto]="paradaParaExcluir() !== null"
+  titulo="Remover parada"
+  [mensagem]="'Remover a parada ' + (paradaParaExcluir()?.localParada ?? '') + ' da rota?'"
+  textoConfirmar="Remover"
+  [processando]="excluindo()"
+  (cancelar)="paradaParaExcluir.set(null)"
+  (confirmar)="confirmarExclusaoParada()"
+/>

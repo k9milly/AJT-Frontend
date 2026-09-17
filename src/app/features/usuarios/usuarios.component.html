@@ -1,0 +1,171 @@
+<div class="max-w-6xl p-5 sm:p-6">
+
+  <!-- cabecalho -->
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3 animate-surgir">
+    <div>
+      <h2 class="text-lg font-semibold text-foreground">Usuários</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">Quem acessa o painel e o que cada perfil pode fazer.</p>
+    </div>
+
+    <button type="button" class="ajt-botao-primario" (click)="abrirCadastro()">
+      <app-icone nome="mais" class="size-3.5" /> Novo usuário
+    </button>
+  </div>
+
+  @if (erro()) {
+    <div class="ajt-alerta-erro mb-4">{{ erro() }}</div>
+  }
+
+  <!-- tabela -->
+  <div class="ajt-card overflow-hidden animate-surgir" style="animation-delay: 40ms">
+    @if (carregando()) {
+      <app-tabela-skeleton [colunas]="5" />
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="ajt-tabela min-w-[720px]">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Perfil</th>
+              <th>Situação</th>
+              <th>Último acesso</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (usuario of pagina()?.conteudo; track usuario.id) {
+              <tr>
+                <td>
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex size-7 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground">
+                      {{ iniciais(usuario.nome) }}
+                    </div>
+                    <div>
+                      <p class="font-medium">
+                        {{ usuario.nome }}
+                        @if (usuario.username === usernameLogado()) {
+                          <span class="ml-1 text-[10px] font-normal text-muted-foreground">(você)</span>
+                        }
+                      </p>
+                      <p class="ajt-dado text-[11px] text-muted-foreground">&#64;{{ usuario.username }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-muted-foreground">{{ rotuloPerfil[usuario.role] }}</td>
+                <td>
+                  <app-status-badge [tom]="situacao(usuario).tom" [rotulo]="situacao(usuario).rotulo" />
+                </td>
+                <td class="ajt-dado text-xs text-muted-foreground">{{ formatarDataHora(usuario.ultimoLogin) }}</td>
+                <td class="whitespace-nowrap text-right">
+                  <button type="button" class="ajt-botao-icone" title="Editar" (click)="abrirEdicao(usuario)">
+                    <app-icone nome="lapis" class="size-3.5" />
+                  </button>
+                  @if (usuario.username !== usernameLogado()) {
+                    <button type="button" class="ajt-botao-icone hover:!text-destructive" title="Excluir" (click)="paraExcluir.set(usuario)">
+                      <app-icone nome="lixeira" class="size-3.5" />
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="!py-10 text-center text-xs !text-muted-foreground">Nenhum usuário cadastrado.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-paginacao [pagina]="pagina()" (mudarPagina)="carregar($event)" />
+    }
+  </div>
+</div>
+
+<!-- ===================== cadastro/edicao ===================== -->
+<app-modal
+  [aberto]="modalAberto()"
+  [titulo]="editando() ? 'Editar usuário' : 'Novo usuário'"
+  (fechar)="fecharModal()"
+>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="space-y-4" novalidate>
+    <div>
+      <label for="nome" class="ajt-rotulo">Nome</label>
+      <input id="nome" type="text" formControlName="nome" class="ajt-campo"
+             [class.ajt-campo-invalido]="form.controls.nome.touched && form.controls.nome.invalid" />
+      @if (form.controls.nome.touched && form.controls.nome.invalid) {
+        <p class="ajt-erro-campo">Informe o nome (até 100 caracteres).</p>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label for="username" class="ajt-rotulo">Usuário (login)</label>
+        <input id="username" type="text" autocomplete="off" formControlName="username" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.username.touched && form.controls.username.invalid" />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <p class="ajt-erro-campo">De 3 a 50 caracteres: letras, números, ponto, _ ou -.</p>
+        }
+      </div>
+
+      <div>
+        <label for="senha" class="ajt-rotulo">{{ editando() ? 'Nova senha' : 'Senha provisória' }}</label>
+        <input id="senha" type="password" autocomplete="new-password" formControlName="senha" class="ajt-campo"
+               [class.ajt-campo-invalido]="form.controls.senha.touched && form.controls.senha.invalid" />
+        @if (form.controls.senha.touched && form.controls.senha.invalid) {
+          <p class="ajt-erro-campo">A senha deve ter entre 8 e 72 caracteres.</p>
+        } @else {
+          <p class="ajt-ajuda">
+            {{ editando() ? 'Deixe em branco para manter a atual.' : 'O usuário troca no primeiro acesso.' }}
+          </p>
+        }
+      </div>
+    </div>
+
+    <div>
+      <label for="role" class="ajt-rotulo">Perfil</label>
+      <select id="role" formControlName="role" class="ajt-campo">
+        @for (perfil of perfis; track perfil) {
+          <option [value]="perfil">{{ rotuloPerfil[perfil] }}</option>
+        }
+      </select>
+      <p class="ajt-ajuda">{{ descricaoPerfil[perfilSelecionado()] }}</p>
+    </div>
+
+    <!-- ativo/inativo -->
+    <label class="flex cursor-pointer items-center justify-between rounded-md border border-border px-3 py-2.5"
+           [class.opacity-60]="form.controls.ativo.disabled">
+      <div>
+        <p class="text-sm font-medium text-foreground">Usuário ativo</p>
+        <p class="text-[11px] text-muted-foreground">
+          {{ form.controls.ativo.disabled ? 'Você não pode desativar a própria conta.' : 'Inativos não conseguem entrar no painel.' }}
+        </p>
+      </div>
+      <input type="checkbox" formControlName="ativo" class="peer sr-only" />
+      <span class="relative h-5 w-9 rounded-full bg-input transition-colors peer-checked:bg-status-success
+                   after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-white after:transition-transform
+                   peer-checked:after:translate-x-4"></span>
+    </label>
+
+    @if (erroFormulario()) {
+      <div class="ajt-alerta-erro">{{ erroFormulario() }}</div>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" class="ajt-botao-secundario" (click)="fecharModal()">Cancelar</button>
+      <button type="submit" class="ajt-botao-primario" [disabled]="salvando()">
+        {{ salvando() ? 'Salvando...' : (editando() ? 'Salvar alterações' : 'Criar usuário') }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- ===================== exclusao ===================== -->
+<app-confirm-dialog
+  [aberto]="paraExcluir() !== null"
+  titulo="Excluir usuário"
+  [mensagem]="'Excluir ' + (paraExcluir()?.nome ?? '') + '? Para só bloquear o acesso, prefira desativar o usuário.'"
+  textoConfirmar="Excluir"
+  [processando]="excluindo()"
+  (cancelar)="paraExcluir.set(null)"
+  (confirmar)="confirmarExclusao()"
+/>
