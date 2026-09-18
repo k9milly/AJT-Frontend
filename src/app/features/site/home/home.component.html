@@ -10,7 +10,7 @@
     <div class="flex items-center gap-3">
       <img
         src="/logo.png"
-        alt="Logo AJT Viagens"
+        [alt]="t().logoAlt"
         class="w-12 h-12 object-contain"
       />
 
@@ -20,10 +20,12 @@
         </h1>
 
         <p class="text-xs text-[#9a9a9a]">
-          Viagens e Turismo
+          {{ t().marcaSubtitulo }}
         </p>
       </div>
     </div>
+
+    <div class="flex items-center gap-8">
 
     <nav class="hidden md:flex items-center gap-8 text-sm">
 
@@ -31,38 +33,64 @@
         href="#inicio"
         class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Início
+        {{ t().nav.inicio }}
       </a>
 
       <a
         href="#sobre"
         class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Sobre
+        {{ t().nav.sobre }}
       </a>
 
       <a
         href="#servicos"
         class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Serviços
+        {{ t().nav.servicos }}
       </a>
 
       <a
         href="#diferenciais"
         class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Por que a AJT?
+        {{ t().nav.porQue }}
       </a>
 
       <a
         href="#contato"
         class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Contato
+        {{ t().nav.contato }}
       </a>
 
     </nav>
+
+    <!-- seletor de idioma (so a home e traduzida); fica visivel tambem no celular -->
+    <div
+      role="group"
+      [attr.aria-label]="t().seletorIdioma"
+      class="flex items-center gap-1 text-xs font-semibold tracking-wider"
+    >
+      @for (opcao of idiomas; track opcao.codigo; let ultimo = $last) {
+        <button
+          type="button"
+          (click)="trocarIdioma(opcao.codigo)"
+          [attr.aria-pressed]="idioma() === opcao.codigo"
+          [attr.lang]="opcao.lang"
+          [title]="opcao.nome"
+          class="px-1.5 py-1 transition-colors"
+          [class]="idioma() === opcao.codigo ? 'text-ouro' : 'text-[#8a8a8a] hover:text-white'"
+        >
+          {{ opcao.rotulo }}
+        </button>
+        @if (!ultimo) {
+          <span class="text-[#3a3a3a]" aria-hidden="true">|</span>
+        }
+      }
+    </div>
+
+    </div>
   </header>
 
 
@@ -88,7 +116,7 @@
                    uppercase tracking-[0.22em]
                    mb-4"
           >
-            AJT Viagens e Turismo
+            {{ t().hero.rotulo }}
           </p>
 
           <h2
@@ -98,9 +126,9 @@
                    font-bold
                    leading-[1.15]"
           >
-            Conforto, segurança e experiências que tornam sua viagem
+            {{ t().hero.titulo }}
             <span class="text-ouro">
-              inesquecível
+              {{ t().hero.tituloDestaque }}
             </span>
           </h2>
 
@@ -112,18 +140,17 @@
                    mt-6
                    max-w-2xl"
           >
-            Transporte turístico e atendimento personalizado para quem quer
-            aproveitar Foz do Iguaçu com tranquilidade do início ao fim.
+            {{ t().hero.texto }}
           </p>
 
           <div [appReveal]="240" class="flex flex-wrap gap-4 mt-8">
 
             <a href="#servicos" class="ajt-site-btn-primario">
-              Conheça nossos serviços
+              {{ t().hero.botaoServicos }}
             </a>
 
             <a href="#contato" class="ajt-site-btn-outline">
-              Fale com a AJT
+              {{ t().hero.botaoContato }}
             </a>
 
           </div>
@@ -151,7 +178,7 @@
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
-            Sobre a AJT
+            {{ t().sobre.rotulo }}
           </p>
 
           <h2
@@ -161,7 +188,7 @@
                    text-[#181818]
                    mt-3"
           >
-            Mais do que transporte: cuidado em cada trajeto
+            {{ t().sobre.titulo }}
           </h2>
 
           <p
@@ -171,9 +198,7 @@
                    leading-8
                    mt-6"
           >
-            A AJT Viagens e Turismo atua para oferecer deslocamentos seguros,
-            confortáveis e organizados para visitantes, famílias, grupos e
-            empresas.
+            {{ t().sobre.texto1 }}
           </p>
 
           <p
@@ -182,9 +207,7 @@
                    leading-7
                    mt-4"
           >
-            Nosso compromisso é proporcionar uma experiência tranquila desde
-            a chegada até o último destino, com atendimento próximo e atenção
-            aos detalhes.
+            {{ t().sobre.texto2 }}
           </p>
 
         </div>
@@ -206,11 +229,11 @@
                    hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#161616]">
-              Segurança
+              {{ t().sobre.cards[0].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Transporte realizado com cuidado e responsabilidade.
+              {{ t().sobre.cards[0].texto }}
             </p>
           </div>
 
@@ -227,11 +250,11 @@
                    hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#161616]">
-              Conforto
+              {{ t().sobre.cards[1].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Uma experiência pensada para tornar cada trajeto agradável.
+              {{ t().sobre.cards[1].texto }}
             </p>
           </div>
 
@@ -248,11 +271,11 @@
                    hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#161616]">
-              Pontualidade
+              {{ t().sobre.cards[2].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Organização para você aproveitar melhor o seu tempo.
+              {{ t().sobre.cards[2].texto }}
             </p>
           </div>
 
@@ -269,11 +292,11 @@
                    hover:shadow-md"
           >
             <p class="text-3xl font-bold text-[#161616]">
-              Atendimento
+              {{ t().sobre.cards[3].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Suporte próximo e personalizado durante sua experiência.
+              {{ t().sobre.cards[3].texto }}
             </p>
           </div>
 
@@ -297,7 +320,7 @@
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
-            Nossos serviços
+            {{ t().servicos.rotulo }}
           </p>
 
           <h2
@@ -307,7 +330,7 @@
                    text-[#181818]
                    mt-3"
           >
-            Soluções para diferentes momentos da sua viagem
+            {{ t().servicos.titulo }}
           </h2>
 
           <p
@@ -316,8 +339,7 @@
                    mt-5
                    leading-7"
           >
-            Escolha a opção que combina com sua necessidade e tenha uma
-            experiência mais tranquila em Foz do Iguaçu e região.
+            {{ t().servicos.texto }}
           </p>
 
         </div>
@@ -357,7 +379,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Transfers
+              {{ t().servicos.transfers.titulo }}
             </h3>
 
             <p
@@ -366,7 +388,7 @@
                      leading-6
                      mt-3"
             >
-              Transporte entre aeroporto, hotel e principais pontos da cidade.
+              {{ t().servicos.transfers.texto }}
             </p>
 
             <a
@@ -378,7 +400,7 @@
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
@@ -409,7 +431,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Passeios
+              {{ t().servicos.passeios.titulo }}
             </h3>
 
             <p
@@ -418,8 +440,7 @@
                      leading-6
                      mt-3"
             >
-              Experiências e roteiros para conhecer os principais atrativos da
-              região.
+              {{ t().servicos.passeios.texto }}
             </p>
 
             <a
@@ -431,7 +452,7 @@
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
@@ -463,7 +484,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Transporte Executivo
+              {{ t().servicos.executivo.titulo }}
             </h3>
 
             <p
@@ -472,7 +493,7 @@
                      leading-6
                      mt-3"
             >
-              Atendimento personalizado para viagens corporativas e privativas.
+              {{ t().servicos.executivo.texto }}
             </p>
 
             <a
@@ -484,7 +505,7 @@
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
@@ -515,7 +536,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Grupos e Excursões
+              {{ t().servicos.grupos.titulo }}
             </h3>
 
             <p
@@ -524,7 +545,7 @@
                      leading-6
                      mt-3"
             >
-              Soluções para grupos, eventos, excursões e roteiros especiais.
+              {{ t().servicos.grupos.texto }}
             </p>
 
             <a
@@ -536,7 +557,7 @@
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
@@ -563,7 +584,7 @@
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
-            Por que escolher a AJT?
+            {{ t().diferenciais.rotulo }}
           </p>
 
           <h2
@@ -572,7 +593,7 @@
                    font-bold
                    mt-3"
           >
-            Sua viagem merece atenção em cada detalhe
+            {{ t().diferenciais.titulo }}
           </h2>
 
         </div>
@@ -596,12 +617,11 @@
                    hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
             <h3 class="text-white font-bold text-lg">
-              Atendimento personalizado
+              {{ t().diferenciais.cards[0].titulo }}
             </h3>
 
             <p class="text-[#aaa] mt-3 leading-7">
-              Cada viagem tem necessidades diferentes. Nosso atendimento busca
-              entender exatamente o que você precisa.
+              {{ t().diferenciais.cards[0].texto }}
             </p>
           </div>
 
@@ -618,12 +638,11 @@
                    hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
             <h3 class="text-white font-bold text-lg">
-              Experiência local
+              {{ t().diferenciais.cards[1].titulo }}
             </h3>
 
             <p class="text-[#aaa] mt-3 leading-7">
-              Conhecimento da região para tornar os deslocamentos mais
-              organizados e sua experiência mais tranquila.
+              {{ t().diferenciais.cards[1].texto }}
             </p>
           </div>
 
@@ -640,12 +659,11 @@
                    hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
             <h3 class="text-white font-bold text-lg">
-              Praticidade
+              {{ t().diferenciais.cards[2].titulo }}
             </h3>
 
             <p class="text-[#aaa] mt-3 leading-7">
-              Uma solução para você se preocupar menos com transporte e
-              aproveitar mais cada momento da viagem.
+              {{ t().diferenciais.cards[2].texto }}
             </p>
           </div>
 
@@ -674,7 +692,7 @@
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
-            Contato
+            {{ t().contato.rotulo }}
           </p>
 
           <h2
@@ -684,7 +702,7 @@
                    text-[#181818]
                    mt-3"
           >
-            Fale com a AJT
+            {{ t().contato.titulo }}
           </h2>
 
           <p
@@ -694,8 +712,7 @@
                    leading-7
                    max-w-xl"
           >
-            Entre em contato para informações, reservas e atendimento.
-            Nossa equipe está pronta para ajudar você a organizar sua viagem.
+            {{ t().contato.texto }}
           </p>
 
         </div>
@@ -717,7 +734,7 @@
                        uppercase tracking-wider
                        text-[#999]"
               >
-                Telefone e WhatsApp
+                {{ t().contato.telefone }}
               </p>
 
               <p
@@ -737,7 +754,7 @@
                        uppercase tracking-wider
                        text-[#999]"
               >
-                E-mail
+                {{ t().contato.email }}
               </p>
 
               <p
@@ -757,7 +774,7 @@
                        uppercase tracking-wider
                        text-[#999]"
               >
-                Endereço
+                {{ t().contato.endereco }}
               </p>
 
               <p
@@ -782,7 +799,7 @@
             rel="noopener noreferrer"
             class="ajt-site-btn-primario mt-8 w-full"
           >
-            Falar pelo WhatsApp
+            {{ t().contato.botaoWhatsapp }}
           </a>
 
         </div>
@@ -813,13 +830,13 @@
 
           <img
             src="/logo.png"
-            alt="Logo AJT Viagens"
+            [alt]="t().logoAlt"
             class="w-12 h-12 object-contain"
           />
 
           <div>
             <h3 class="font-bold">
-              AJT Viagens e Turismo
+              {{ t().rodape.marca }}
             </h3>
 
             <p class="text-xs text-[#777]">
@@ -835,8 +852,7 @@
                  leading-6
                  mt-5"
         >
-          Transporte, turismo e experiências para tornar sua viagem mais
-          confortável, segura e inesquecível.
+          {{ t().rodape.texto }}
         </p>
 
       </div>
@@ -845,7 +861,7 @@
       <div>
 
         <h3 class="font-semibold mb-4">
-          Navegação
+          {{ t().rodape.navegacao }}
         </h3>
 
         <div class="flex flex-col items-start gap-3">
@@ -854,28 +870,28 @@
             href="#inicio"
             class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
-            Início
+            {{ t().nav.inicio }}
           </a>
 
           <a
             href="#sobre"
             class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
-            Sobre
+            {{ t().nav.sobre }}
           </a>
 
           <a
             href="#servicos"
             class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
-            Serviços
+            {{ t().nav.servicos }}
           </a>
 
           <a
             href="#contato"
             class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
-            Contato
+            {{ t().nav.contato }}
           </a>
 
         </div>
@@ -886,7 +902,7 @@
       <div>
 
         <h3 class="font-semibold mb-4">
-          Administração
+          {{ t().rodape.administracao }}
         </h3>
 
         <p
@@ -894,12 +910,12 @@
                  text-[#8f8f8f]
                  mb-5"
         >
-          Área exclusiva para a equipe AJT.
+          {{ t().rodape.administracaoTexto }}
         </p>
 
         <!-- link secundario do rodape: mais discreto que os ctas (padding e fonte menores) -->
         <a routerLink="/login" class="ajt-site-btn-outline px-5 py-2.5 text-sm font-medium">
-          Acessar Admin
+          {{ t().rodape.botaoAdmin }}
         </a>
 
       </div>
@@ -913,7 +929,7 @@
              border-t border-[#222]
              text-sm text-[#666]"
     >
-      © 2026 AJT Viagens e Turismo.
+      {{ t().rodape.direitos }}
     </div>
 
   </footer>
