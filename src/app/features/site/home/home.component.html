@@ -690,133 +690,155 @@
     </section>
 
 
+    <!-- contato: titulo + whatsapp numa linha, e os tres contatos lado a lado logo abaixo
+         (antes o card ficava sozinho a direita e sobrava muito espaco vazio a esquerda).
+         cada contato e um link direto: liga, abre o e-mail ou o endereco no mapa -->
     <section
       id="contato"
-      class="px-6 lg:px-12 py-24
+      class="px-6 lg:px-12 py-20 lg:py-24
              bg-[#f4f4f5]"
     >
-      <div
-        class="max-w-6xl mx-auto
-               grid lg:grid-cols-2
-               gap-12"
-      >
+      <div class="max-w-6xl mx-auto">
 
-        <div>
+        <div
+          class="flex flex-col gap-8
+                 lg:flex-row lg:items-end lg:justify-between"
+        >
 
-          <p
-            appReveal
-            class="text-ouro-profundo
-                   text-sm font-semibold
-                   uppercase tracking-[0.22em]"
-          >
-            {{ t().contato.rotulo }}
-          </p>
+          <div class="max-w-2xl">
 
-          <h2
-            [appReveal]="80"
-            class="text-3xl md:text-4xl
-                   font-bold
-                   text-[#181818]
-                   mt-3"
-          >
-            {{ t().contato.titulo }}
-          </h2>
+            <p
+              appReveal
+              class="text-ouro-profundo
+                     text-sm font-semibold
+                     uppercase tracking-[0.22em]"
+            >
+              {{ t().contato.rotulo }}
+            </p>
 
-          <p
-            [appReveal]="140"
-            class="text-[#666]
-                   mt-5
-                   leading-7
-                   max-w-xl"
-          >
-            {{ t().contato.texto }}
-          </p>
+            <h2
+              [appReveal]="80"
+              class="text-3xl md:text-4xl
+                     font-bold
+                     text-[#181818]
+                     mt-3"
+            >
+              {{ t().contato.titulo }}
+            </h2>
+
+            <p
+              [appReveal]="140"
+              class="text-[#666]
+                     mt-5
+                     leading-7"
+            >
+              {{ t().contato.texto }}
+            </p>
+
+          </div>
+
+          <div [appReveal]="200" class="shrink-0">
+            <a
+              href="https://wa.me/5545999180277"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ajt-site-btn-primario"
+            >
+              {{ t().contato.botaoWhatsapp }}
+            </a>
+          </div>
 
         </div>
 
 
         <div
-          [appReveal]="100"
-          class="bg-[#fafafa]
-                 border border-[#e4e4e7]
-                 rounded-2xl
-                 p-8"
+          class="grid md:grid-cols-3
+                 gap-x-10
+                 mt-14"
         >
 
-          <div class="space-y-6">
+          <a
+            [appReveal]="0"
+            href="tel:+5545999180277"
+            class="group block
+                   border-t border-[#d4d4d8]
+                   py-7
+                   no-underline
+                   transition-colors duration-500
+                   hover:border-ouro"
+          >
+            <p class="text-xs uppercase tracking-wider text-[#8a8a8a]">
+              {{ t().contato.telefone }}
+            </p>
 
-            <div>
-              <p
-                class="text-xs
-                       uppercase tracking-wider
-                       text-[#999]"
-              >
-                {{ t().contato.telefone }}
-              </p>
+            <p class="text-[#181818] text-lg font-semibold mt-2">
+              (45) 99918-0277
+            </p>
 
-              <p
-                class="text-[#222]
-                       text-lg
-                       font-semibold
-                       mt-1"
-              >
-                (45) 99918-0277
-              </p>
-            </div>
-
-
-            <div>
-              <p
-                class="text-xs
-                       uppercase tracking-wider
-                       text-[#999]"
-              >
-                {{ t().contato.email }}
-              </p>
-
-              <p
-                class="text-[#222]
-                       text-lg
-                       font-semibold
-                       mt-1"
-              >
-                contato&#64;ajtviagens.com.br
-              </p>
-            </div>
-
-
-            <div>
-              <p
-                class="text-xs
-                       uppercase tracking-wider
-                       text-[#999]"
-              >
-                {{ t().contato.endereco }}
-              </p>
-
-              <p
-                class="text-[#222]
-                       font-semibold
-                       mt-1"
-              >
-                Av. Juscelino Kubitscheck, 1072 – Centro
-              </p>
-
-              <p class="text-[#666] mt-1">
-                Foz do Iguaçu - PR, 85851-210
-              </p>
-            </div>
-
-          </div>
-
+            <p
+              class="text-sm text-[#181818] font-medium mt-3
+                     decoration-ouro decoration-2 underline-offset-4 group-hover:underline"
+            >
+              {{ t().contato.acaoTelefone }} →
+            </p>
+          </a>
 
           <a
-            href="https://wa.me/5545999180277"
+            [appReveal]="100"
+            href="mailto:atendimento&#64;ajtviagens.com.br"
+            class="group block
+                   border-t border-[#d4d4d8]
+                   py-7
+                   no-underline
+                   transition-colors duration-500
+                   hover:border-ouro"
+          >
+            <p class="text-xs uppercase tracking-wider text-[#8a8a8a]">
+              {{ t().contato.email }}
+            </p>
+
+            <p class="text-[#181818] text-lg font-semibold mt-2 break-words">
+              atendimento&#64;ajtviagens.com.br
+            </p>
+
+            <p
+              class="text-sm text-[#181818] font-medium mt-3
+                     decoration-ouro decoration-2 underline-offset-4 group-hover:underline"
+            >
+              {{ t().contato.acaoEmail }} →
+            </p>
+          </a>
+
+          <a
+            [appReveal]="200"
+            href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Juscelino+Kubitscheck,+1072,+Foz+do+Igua%C3%A7u+-+PR,+85851-210"
             target="_blank"
             rel="noopener noreferrer"
-            class="ajt-site-btn-primario mt-8 w-full"
+            class="group block
+                   border-t border-[#d4d4d8]
+                   py-7
+                   no-underline
+                   transition-colors duration-500
+                   hover:border-ouro"
           >
-            {{ t().contato.botaoWhatsapp }}
+            <p class="text-xs uppercase tracking-wider text-[#8a8a8a]">
+              {{ t().contato.endereco }}
+            </p>
+
+            <p class="text-[#181818] font-semibold mt-2">
+              Av. Juscelino Kubitscheck, 1072 – Centro
+            </p>
+
+            <p class="text-[#666] mt-1">
+              Foz do Iguaçu - PR, 85851-210
+            </p>
+
+            <p
+              class="text-sm text-[#181818] font-medium mt-3
+                     decoration-ouro decoration-2 underline-offset-4 group-hover:underline"
+            >
+              {{ t().contato.acaoEndereco }} ↗
+            </p>
           </a>
 
         </div>

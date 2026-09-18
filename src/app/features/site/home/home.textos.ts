@@ -80,6 +80,9 @@ const pt = {
     email: 'E-mail',
     endereco: 'Endereço',
     botaoWhatsapp: 'Falar pelo WhatsApp',
+    acaoTelefone: 'Ligar',
+    acaoEmail: 'Enviar e-mail',
+    acaoEndereco: 'Ver no mapa',
   },
 
   rodape: {
@@ -159,6 +162,9 @@ const en: TextosHome = {
     email: 'Email',
     endereco: 'Address',
     botaoWhatsapp: 'Chat on WhatsApp',
+    acaoTelefone: 'Call',
+    acaoEmail: 'Send an email',
+    acaoEndereco: 'View on map',
   },
 
   rodape: {
@@ -236,6 +242,9 @@ const es: TextosHome = {
     email: 'Correo electrónico',
     endereco: 'Dirección',
     botaoWhatsapp: 'Escribir por WhatsApp',
+    acaoTelefone: 'Llamar',
+    acaoEmail: 'Enviar correo',
+    acaoEndereco: 'Ver en el mapa',
   },
 
   rodape: {
