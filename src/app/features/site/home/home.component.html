@@ -66,27 +66,53 @@
 
     </nav>
 
-    <!-- seletor de idioma (so a home e traduzida); fica visivel tambem no celular -->
-    <div
-      role="group"
-      [attr.aria-label]="t().seletorIdioma"
-      class="flex items-center gap-1 text-xs font-semibold tracking-wider"
-    >
-      @for (opcao of idiomas; track opcao.codigo; let ultimo = $last) {
-        <button
-          type="button"
-          (click)="trocarIdioma(opcao.codigo)"
-          [attr.aria-pressed]="idioma() === opcao.codigo"
-          [attr.lang]="opcao.lang"
-          [title]="opcao.nome"
-          class="px-1.5 py-1 transition-colors"
-          [class]="idioma() === opcao.codigo ? 'text-ouro' : 'text-[#8a8a8a] hover:text-white'"
+    <!-- seletor de idioma (so a home e traduzida): "PT ▾" abre a lista; visivel tambem no celular -->
+    <div #seletorIdioma class="relative">
+      <button
+        type="button"
+        (click)="alternarMenuIdioma()"
+        aria-haspopup="true"
+        [attr.aria-expanded]="menuIdiomaAberto()"
+        [attr.aria-label]="t().seletorIdioma + ': ' + idiomaAtual().nome"
+        class="flex items-center gap-1.5 rounded-md px-2 py-1.5
+               text-xs font-semibold tracking-wider text-[#c4c4c4]
+               transition-colors hover:text-white"
+      >
+        {{ idiomaAtual().rotulo }}
+        <svg
+          viewBox="0 0 10 6"
+          class="w-2.5 h-1.5 transition-transform duration-200"
+          [class.rotate-180]="menuIdiomaAberto()"
+          aria-hidden="true"
         >
-          {{ opcao.rotulo }}
-        </button>
-        @if (!ultimo) {
-          <span class="text-[#3a3a3a]" aria-hidden="true">|</span>
-        }
+          <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+
+      @if (menuIdiomaAberto()) {
+        <ul
+          class="absolute right-0 top-full mt-2 min-w-[150px]
+                 rounded-lg border border-[#262626] bg-[#141414]
+                 py-1 shadow-[0_12px_30px_rgba(0,0,0,0.45)]
+                 animate-aparecer"
+        >
+          @for (opcao of idiomas; track opcao.codigo) {
+            <li>
+              <button
+                type="button"
+                (click)="trocarIdioma(opcao.codigo)"
+                [attr.aria-current]="idioma() === opcao.codigo ? 'true' : null"
+                [attr.lang]="opcao.lang"
+                class="flex w-full items-center justify-between gap-4 px-3.5 py-2
+                       text-left text-sm transition-colors hover:bg-[#1f1f1f]"
+                [class]="idioma() === opcao.codigo ? 'text-ouro' : 'text-[#c4c4c4] hover:text-white'"
+              >
+                {{ opcao.nome }}
+                <span class="text-[10px] font-semibold tracking-wider opacity-60">{{ opcao.rotulo }}</span>
+              </button>
+            </li>
+          }
+        </ul>
       }
     </div>
 

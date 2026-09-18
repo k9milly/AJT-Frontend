@@ -7,12 +7,13 @@
 //
 // ficam fora de proposito: nome da marca (AJT Viagens), telefone, e-mail e endereco.
 
-export type Idioma = 'pt' | 'en';
+export type Idioma = 'pt' | 'en' | 'es';
 
-// ordem dos botoes no seletor do cabecalho; "lang" vai pro <html lang> (leitor de tela, tradutor do navegador)
+// ordem das opcoes no seletor do cabecalho; "lang" vai pro <html lang> (leitor de tela, tradutor do navegador)
 export const IDIOMAS: { codigo: Idioma; rotulo: string; nome: string; lang: string }[] = [
   { codigo: 'pt', rotulo: 'PT', nome: 'Português', lang: 'pt-BR' },
   { codigo: 'en', rotulo: 'EN', nome: 'English', lang: 'en' },
+  { codigo: 'es', rotulo: 'ES', nome: 'Español', lang: 'es' },
 ];
 
 const pt = {
@@ -171,4 +172,81 @@ const en: TextosHome = {
   },
 };
 
-export const TEXTOS_HOME: Record<Idioma, TextosHome> = { pt, en };
+const es: TextosHome = {
+  marcaSubtitulo: 'Viajes y Turismo',
+  logoAlt: 'Logo de AJT Viagens',
+  seletorIdioma: 'Idioma del sitio',
+
+  nav: {
+    inicio: 'Inicio',
+    sobre: 'Nosotros',
+    servicos: 'Servicios',
+    porQue: '¿Por qué AJT?',
+    contato: 'Contacto',
+  },
+
+  hero: {
+    rotulo: 'AJT Viajes y Turismo',
+    titulo: 'Comodidad, seguridad y experiencias que hacen tu viaje',
+    tituloDestaque: 'inolvidable',
+    texto: 'Transporte turístico y atención personalizada para quienes quieren disfrutar Foz do Iguaçu con tranquilidad de principio a fin.',
+    botaoServicos: 'Conoce nuestros servicios',
+    botaoContato: 'Habla con AJT',
+  },
+
+  sobre: {
+    rotulo: 'Sobre AJT',
+    titulo: 'Más que transporte: cuidado en cada trayecto',
+    texto1: 'AJT Viajes y Turismo ofrece traslados seguros, cómodos y organizados para visitantes, familias, grupos y empresas.',
+    texto2: 'Nuestro compromiso es brindarte una experiencia tranquila desde tu llegada hasta el último destino, con atención cercana y cuidado en cada detalle.',
+    cards: [
+      { titulo: 'Seguridad', texto: 'Transporte realizado con cuidado y responsabilidad.' },
+      { titulo: 'Comodidad', texto: 'Una experiencia pensada para que cada trayecto sea agradable.' },
+      { titulo: 'Puntualidad', texto: 'Organización para que aproveches mejor tu tiempo.' },
+      { titulo: 'Atención', texto: 'Soporte cercano y personalizado durante toda tu experiencia.' },
+    ],
+  },
+
+  servicos: {
+    rotulo: 'Nuestros servicios',
+    titulo: 'Soluciones para cada momento de tu viaje',
+    texto: 'Elige la opción que mejor se adapte a lo que necesitas y vive una experiencia más tranquila en Foz do Iguaçu y la región.',
+    verDetalhes: 'Ver detalles →',
+    transfers: { titulo: 'Traslados', texto: 'Transporte entre el aeropuerto, el hotel y los principales puntos de la ciudad.' },
+    passeios: { titulo: 'Paseos', texto: 'Experiencias y recorridos para conocer los principales atractivos de la región.' },
+    executivo: { titulo: 'Transporte Ejecutivo', texto: 'Atención personalizada para viajes corporativos y privados.' },
+    grupos: { titulo: 'Grupos y Excursiones', texto: 'Soluciones para grupos, eventos, excursiones y recorridos especiales.' },
+  },
+
+  diferenciais: {
+    rotulo: '¿Por qué elegir AJT?',
+    titulo: 'Tu viaje merece atención en cada detalle',
+    cards: [
+      { titulo: 'Atención personalizada', texto: 'Cada viaje tiene necesidades distintas. Buscamos entender exactamente lo que necesitas.' },
+      { titulo: 'Experiencia local', texto: 'Conocimiento de la región para que tus traslados sean más organizados y tu experiencia más tranquila.' },
+      { titulo: 'Practicidad', texto: 'Una solución para que te preocupes menos por el transporte y disfrutes más cada momento del viaje.' },
+    ],
+  },
+
+  contato: {
+    rotulo: 'Contacto',
+    titulo: 'Habla con AJT',
+    texto: 'Contáctanos para información, reservas y atención. Nuestro equipo está listo para ayudarte a organizar tu viaje.',
+    telefone: 'Teléfono y WhatsApp',
+    email: 'Correo electrónico',
+    endereco: 'Dirección',
+    botaoWhatsapp: 'Escribir por WhatsApp',
+  },
+
+  rodape: {
+    marca: 'AJT Viajes y Turismo',
+    texto: 'Transporte, turismo y experiencias para que tu viaje sea más cómodo, seguro e inolvidable.',
+    navegacao: 'Navegación',
+    administracao: 'Administración',
+    administracaoTexto: 'Área exclusiva para el equipo de AJT.',
+    botaoAdmin: 'Acceso de administración',
+    direitos: '© 2026 AJT Viajes y Turismo.',
+  },
+};
+
+export const TEXTOS_HOME: Record<Idioma, TextosHome> = { pt, en, es };

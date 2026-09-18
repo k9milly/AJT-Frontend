@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { RevealDirective } from '../../../shared/directives/reveal.directive';
@@ -22,6 +22,11 @@ export class HomeComponent implements OnDestroy {
   // textos do idioma atual; o template le tudo daqui (t().hero.titulo, etc.)
   readonly t = computed(() => TEXTOS_HOME[this.idioma()]);
 
+  // seletor de idioma compacto: botao "PT ▾" que abre a lista de idiomas
+  readonly idiomaAtual = computed(() => IDIOMAS.find(i => i.codigo === this.idioma()) ?? IDIOMAS[0]);
+  readonly menuIdiomaAberto = signal(false);
+  private seletorIdioma = viewChild<ElementRef<HTMLElement>>('seletorIdioma');
+
   constructor() {
     // mantem o <html lang> em dia com o idioma da home
     effect(() => {
@@ -30,7 +35,26 @@ export class HomeComponent implements OnDestroy {
     });
   }
 
+  alternarMenuIdioma(): void {
+    this.menuIdiomaAberto.update(aberto => !aberto);
+  }
+
+  // fecha o menu ao clicar fora dele
+  @HostListener('document:click', ['$event'])
+  aoClicarNaPagina(evento: MouseEvent): void {
+    const seletor = this.seletorIdioma()?.nativeElement;
+    if (this.menuIdiomaAberto() && seletor && !seletor.contains(evento.target as Node)) {
+      this.menuIdiomaAberto.set(false);
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  aoApertarEsc(): void {
+    this.menuIdiomaAberto.set(false);
+  }
+
   trocarIdioma(idioma: Idioma): void {
+    this.menuIdiomaAberto.set(false);
     this.idioma.set(idioma);
     try {
       localStorage.setItem(CHAVE_IDIOMA, idioma);
