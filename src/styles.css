@@ -73,6 +73,12 @@
   --login-border: 43 43 48;
   --login-foreground: 244 244 245;
   --login-muted: 152 152 159;
+
+  /* dourado do site (landing page): tom de mel, menos amarelo-limao que o do painel.
+     usado com parcimonia (destaque do titulo, botao, titulinhos das secoes, detalhes de borda); o resto e preto/cinza */
+  --ouro: 212 175 106;
+  /* mesmo dourado, escurecido pra texto sobre fundo claro (contraste ~4.8:1) */
+  --ouro-profundo: 143 107 46;
 }
 
 /* modo escuro: mesma paleta invertida, ligado pela classe .dark no <html> (TemaService) */
@@ -257,29 +263,31 @@
     z-index: 0;
   }
 
-  /* botao principal (cta): preenchido a ouro solido, "levanta" no hover em vez de so mudar de cor */
+  /* botao principal (cta): dourado chapado, "levanta" no hover em vez de so mudar de cor */
   .ajt-site-btn-primario {
-    @apply ajt-site-btn text-[#0a0a0a];
-    background: #e6c04d;
-    box-shadow: 0 8px 20px rgba(217, 184, 63, 0.25);
-    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    @apply ajt-site-btn text-[#0b0b0b];
+    background: rgb(var(--ouro));
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                background-color 0.35s ease;
   }
 
   .ajt-site-btn-primario:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 34px rgba(217, 184, 63, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgb(0 0 0 / 0.35);
   }
 
   .ajt-site-btn-primario:active {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(217, 184, 63, 0.35);
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
   }
 
-  /* botao secundario (contornado, so pra fundo escuro): o preenchimento "varre" da
-     esquerda pra direita no hover, como um ima puxando a cor pro botao */
+  /* botao secundario (contornado, so pra fundo escuro): neutro, sem dourado. o preenchimento
+     branco "varre" da esquerda pra direita no hover */
   .ajt-site-btn-outline {
     @apply ajt-site-btn text-white overflow-hidden;
-    border: 2px solid rgba(230, 192, 77, 0.55);
+    border: 1px solid rgb(255 255 255 / 0.25);
     /* cor e borda no mesmo ritmo do preenchimento (::before, 0.55s logo abaixo) —
        sem isso o texto escurecia antes do fundo terminar de varrer */
     transition: color 0.55s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.55s cubic-bezier(0.22, 1, 0.36, 1);
@@ -290,7 +298,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: #e6c04d;
+    background: #ffffff;
     transform: scaleX(0);
     transform-origin: left;
     /* um pouco mais devagar que o padrao (pedido explicito: "hover mais lento") */
@@ -298,8 +306,8 @@
   }
 
   .ajt-site-btn-outline:hover {
-    color: #141210;
-    border-color: #e6c04d;
+    color: #0b0b0b;
+    border-color: #ffffff;
   }
 
   .ajt-site-btn-outline:hover::before {
@@ -319,7 +327,7 @@
     bottom: 0;
     height: 1px;
     width: 100%;
-    background: #e6c04d;
+    background: rgb(var(--ouro));
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);

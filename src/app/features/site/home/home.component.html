@@ -4,8 +4,8 @@
     class="sticky top-0 z-50
            h-20 px-6 lg:px-12
            flex items-center justify-between
-           border-b border-[#2c2c2c]
-           bg-[#111111]"
+           border-b border-[#1f1f1f]
+           bg-[#0b0b0b]"
   >
     <div class="flex items-center gap-3">
       <img
@@ -29,35 +29,35 @@
 
       <a
         href="#inicio"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
         Início
       </a>
 
       <a
         href="#sobre"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
         Sobre
       </a>
 
       <a
         href="#servicos"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
         Serviços
       </a>
 
       <a
         href="#diferenciais"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
         Por que a AJT?
       </a>
 
       <a
         href="#contato"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
         Contato
       </a>
@@ -74,16 +74,8 @@
              min-h-[650px]
              flex items-center
              px-6 lg:px-12
-             bg-gradient-to-br
-             from-[#101010]
-             via-[#171717]
-             to-[#232323]"
+             bg-[#0b0b0b]"
     >
-      <!-- brilho de fundo, so pra dar profundidade (mesmo recurso da tela de login) -->
-      <div
-        class="pointer-events-none absolute -top-32 right-0 size-[560px] rounded-full opacity-[0.14]"
-        style="background: radial-gradient(circle, #e6c04d 0%, transparent 70%)"
-      ></div>
 
       <div class="relative max-w-6xl mx-auto w-full">
 
@@ -91,7 +83,7 @@
 
           <p
             appReveal
-            class="text-[#e6c04d]
+            class="text-ouro
                    text-sm font-semibold
                    uppercase tracking-[0.22em]
                    mb-4"
@@ -107,7 +99,7 @@
                    leading-[1.15]"
           >
             Conforto, segurança e experiências que tornam sua viagem
-            <span class="text-[#e6c04d]">
+            <span class="text-ouro">
               inesquecível
             </span>
           </h2>
@@ -143,7 +135,7 @@
     <section
       id="sobre"
       class="px-6 lg:px-12 py-24
-             bg-[#fffdf8]"
+             bg-[#fafafa]"
     >
       <div
         class="max-w-6xl mx-auto
@@ -155,7 +147,7 @@
 
           <p
             appReveal
-            class="text-[#b69120]
+            class="text-ouro-profundo
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
@@ -205,14 +197,14 @@
           <div
             [appReveal]="0"
             class="bg-white
-                   border border-[#e5e0d5]
+                   border border-[#e5e5e5]
                    rounded-2xl
                    p-6
                    shadow-sm
                    transition-shadow
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
+            <p class="text-3xl font-bold text-[#161616]">
               Segurança
             </p>
 
@@ -225,14 +217,14 @@
           <div
             [appReveal]="80"
             class="bg-white
-                   border border-[#e5e0d5]
+                   border border-[#e5e5e5]
                    rounded-2xl
                    p-6
                    shadow-sm
                    transition-shadow
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
+            <p class="text-3xl font-bold text-[#161616]">
               Conforto
             </p>
 
@@ -245,14 +237,14 @@
           <div
             [appReveal]="160"
             class="bg-white
-                   border border-[#e5e0d5]
+                   border border-[#e5e5e5]
                    rounded-2xl
                    p-6
                    shadow-sm
                    transition-shadow
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
+            <p class="text-3xl font-bold text-[#161616]">
               Pontualidade
             </p>
 
@@ -265,14 +257,14 @@
           <div
             [appReveal]="240"
             class="bg-white
-                   border border-[#e5e0d5]
+                   border border-[#e5e5e5]
                    rounded-2xl
                    p-6
                    shadow-sm
                    transition-shadow
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
+            <p class="text-3xl font-bold text-[#161616]">
               Atendimento
             </p>
 
@@ -297,7 +289,7 @@
 
           <p
             appReveal
-            class="text-[#b69120]
+            class="text-ouro-profundo
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
@@ -345,15 +337,15 @@
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -377,7 +369,7 @@
               routerLink="/servicos/transfers"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
@@ -397,15 +389,15 @@
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -430,7 +422,7 @@
               routerLink="/servicos/passeios"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
@@ -451,15 +443,15 @@
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -483,7 +475,7 @@
               routerLink="/servicos/executivo"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
@@ -503,15 +495,15 @@
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -535,7 +527,7 @@
               routerLink="/servicos/grupos"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
@@ -554,7 +546,7 @@
     <section
       id="diferenciais"
       class="px-6 lg:px-12 py-24
-             bg-[#171717]
+             bg-[#0b0b0b]
              text-white"
     >
       <div class="max-w-6xl mx-auto">
@@ -563,7 +555,7 @@
 
           <p
             appReveal
-            class="text-[#e6c04d]
+            class="text-ouro
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
@@ -590,16 +582,16 @@
 
           <div
             [appReveal]="0"
-            class="bg-[#202020]
-                   border border-[#333]
+            class="bg-[#141414]
+                   border border-[#262626]
                    rounded-2xl
                    p-7
                    transition
                    hover:-translate-y-1
-                   hover:border-[#e6c04d]/60
+                   hover:border-ouro/50
                    hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
-            <h3 class="text-[#e6c04d] font-bold text-lg">
+            <h3 class="text-white font-bold text-lg">
               Atendimento personalizado
             </h3>
 
@@ -612,16 +604,16 @@
 
           <div
             [appReveal]="80"
-            class="bg-[#202020]
-                   border border-[#333]
+            class="bg-[#141414]
+                   border border-[#262626]
                    rounded-2xl
                    p-7
                    transition
                    hover:-translate-y-1
-                   hover:border-[#e6c04d]/60
+                   hover:border-ouro/50
                    hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
-            <h3 class="text-[#e6c04d] font-bold text-lg">
+            <h3 class="text-white font-bold text-lg">
               Experiência local
             </h3>
 
@@ -634,16 +626,16 @@
 
           <div
             [appReveal]="160"
-            class="bg-[#202020]
-                   border border-[#333]
+            class="bg-[#141414]
+                   border border-[#262626]
                    rounded-2xl
                    p-7
                    transition
                    hover:-translate-y-1
-                   hover:border-[#e6c04d]/60
+                   hover:border-ouro/50
                    hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           >
-            <h3 class="text-[#e6c04d] font-bold text-lg">
+            <h3 class="text-white font-bold text-lg">
               Praticidade
             </h3>
 
@@ -674,7 +666,7 @@
 
           <p
             appReveal
-            class="text-[#b69120]
+            class="text-ouro-profundo
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
@@ -798,7 +790,7 @@
 
 
   <footer
-    class="bg-[#0c0c0c]
+    class="bg-[#0b0b0b]
            border-t border-[#262626]
            px-6 lg:px-12
            py-12
@@ -856,28 +848,28 @@
 
           <a
             href="#inicio"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
             Início
           </a>
 
           <a
             href="#sobre"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
             Sobre
           </a>
 
           <a
             href="#servicos"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
             Serviços
           </a>
 
           <a
             href="#contato"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
+            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
           >
             Contato
           </a>

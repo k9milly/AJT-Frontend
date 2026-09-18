@@ -55,6 +55,10 @@ module.exports = {
         'login-border': token('login-border'),
         'login-foreground': token('login-foreground'),
         'login-muted': token('login-muted'),
+
+        // dourado do site (landing page)
+        ouro: token('ouro'),
+        'ouro-profundo': token('ouro-profundo'),
       },
       fontFamily: {
         painel: ['Inter', 'system-ui', 'sans-serif'],
