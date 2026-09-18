@@ -594,15 +594,22 @@
     </section>
 
 
+    <!-- por que a ajt: layout editorial (titulo a esquerda, lista numerada a direita),
+         sem cards, pra nao repetir a grade das secoes sobre e servicos -->
     <section
       id="diferenciais"
-      class="px-6 lg:px-12 py-24
+      class="px-6 lg:px-12 py-24 lg:py-32
              bg-[#0b0b0b]
              text-white"
     >
-      <div class="max-w-6xl mx-auto">
+      <div
+        class="max-w-6xl mx-auto
+               grid gap-12 lg:gap-20
+               lg:grid-cols-[5fr_7fr]"
+      >
 
-        <div class="text-center max-w-2xl mx-auto">
+        <!-- no desktop o titulo acompanha a rolagem enquanto a lista passa -->
+        <div class="lg:sticky lg:top-32 lg:self-start">
 
           <p
             appReveal
@@ -615,85 +622,69 @@
 
           <h2
             [appReveal]="80"
-            class="text-3xl md:text-4xl
+            class="text-balance
+                   text-3xl md:text-4xl lg:text-5xl
                    font-bold
-                   mt-3"
+                   leading-[1.15]
+                   mt-4"
           >
             {{ t().diferenciais.titulo }}
           </h2>
 
+          <div
+            [appReveal]="140"
+            class="h-px w-16 bg-ouro mt-8"
+            aria-hidden="true"
+          ></div>
+
         </div>
 
 
-        <div
-          class="grid md:grid-cols-3
-                 gap-6
-                 mt-12"
-        >
+        <ol class="border-b border-[#262626]">
+          @for (item of t().diferenciais.cards; track $index) {
+            <li
+              [appReveal]="$index * 100"
+              class="group
+                     grid grid-cols-[auto_1fr] gap-6 md:gap-10
+                     border-t border-[#262626]
+                     py-8 md:py-10
+                     transition-colors duration-500
+                     hover:border-ouro/60"
+            >
+              <span
+                class="font-dados
+                       text-sm md:text-base
+                       text-ouro
+                       tabular-nums
+                       pt-1.5"
+                aria-hidden="true"
+              >
+                {{ '0' + ($index + 1) }}
+              </span>
 
-          <div
-            [appReveal]="0"
-            class="bg-[#141414]
-                   border border-[#262626]
-                   rounded-2xl
-                   p-7
-                   transition
-                   hover:-translate-y-1
-                   hover:border-ouro/50
-                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
-          >
-            <h3 class="text-white font-bold text-lg">
-              {{ t().diferenciais.cards[0].titulo }}
-            </h3>
+              <div>
+                <h3
+                  class="text-xl md:text-2xl
+                         font-semibold
+                         text-white"
+                >
+                  {{ item.titulo }}
+                </h3>
 
-            <p class="text-[#aaa] mt-3 leading-7">
-              {{ t().diferenciais.cards[0].texto }}
-            </p>
-          </div>
-
-
-          <div
-            [appReveal]="80"
-            class="bg-[#141414]
-                   border border-[#262626]
-                   rounded-2xl
-                   p-7
-                   transition
-                   hover:-translate-y-1
-                   hover:border-ouro/50
-                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
-          >
-            <h3 class="text-white font-bold text-lg">
-              {{ t().diferenciais.cards[1].titulo }}
-            </h3>
-
-            <p class="text-[#aaa] mt-3 leading-7">
-              {{ t().diferenciais.cards[1].texto }}
-            </p>
-          </div>
-
-
-          <div
-            [appReveal]="160"
-            class="bg-[#141414]
-                   border border-[#262626]
-                   rounded-2xl
-                   p-7
-                   transition
-                   hover:-translate-y-1
-                   hover:border-ouro/50
-                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
-          >
-            <h3 class="text-white font-bold text-lg">
-              {{ t().diferenciais.cards[2].titulo }}
-            </h3>
-
-            <p class="text-[#aaa] mt-3 leading-7">
-              {{ t().diferenciais.cards[2].texto }}
-            </p>
-          </div>
-
-        </div>
+                <p
+                  class="text-[#9a9a9a]
+                         leading-7
+                         mt-3
+                         max-w-xl
+                         transition-colors duration-500
+                         group-hover:text-[#c4c4c4]"
+                >
+                  {{ item.texto }}
+                </p>
+              </div>
+            </li>
+          }
+        </ol>
 
       </div>
     </section>
