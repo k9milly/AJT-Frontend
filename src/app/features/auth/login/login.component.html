@@ -1,11 +1,6 @@
 <!-- canvas unico escuro atras das duas metades: a diferenca entre elas e so o conteudo, nao a cor -->
-<div class="ajt-app relative min-h-screen overflow-hidden bg-login-bg text-login-foreground">
-
-  <!-- brilho dourado de fundo -->
-  <div
-    class="pointer-events-none absolute -top-24 left-1/4 size-[620px] rounded-full opacity-[0.10]"
-    style="background: radial-gradient(circle, #e6c04d 0%, transparent 70%)"
-  ></div>
+<!-- mesmo preto chapado da home, sem brilho de fundo: o dourado fica so no destaque do titulo e no botao -->
+<div class="ajt-app relative min-h-screen overflow-hidden bg-[#0b0b0b] text-login-foreground">
 
   <div class="relative flex min-h-screen flex-col lg:flex-row">
 
@@ -23,7 +18,7 @@
 
         <h1 class="mb-3 text-3xl font-bold leading-[1.15] lg:text-[2.5rem]">
           Do desembarque ao hotel,<br />
-          <em class="italic text-sidebar-accent">tudo no horário.</em>
+          <span class="text-ouro">tudo no horário.</span>
         </h1>
 
         <p class="mb-9 max-w-sm text-sm text-login-muted">
@@ -32,7 +27,7 @@
 
         <!-- cartao ilustrativo (exemplo estatico, nao e dado real) -->
         <div
-          class="hidden max-w-sm rounded-xl border border-login-border bg-login-surface p-4 shadow-2xl animate-surgir sm:block"
+          class="hidden max-w-sm rounded-xl border border-[#262626] bg-[#141414] p-4 shadow-2xl animate-surgir sm:block"
           style="animation-delay: 120ms"
         >
           <div class="mb-3 flex items-center justify-between">
@@ -42,7 +37,7 @@
 
           <div class="flex items-center justify-between border-b border-login-border/70 py-2.5">
             <div class="flex items-center gap-3">
-              <div class="flex size-8 items-center justify-center rounded-full bg-white/5 text-sidebar-accent">
+              <div class="flex size-8 items-center justify-center rounded-full bg-white/5 text-[#c4c4c4]">
                 <app-icone nome="aviao" class="size-4" />
               </div>
               <div>
@@ -68,7 +63,7 @@
     </div>
 
     <!-- ===================== metade do formulario ===================== -->
-    <div class="relative flex flex-1 items-center justify-center border-t border-login-border px-6 py-10 lg:border-l lg:border-t-0 lg:px-16">
+    <div class="relative flex flex-1 items-center justify-center border-t border-[#1f1f1f] px-6 py-10 lg:border-l lg:border-t-0 lg:px-16">
       <form
         [formGroup]="form"
         (ngSubmit)="entrar()"
@@ -89,8 +84,8 @@
             autocomplete="username"
             autofocus
             formControlName="username"
-            class="w-full rounded-lg border border-login-border bg-login-surface py-2.5 pl-9 pr-3.5 text-sm text-login-foreground
-                   outline-none transition-colors focus:border-sidebar-accent"
+            class="ajt-campo-login w-full rounded-lg border border-[#262626] bg-[#141414] py-2.5 pl-9 pr-3.5 text-sm text-login-foreground
+                   outline-none transition-colors focus:border-[#6b6b6b]"
           />
           @if (form.controls.username.touched && form.controls.username.invalid) {
             <p class="mt-1 text-[11px] text-[#f87171]">Informe o usuário.</p>
@@ -106,8 +101,8 @@
             [type]="mostrarSenha() ? 'text' : 'password'"
             autocomplete="current-password"
             formControlName="senha"
-            class="w-full rounded-lg border border-login-border bg-login-surface py-2.5 pl-9 pr-10 text-sm text-login-foreground
-                   outline-none transition-colors focus:border-sidebar-accent"
+            class="ajt-campo-login w-full rounded-lg border border-[#262626] bg-[#141414] py-2.5 pl-9 pr-10 text-sm text-login-foreground
+                   outline-none transition-colors focus:border-[#6b6b6b]"
           />
           <button
             type="button"
@@ -141,7 +136,7 @@
           mdbRipple
           rippleColor="dark"
           [disabled]="carregando()"
-          class="w-full rounded-full bg-sidebar-accent py-2.5 text-sm font-semibold text-[#1a1206]
+          class="w-full rounded-md bg-ouro py-2.5 text-sm font-semibold text-[#1a1206]
                  transition-all hover:brightness-110 disabled:opacity-50"
         >
           {{ carregando() ? 'Entrando...' : 'Entrar' }}
