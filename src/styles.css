@@ -73,6 +73,12 @@
   --login-border: 43 43 48;
   --login-foreground: 244 244 245;
   --login-muted: 152 152 159;
+
+  /* dourado do site (landing page), mesmos valores de antes:
+     - ouro: #e6c04d, sobre fundo escuro (titulinhos, destaque do titulo, detalhes de borda)
+     - ouro-profundo: #b69120, texto dourado sobre as secoes claras */
+  --ouro: 230 192 77;
+  --ouro-profundo: 182 145 32;
 }
 
 /* modo escuro: mesma paleta invertida, ligado pela classe .dark no <html> (TemaService) */

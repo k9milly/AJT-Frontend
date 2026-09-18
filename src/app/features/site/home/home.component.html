@@ -1,16 +1,16 @@
-<div class="min-h-screen bg-white text-[#161616]">
+<div class="min-h-screen bg-[#f4f4f5] text-[#161616]">
 
   <header
     class="sticky top-0 z-50
            h-20 px-6 lg:px-12
            flex items-center justify-between
-           border-b border-[#2c2c2c]
-           bg-[#111111]"
+           border-b border-[#1f1f1f]
+           bg-[#0b0b0b]"
   >
     <div class="flex items-center gap-3">
       <img
         src="/logo.png"
-        alt="Logo AJT Viagens"
+        [alt]="t().logoAlt"
         class="w-12 h-12 object-contain"
       />
 
@@ -20,49 +20,103 @@
         </h1>
 
         <p class="text-xs text-[#9a9a9a]">
-          Viagens e Turismo
+          {{ t().marcaSubtitulo }}
         </p>
       </div>
     </div>
+
+    <div class="flex items-center gap-8">
 
     <nav class="hidden md:flex items-center gap-8 text-sm">
 
       <a
         href="#inicio"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Início
+        {{ t().nav.inicio }}
       </a>
 
       <a
         href="#sobre"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Sobre
+        {{ t().nav.sobre }}
       </a>
 
       <a
         href="#servicos"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Serviços
+        {{ t().nav.servicos }}
       </a>
 
       <a
         href="#diferenciais"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Por que a AJT?
+        {{ t().nav.porQue }}
       </a>
 
       <a
         href="#contato"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-[#e6c04d]"
+        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
       >
-        Contato
+        {{ t().nav.contato }}
       </a>
 
     </nav>
+
+    <!-- seletor de idioma (so a home e traduzida): "PT ▾" abre a lista; visivel tambem no celular -->
+    <div #seletorIdioma class="relative">
+      <button
+        type="button"
+        (click)="alternarMenuIdioma()"
+        aria-haspopup="true"
+        [attr.aria-expanded]="menuIdiomaAberto()"
+        [attr.aria-label]="t().seletorIdioma + ': ' + idiomaAtual().nome"
+        class="flex items-center gap-1.5 rounded-md px-2 py-1.5
+               text-xs font-semibold tracking-wider text-[#c4c4c4]
+               transition-colors hover:text-white"
+      >
+        {{ idiomaAtual().rotulo }}
+        <svg
+          viewBox="0 0 10 6"
+          class="w-2.5 h-1.5 transition-transform duration-200"
+          [class.rotate-180]="menuIdiomaAberto()"
+          aria-hidden="true"
+        >
+          <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+
+      @if (menuIdiomaAberto()) {
+        <ul
+          class="absolute right-0 top-full mt-2 min-w-[150px]
+                 rounded-lg border border-[#262626] bg-[#141414]
+                 py-1 shadow-[0_12px_30px_rgba(0,0,0,0.45)]
+                 animate-aparecer"
+        >
+          @for (opcao of idiomas; track opcao.codigo) {
+            <li>
+              <button
+                type="button"
+                (click)="trocarIdioma(opcao.codigo)"
+                [attr.aria-current]="idioma() === opcao.codigo ? 'true' : null"
+                [attr.lang]="opcao.lang"
+                class="flex w-full items-center justify-between gap-4 px-3.5 py-2
+                       text-left text-sm transition-colors hover:bg-[#1f1f1f]"
+                [class]="idioma() === opcao.codigo ? 'text-ouro' : 'text-[#c4c4c4] hover:text-white'"
+              >
+                {{ opcao.nome }}
+                <span class="text-[10px] font-semibold tracking-wider opacity-60">{{ opcao.rotulo }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    </div>
   </header>
 
 
@@ -74,16 +128,8 @@
              min-h-[650px]
              flex items-center
              px-6 lg:px-12
-             bg-gradient-to-br
-             from-[#101010]
-             via-[#171717]
-             to-[#232323]"
+             bg-[#0b0b0b]"
     >
-      <!-- brilho de fundo, so pra dar profundidade (mesmo recurso da tela de login) -->
-      <div
-        class="pointer-events-none absolute -top-32 right-0 size-[560px] rounded-full opacity-[0.14]"
-        style="background: radial-gradient(circle, #e6c04d 0%, transparent 70%)"
-      ></div>
 
       <div class="relative max-w-6xl mx-auto w-full">
 
@@ -91,12 +137,12 @@
 
           <p
             appReveal
-            class="text-[#e6c04d]
+            class="text-ouro
                    text-sm font-semibold
                    uppercase tracking-[0.22em]
                    mb-4"
           >
-            AJT Viagens e Turismo
+            {{ t().hero.rotulo }}
           </p>
 
           <h2
@@ -106,9 +152,9 @@
                    font-bold
                    leading-[1.15]"
           >
-            Conforto, segurança e experiências que tornam sua viagem
-            <span class="text-[#e6c04d]">
-              inesquecível
+            {{ t().hero.titulo }}
+            <span class="text-ouro">
+              {{ t().hero.tituloDestaque }}
             </span>
           </h2>
 
@@ -120,18 +166,17 @@
                    mt-6
                    max-w-2xl"
           >
-            Transporte turístico e atendimento personalizado para quem quer
-            aproveitar Foz do Iguaçu com tranquilidade do início ao fim.
+            {{ t().hero.texto }}
           </p>
 
           <div [appReveal]="240" class="flex flex-wrap gap-4 mt-8">
 
             <a href="#servicos" class="ajt-site-btn-primario">
-              Conheça nossos serviços
+              {{ t().hero.botaoServicos }}
             </a>
 
             <a href="#contato" class="ajt-site-btn-outline">
-              Fale com a AJT
+              {{ t().hero.botaoContato }}
             </a>
 
           </div>
@@ -143,7 +188,7 @@
     <section
       id="sobre"
       class="px-6 lg:px-12 py-24
-             bg-[#fffdf8]"
+             bg-[#f4f4f5]"
     >
       <div
         class="max-w-6xl mx-auto
@@ -155,11 +200,11 @@
 
           <p
             appReveal
-            class="text-[#b69120]
+            class="text-ouro-profundo
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
-            Sobre a AJT
+            {{ t().sobre.rotulo }}
           </p>
 
           <h2
@@ -169,7 +214,7 @@
                    text-[#181818]
                    mt-3"
           >
-            Mais do que transporte: cuidado em cada trajeto
+            {{ t().sobre.titulo }}
           </h2>
 
           <p
@@ -179,9 +224,7 @@
                    leading-8
                    mt-6"
           >
-            A AJT Viagens e Turismo atua para oferecer deslocamentos seguros,
-            confortáveis e organizados para visitantes, famílias, grupos e
-            empresas.
+            {{ t().sobre.texto1 }}
           </p>
 
           <p
@@ -190,9 +233,7 @@
                    leading-7
                    mt-4"
           >
-            Nosso compromisso é proporcionar uma experiência tranquila desde
-            a chegada até o último destino, com atendimento próximo e atenção
-            aos detalhes.
+            {{ t().sobre.texto2 }}
           </p>
 
         </div>
@@ -204,80 +245,84 @@
 
           <div
             [appReveal]="0"
-            class="bg-white
-                   border border-[#e5e0d5]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-6
                    shadow-sm
-                   transition-shadow
+                   transition-all duration-300
+                   hover:-translate-y-0.5
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
-              Segurança
+            <p class="text-3xl font-bold text-[#161616]">
+              {{ t().sobre.cards[0].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Transporte realizado com cuidado e responsabilidade.
+              {{ t().sobre.cards[0].texto }}
             </p>
           </div>
 
 
           <div
             [appReveal]="80"
-            class="bg-white
-                   border border-[#e5e0d5]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-6
                    shadow-sm
-                   transition-shadow
+                   transition-all duration-300
+                   hover:-translate-y-0.5
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
-              Conforto
+            <p class="text-3xl font-bold text-[#161616]">
+              {{ t().sobre.cards[1].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Uma experiência pensada para tornar cada trajeto agradável.
+              {{ t().sobre.cards[1].texto }}
             </p>
           </div>
 
 
           <div
             [appReveal]="160"
-            class="bg-white
-                   border border-[#e5e0d5]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-6
                    shadow-sm
-                   transition-shadow
+                   transition-all duration-300
+                   hover:-translate-y-0.5
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
-              Pontualidade
+            <p class="text-3xl font-bold text-[#161616]">
+              {{ t().sobre.cards[2].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Organização para você aproveitar melhor o seu tempo.
+              {{ t().sobre.cards[2].texto }}
             </p>
           </div>
 
 
           <div
             [appReveal]="240"
-            class="bg-white
-                   border border-[#e5e0d5]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-6
                    shadow-sm
-                   transition-shadow
+                   transition-all duration-300
+                   hover:-translate-y-0.5
                    hover:shadow-md"
           >
-            <p class="text-3xl font-bold text-[#b69120]">
-              Atendimento
+            <p class="text-3xl font-bold text-[#161616]">
+              {{ t().sobre.cards[3].titulo }}
             </p>
 
             <p class="text-[#6d6d6d] mt-2">
-              Suporte próximo e personalizado durante sua experiência.
+              {{ t().sobre.cards[3].texto }}
             </p>
           </div>
 
@@ -289,7 +334,7 @@
     <section
       id="servicos"
       class="px-6 lg:px-12 py-24
-             bg-[#f3f3f3]"
+             bg-[#ececee]"
     >
       <div class="max-w-6xl mx-auto">
 
@@ -297,11 +342,11 @@
 
           <p
             appReveal
-            class="text-[#b69120]
+            class="text-ouro-profundo
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
-            Nossos serviços
+            {{ t().servicos.rotulo }}
           </p>
 
           <h2
@@ -311,7 +356,7 @@
                    text-[#181818]
                    mt-3"
           >
-            Soluções para diferentes momentos da sua viagem
+            {{ t().servicos.titulo }}
           </h2>
 
           <p
@@ -320,8 +365,7 @@
                    mt-5
                    leading-7"
           >
-            Escolha a opção que combina com sua necessidade e tenha uma
-            experiência mais tranquila em Foz do Iguaçu e região.
+            {{ t().servicos.texto }}
           </p>
 
         </div>
@@ -337,23 +381,23 @@
 
           <div
             [appReveal]="0"
-            class="bg-white
-                   border border-[#dedede]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-7
                    shadow-sm
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -361,7 +405,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Transfers
+              {{ t().servicos.transfers.titulo }}
             </h3>
 
             <p
@@ -370,42 +414,42 @@
                      leading-6
                      mt-3"
             >
-              Transporte entre aeroporto, hotel e principais pontos da cidade.
+              {{ t().servicos.transfers.texto }}
             </p>
 
             <a
               routerLink="/servicos/transfers"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
 
           <div
             [appReveal]="80"
-            class="bg-white
-                   border border-[#dedede]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-7
                    shadow-sm
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -413,7 +457,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Passeios
+              {{ t().servicos.passeios.titulo }}
             </h3>
 
             <p
@@ -422,20 +466,19 @@
                      leading-6
                      mt-3"
             >
-              Experiências e roteiros para conhecer os principais atrativos da
-              região.
+              {{ t().servicos.passeios.texto }}
             </p>
 
             <a
               routerLink="/servicos/passeios"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
@@ -443,23 +486,23 @@
 
           <div
             [appReveal]="160"
-            class="bg-white
-                   border border-[#dedede]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-7
                    shadow-sm
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -467,7 +510,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Transporte Executivo
+              {{ t().servicos.executivo.titulo }}
             </h3>
 
             <p
@@ -476,42 +519,42 @@
                      leading-6
                      mt-3"
             >
-              Atendimento personalizado para viagens corporativas e privativas.
+              {{ t().servicos.executivo.texto }}
             </p>
 
             <a
               routerLink="/servicos/executivo"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
 
           <div
             [appReveal]="240"
-            class="bg-white
-                   border border-[#dedede]
+            class="bg-[#fafafa]
+                   border border-[#e4e4e7]
                    rounded-2xl
                    p-7
                    shadow-sm
                    transition
                    hover:-translate-y-1
                    hover:shadow-lg
-                   hover:border-[#d6b442]"
+                   hover:border-ouro"
           >
 
             <div
               class="w-14 h-14
                      rounded-full
-                     border-2 border-[#e6c04d]
+                     border-2 border-ouro
                      flex items-center justify-center
-                     text-[#b69120]
+                     text-[#181818]
                      text-2xl
                      mb-5"
             >
@@ -519,7 +562,7 @@
             </div>
 
             <h3 class="text-xl font-bold text-[#181818]">
-              Grupos e Excursões
+              {{ t().servicos.grupos.titulo }}
             </h3>
 
             <p
@@ -528,19 +571,19 @@
                      leading-6
                      mt-3"
             >
-              Soluções para grupos, eventos, excursões e roteiros especiais.
+              {{ t().servicos.grupos.texto }}
             </p>
 
             <a
               routerLink="/servicos/grupos"
               class="inline-block
                      mt-5
-                     text-[#a88410]
+                     text-[#181818]
                      font-semibold
                      no-underline
                      hover:underline"
             >
-              Ver detalhes →
+              {{ t().servicos.verDetalhes }}
             </a>
 
           </div>
@@ -551,242 +594,251 @@
     </section>
 
 
+    <!-- por que a ajt: layout editorial (titulo a esquerda, lista numerada a direita),
+         sem cards, pra nao repetir a grade das secoes sobre e servicos -->
     <section
       id="diferenciais"
-      class="px-6 lg:px-12 py-24
-             bg-[#171717]
+      class="px-6 lg:px-12 py-24 lg:py-32
+             bg-[#0b0b0b]
              text-white"
     >
-      <div class="max-w-6xl mx-auto">
+      <div
+        class="max-w-6xl mx-auto
+               grid gap-12 lg:gap-20
+               lg:grid-cols-[5fr_7fr]"
+      >
 
-        <div class="text-center max-w-2xl mx-auto">
+        <!-- no desktop o titulo acompanha a rolagem enquanto a lista passa -->
+        <div class="lg:sticky lg:top-32 lg:self-start">
 
           <p
             appReveal
-            class="text-[#e6c04d]
+            class="text-ouro
                    text-sm font-semibold
                    uppercase tracking-[0.22em]"
           >
-            Por que escolher a AJT?
+            {{ t().diferenciais.rotulo }}
           </p>
 
           <h2
             [appReveal]="80"
-            class="text-3xl md:text-4xl
+            class="text-balance
+                   text-3xl md:text-4xl lg:text-5xl
                    font-bold
-                   mt-3"
+                   leading-[1.15]
+                   mt-4"
           >
-            Sua viagem merece atenção em cada detalhe
+            {{ t().diferenciais.titulo }}
           </h2>
+
+          <div
+            [appReveal]="140"
+            class="h-px w-16 bg-ouro mt-8"
+            aria-hidden="true"
+          ></div>
+
+        </div>
+
+
+        <ol class="border-b border-[#262626]">
+          @for (item of t().diferenciais.cards; track $index) {
+            <li
+              [appReveal]="$index * 100"
+              class="group
+                     grid grid-cols-[auto_1fr] gap-6 md:gap-10
+                     border-t border-[#262626]
+                     py-8 md:py-10
+                     transition-colors duration-500
+                     hover:border-ouro/60"
+            >
+              <span
+                class="font-dados
+                       text-sm md:text-base
+                       text-ouro
+                       tabular-nums
+                       pt-1.5"
+                aria-hidden="true"
+              >
+                {{ '0' + ($index + 1) }}
+              </span>
+
+              <div>
+                <h3
+                  class="text-xl md:text-2xl
+                         font-semibold
+                         text-white"
+                >
+                  {{ item.titulo }}
+                </h3>
+
+                <p
+                  class="text-[#9a9a9a]
+                         leading-7
+                         mt-3
+                         max-w-xl
+                         transition-colors duration-500
+                         group-hover:text-[#c4c4c4]"
+                >
+                  {{ item.texto }}
+                </p>
+              </div>
+            </li>
+          }
+        </ol>
+
+      </div>
+    </section>
+
+
+    <!-- contato: titulo + whatsapp numa linha, e os tres contatos lado a lado logo abaixo
+         (antes o card ficava sozinho a direita e sobrava muito espaco vazio a esquerda).
+         cada contato e um link direto: liga, abre o e-mail ou o endereco no mapa -->
+    <section
+      id="contato"
+      class="px-6 lg:px-12 py-20 lg:py-24
+             bg-[#f4f4f5]"
+    >
+      <div class="max-w-6xl mx-auto">
+
+        <div
+          class="flex flex-col gap-8
+                 lg:flex-row lg:items-end lg:justify-between"
+        >
+
+          <div class="max-w-2xl">
+
+            <p
+              appReveal
+              class="text-ouro-profundo
+                     text-sm font-semibold
+                     uppercase tracking-[0.22em]"
+            >
+              {{ t().contato.rotulo }}
+            </p>
+
+            <h2
+              [appReveal]="80"
+              class="text-3xl md:text-4xl
+                     font-bold
+                     text-[#181818]
+                     mt-3"
+            >
+              {{ t().contato.titulo }}
+            </h2>
+
+            <p
+              [appReveal]="140"
+              class="text-[#666]
+                     mt-5
+                     leading-7"
+            >
+              {{ t().contato.texto }}
+            </p>
+
+          </div>
+
+          <div [appReveal]="200" class="shrink-0">
+            <a
+              href="https://wa.me/5545999180277"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ajt-site-btn-primario"
+            >
+              {{ t().contato.botaoWhatsapp }}
+            </a>
+          </div>
 
         </div>
 
 
         <div
           class="grid md:grid-cols-3
-                 gap-6
-                 mt-12"
+                 gap-x-10
+                 mt-14"
         >
-
-          <div
-            [appReveal]="0"
-            class="bg-[#202020]
-                   border border-[#333]
-                   rounded-2xl
-                   p-7
-                   transition
-                   hover:-translate-y-1
-                   hover:border-[#e6c04d]/60
-                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
-          >
-            <h3 class="text-[#e6c04d] font-bold text-lg">
-              Atendimento personalizado
-            </h3>
-
-            <p class="text-[#aaa] mt-3 leading-7">
-              Cada viagem tem necessidades diferentes. Nosso atendimento busca
-              entender exatamente o que você precisa.
-            </p>
-          </div>
-
-
-          <div
-            [appReveal]="80"
-            class="bg-[#202020]
-                   border border-[#333]
-                   rounded-2xl
-                   p-7
-                   transition
-                   hover:-translate-y-1
-                   hover:border-[#e6c04d]/60
-                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
-          >
-            <h3 class="text-[#e6c04d] font-bold text-lg">
-              Experiência local
-            </h3>
-
-            <p class="text-[#aaa] mt-3 leading-7">
-              Conhecimento da região para tornar os deslocamentos mais
-              organizados e sua experiência mais tranquila.
-            </p>
-          </div>
-
-
-          <div
-            [appReveal]="160"
-            class="bg-[#202020]
-                   border border-[#333]
-                   rounded-2xl
-                   p-7
-                   transition
-                   hover:-translate-y-1
-                   hover:border-[#e6c04d]/60
-                   hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
-          >
-            <h3 class="text-[#e6c04d] font-bold text-lg">
-              Praticidade
-            </h3>
-
-            <p class="text-[#aaa] mt-3 leading-7">
-              Uma solução para você se preocupar menos com transporte e
-              aproveitar mais cada momento da viagem.
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-
-    <section
-      id="contato"
-      class="px-6 lg:px-12 py-24
-             bg-white"
-    >
-      <div
-        class="max-w-6xl mx-auto
-               grid lg:grid-cols-2
-               gap-12"
-      >
-
-        <div>
-
-          <p
-            appReveal
-            class="text-[#b69120]
-                   text-sm font-semibold
-                   uppercase tracking-[0.22em]"
-          >
-            Contato
-          </p>
-
-          <h2
-            [appReveal]="80"
-            class="text-3xl md:text-4xl
-                   font-bold
-                   text-[#181818]
-                   mt-3"
-          >
-            Fale com a AJT
-          </h2>
-
-          <p
-            [appReveal]="140"
-            class="text-[#666]
-                   mt-5
-                   leading-7
-                   max-w-xl"
-          >
-            Entre em contato para informações, reservas e atendimento.
-            Nossa equipe está pronta para ajudar você a organizar sua viagem.
-          </p>
-
-        </div>
-
-
-        <div
-          [appReveal]="100"
-          class="bg-[#f7f7f7]
-                 border border-[#e1e1e1]
-                 rounded-2xl
-                 p-8"
-        >
-
-          <div class="space-y-6">
-
-            <div>
-              <p
-                class="text-xs
-                       uppercase tracking-wider
-                       text-[#999]"
-              >
-                Telefone e WhatsApp
-              </p>
-
-              <p
-                class="text-[#222]
-                       text-lg
-                       font-semibold
-                       mt-1"
-              >
-                (45) 99918-0277
-              </p>
-            </div>
-
-
-            <div>
-              <p
-                class="text-xs
-                       uppercase tracking-wider
-                       text-[#999]"
-              >
-                E-mail
-              </p>
-
-              <p
-                class="text-[#222]
-                       text-lg
-                       font-semibold
-                       mt-1"
-              >
-                contato&#64;ajtviagens.com.br
-              </p>
-            </div>
-
-
-            <div>
-              <p
-                class="text-xs
-                       uppercase tracking-wider
-                       text-[#999]"
-              >
-                Endereço
-              </p>
-
-              <p
-                class="text-[#222]
-                       font-semibold
-                       mt-1"
-              >
-                Av. Juscelino Kubitscheck, 1072 – Centro
-              </p>
-
-              <p class="text-[#666] mt-1">
-                Foz do Iguaçu - PR, 85851-210
-              </p>
-            </div>
-
-          </div>
-
 
           <a
-            href="https://wa.me/5545999180277"
+            [appReveal]="0"
+            href="tel:+5545999180277"
+            class="group block
+                   border-t border-[#d4d4d8]
+                   py-7
+                   no-underline
+                   transition-colors duration-500
+                   hover:border-ouro"
+          >
+            <p class="text-xs uppercase tracking-wider text-[#8a8a8a]">
+              {{ t().contato.telefone }}
+            </p>
+
+            <p class="text-[#181818] text-lg font-semibold mt-2">
+              (45) 99918-0277
+            </p>
+
+            <p
+              class="text-sm text-[#181818] font-medium mt-3
+                     decoration-ouro decoration-2 underline-offset-4 group-hover:underline"
+            >
+              {{ t().contato.acaoTelefone }} →
+            </p>
+          </a>
+
+          <a
+            [appReveal]="100"
+            href="mailto:atendimento&#64;ajtviagens.com.br"
+            class="group block
+                   border-t border-[#d4d4d8]
+                   py-7
+                   no-underline
+                   transition-colors duration-500
+                   hover:border-ouro"
+          >
+            <p class="text-xs uppercase tracking-wider text-[#8a8a8a]">
+              {{ t().contato.email }}
+            </p>
+
+            <p class="text-[#181818] text-lg font-semibold mt-2 break-words">
+              atendimento&#64;ajtviagens.com.br
+            </p>
+
+            <p
+              class="text-sm text-[#181818] font-medium mt-3
+                     decoration-ouro decoration-2 underline-offset-4 group-hover:underline"
+            >
+              {{ t().contato.acaoEmail }} →
+            </p>
+          </a>
+
+          <a
+            [appReveal]="200"
+            href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Juscelino+Kubitscheck,+1072,+Foz+do+Igua%C3%A7u+-+PR,+85851-210"
             target="_blank"
             rel="noopener noreferrer"
-            class="ajt-site-btn-primario mt-8 w-full"
+            class="group block
+                   border-t border-[#d4d4d8]
+                   py-7
+                   no-underline
+                   transition-colors duration-500
+                   hover:border-ouro"
           >
-            Falar pelo WhatsApp
+            <p class="text-xs uppercase tracking-wider text-[#8a8a8a]">
+              {{ t().contato.endereco }}
+            </p>
+
+            <p class="text-[#181818] font-semibold mt-2">
+              Av. Juscelino Kubitscheck, 1072 – Centro
+            </p>
+
+            <p class="text-[#666] mt-1">
+              Foz do Iguaçu - PR, 85851-210
+            </p>
+
+            <p
+              class="text-sm text-[#181818] font-medium mt-3
+                     decoration-ouro decoration-2 underline-offset-4 group-hover:underline"
+            >
+              {{ t().contato.acaoEndereco }} ↗
+            </p>
           </a>
 
         </div>
@@ -797,113 +849,78 @@
   </main>
 
 
+  <!-- rodape enxuto: marca, links e acesso admin numa linha so; direitos numa linha fina embaixo -->
   <footer
-    class="bg-[#0c0c0c]
-           border-t border-[#262626]
+    class="bg-[#0b0b0b]
+           border-t border-[#1f1f1f]
            px-6 lg:px-12
-           py-12
+           py-8
            text-white"
   >
 
     <div
       class="max-w-6xl mx-auto
-             grid gap-10
-             md:grid-cols-3"
+             flex flex-col gap-6
+             md:flex-row md:items-center md:justify-between"
     >
 
-      <div>
+      <div class="flex items-center gap-3">
+        <img
+          src="/logo.png"
+          [alt]="t().logoAlt"
+          class="w-9 h-9 object-contain"
+        />
 
-        <div class="flex items-center gap-3">
+        <div>
+          <p class="text-sm font-semibold">
+            {{ t().rodape.marca }}
+          </p>
 
-          <img
-            src="/logo.png"
-            alt="Logo AJT Viagens"
-            class="w-12 h-12 object-contain"
-          />
-
-          <div>
-            <h3 class="font-bold">
-              AJT Viagens e Turismo
-            </h3>
-
-            <p class="text-xs text-[#777]">
-              Foz do Iguaçu - PR
-            </p>
-          </div>
-
+          <p class="text-xs text-[#777]">
+            Foz do Iguaçu - PR
+          </p>
         </div>
-
-        <p
-          class="text-sm
-                 text-[#929292]
-                 leading-6
-                 mt-5"
-        >
-          Transporte, turismo e experiências para tornar sua viagem mais
-          confortável, segura e inesquecível.
-        </p>
-
       </div>
 
+      <!-- links e acesso admin juntos a direita (nada solto no meio do rodape) -->
+      <div
+        class="flex flex-col gap-5
+               md:flex-row md:items-center md:gap-8"
+      >
 
-      <div>
-
-        <h3 class="font-semibold mb-4">
-          Navegação
-        </h3>
-
-        <div class="flex flex-col items-start gap-3">
-
-          <a
-            href="#inicio"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
-          >
-            Início
-          </a>
-
-          <a
-            href="#sobre"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
-          >
-            Sobre
-          </a>
-
-          <a
-            href="#servicos"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
-          >
-            Serviços
-          </a>
-
-          <a
-            href="#contato"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-[#e6c04d]"
-          >
-            Contato
-          </a>
-
-        </div>
-
-      </div>
-
-
-      <div>
-
-        <h3 class="font-semibold mb-4">
-          Administração
-        </h3>
-
-        <p
-          class="text-sm
-                 text-[#8f8f8f]
-                 mb-5"
+        <nav
+          [attr.aria-label]="t().rodape.navegacao"
+          class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
         >
-          Área exclusiva para a equipe AJT.
-        </p>
+          <a href="#inicio" class="text-[#999] no-underline transition-colors hover:text-white">
+            {{ t().nav.inicio }}
+          </a>
 
-        <!-- link secundario do rodape: mais discreto que os ctas (padding e fonte menores) -->
-        <a routerLink="/login" class="ajt-site-btn-outline px-5 py-2.5 text-sm font-medium">
-          Acessar Admin
+          <a href="#sobre" class="text-[#999] no-underline transition-colors hover:text-white">
+            {{ t().nav.sobre }}
+          </a>
+
+          <a href="#servicos" class="text-[#999] no-underline transition-colors hover:text-white">
+            {{ t().nav.servicos }}
+          </a>
+
+          <a href="#contato" class="text-[#999] no-underline transition-colors hover:text-white">
+            {{ t().nav.contato }}
+          </a>
+        </nav>
+
+        <!-- acesso da equipe: botao com borda neutra, visivel sem competir com os ctas dourados -->
+        <a
+          routerLink="/login"
+          class="self-start md:self-auto
+                 inline-flex items-center
+                 rounded-md border border-[#3a3a3a]
+                 px-4 py-2
+                 text-sm font-medium text-white no-underline
+                 transition-colors
+                 hover:border-white hover:bg-white/5"
+        >
+          {{ t().rodape.botaoAdmin }}
         </a>
 
       </div>
@@ -913,11 +930,11 @@
 
     <div
       class="max-w-6xl mx-auto
-             mt-10 pt-6
-             border-t border-[#222]
-             text-sm text-[#666]"
+             mt-6 pt-5
+             border-t border-[#1a1a1a]
+             text-xs text-[#5e5e5e]"
     >
-      © 2026 AJT Viagens e Turismo.
+      {{ t().rodape.direitos }}
     </div>
 
   </footer>
