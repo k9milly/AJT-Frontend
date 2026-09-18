@@ -77,8 +77,8 @@
   /* dourado do site (landing page): tom de mel, menos amarelo-limao que o do painel.
      usado com parcimonia (destaque do titulo, botao, titulinhos das secoes, detalhes de borda); o resto e preto/cinza */
   --ouro: 212 175 106;
-  /* mesmo dourado, escurecido pra texto sobre fundo claro (contraste ~4.8:1) */
-  --ouro-profundo: 143 107 46;
+  /* mesmo dourado, escurecido pra texto sobre o off-white das secoes claras (contraste ~5:1) */
+  --ouro-profundo: 122 91 36;
 }
 
 /* modo escuro: mesma paleta invertida, ligado pela classe .dark no <html> (TemaService) */
