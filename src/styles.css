@@ -362,6 +362,17 @@
   }
 }
 
+/* campos da tela de login: o autocompletar do chrome pinta o fundo de azul claro por cima
+   do tema escuro. a sombra interna cobre esse azul com a cor do campo */
+.ajt-campo-login:-webkit-autofill,
+.ajt-campo-login:-webkit-autofill:hover,
+.ajt-campo-login:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #141414 inset;
+  -webkit-text-fill-color: rgb(var(--login-foreground));
+  caret-color: rgb(var(--login-foreground));
+  transition: background-color 9999s ease-out;
+}
+
 /* barra de rolagem discreta dentro do painel */
 .ajt-app ::-webkit-scrollbar {
   width: 8px;
