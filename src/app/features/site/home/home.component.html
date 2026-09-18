@@ -849,111 +849,77 @@
   </main>
 
 
+  <!-- rodape enxuto: marca, links e acesso admin numa linha so; direitos numa linha fina embaixo -->
   <footer
     class="bg-[#0b0b0b]
-           border-t border-[#262626]
+           border-t border-[#1f1f1f]
            px-6 lg:px-12
-           py-12
+           py-8
            text-white"
   >
 
     <div
       class="max-w-6xl mx-auto
-             grid gap-10
-             md:grid-cols-3"
+             flex flex-col gap-6
+             md:flex-row md:items-center md:justify-between"
     >
 
-      <div>
+      <div class="flex items-center gap-3">
+        <img
+          src="/logo.png"
+          [alt]="t().logoAlt"
+          class="w-9 h-9 object-contain"
+        />
 
-        <div class="flex items-center gap-3">
+        <div>
+          <p class="text-sm font-semibold">
+            {{ t().rodape.marca }}
+          </p>
 
-          <img
-            src="/logo.png"
-            [alt]="t().logoAlt"
-            class="w-12 h-12 object-contain"
-          />
-
-          <div>
-            <h3 class="font-bold">
-              {{ t().rodape.marca }}
-            </h3>
-
-            <p class="text-xs text-[#777]">
-              Foz do Iguaçu - PR
-            </p>
-          </div>
-
+          <p class="text-xs text-[#777]">
+            Foz do Iguaçu - PR
+          </p>
         </div>
-
-        <p
-          class="text-sm
-                 text-[#929292]
-                 leading-6
-                 mt-5"
-        >
-          {{ t().rodape.texto }}
-        </p>
-
       </div>
 
+      <!-- links e acesso admin juntos a direita (nada solto no meio do rodape) -->
+      <div
+        class="flex flex-col gap-5
+               md:flex-row md:items-center md:gap-8"
+      >
 
-      <div>
-
-        <h3 class="font-semibold mb-4">
-          {{ t().rodape.navegacao }}
-        </h3>
-
-        <div class="flex flex-col items-start gap-3">
-
-          <a
-            href="#inicio"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
-          >
+        <nav
+          [attr.aria-label]="t().rodape.navegacao"
+          class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
+        >
+          <a href="#inicio" class="text-[#999] no-underline transition-colors hover:text-white">
             {{ t().nav.inicio }}
           </a>
 
-          <a
-            href="#sobre"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
-          >
+          <a href="#sobre" class="text-[#999] no-underline transition-colors hover:text-white">
             {{ t().nav.sobre }}
           </a>
 
-          <a
-            href="#servicos"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
-          >
+          <a href="#servicos" class="text-[#999] no-underline transition-colors hover:text-white">
             {{ t().nav.servicos }}
           </a>
 
-          <a
-            href="#contato"
-            class="ajt-site-nav-link text-sm text-[#999] hover:text-white"
-          >
+          <a href="#contato" class="text-[#999] no-underline transition-colors hover:text-white">
             {{ t().nav.contato }}
           </a>
+        </nav>
 
-        </div>
-
-      </div>
-
-
-      <div>
-
-        <h3 class="font-semibold mb-4">
-          {{ t().rodape.administracao }}
-        </h3>
-
-        <p
-          class="text-sm
-                 text-[#8f8f8f]
-                 mb-5"
+        <!-- acesso da equipe: botao com borda neutra, visivel sem competir com os ctas dourados -->
+        <a
+          routerLink="/login"
+          class="self-start md:self-auto
+                 inline-flex items-center
+                 rounded-md border border-[#3a3a3a]
+                 px-4 py-2
+                 text-sm font-medium text-white no-underline
+                 transition-colors
+                 hover:border-white hover:bg-white/5"
         >
-          {{ t().rodape.administracaoTexto }}
-        </p>
-
-        <!-- link secundario do rodape: mais discreto que os ctas (padding e fonte menores) -->
-        <a routerLink="/login" class="ajt-site-btn-outline px-5 py-2.5 text-sm font-medium">
           {{ t().rodape.botaoAdmin }}
         </a>
 
@@ -964,9 +930,9 @@
 
     <div
       class="max-w-6xl mx-auto
-             mt-10 pt-6
-             border-t border-[#222]
-             text-sm text-[#666]"
+             mt-6 pt-5
+             border-t border-[#1a1a1a]
+             text-xs text-[#5e5e5e]"
     >
       {{ t().rodape.direitos }}
     </div>

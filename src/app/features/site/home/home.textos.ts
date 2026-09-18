@@ -87,10 +87,7 @@ const pt = {
 
   rodape: {
     marca: 'AJT Viagens e Turismo',
-    texto: 'Transporte, turismo e experiências para tornar sua viagem mais confortável, segura e inesquecível.',
     navegacao: 'Navegação',
-    administracao: 'Administração',
-    administracaoTexto: 'Área exclusiva para a equipe AJT.',
     botaoAdmin: 'Acessar Admin',
     direitos: '© 2026 AJT Viagens e Turismo.',
   },
@@ -169,10 +166,7 @@ const en: TextosHome = {
 
   rodape: {
     marca: 'AJT Travel & Tourism',
-    texto: 'Transportation, tourism and experiences to make your trip more comfortable, safe and unforgettable.',
     navegacao: 'Navigation',
-    administracao: 'Administration',
-    administracaoTexto: 'Restricted area for the AJT team.',
     botaoAdmin: 'Admin access',
     direitos: '© 2026 AJT Travel & Tourism.',
   },
@@ -249,10 +243,7 @@ const es: TextosHome = {
 
   rodape: {
     marca: 'AJT Viajes y Turismo',
-    texto: 'Transporte, turismo y experiencias para que tu viaje sea más cómodo, seguro e inolvidable.',
     navegacao: 'Navegación',
-    administracao: 'Administración',
-    administracaoTexto: 'Área exclusiva para el equipo de AJT.',
     botaoAdmin: 'Acceso de administración',
     direitos: '© 2026 AJT Viajes y Turismo.',
   },
