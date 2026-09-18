@@ -7,25 +7,26 @@
 
   <!-- ===================== menu lateral ===================== -->
   <aside
-    class="fixed inset-y-0 left-0 z-50 flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground
+    class="fixed inset-y-0 left-0 z-50 flex h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground
            transition-transform duration-200 lg:static lg:translate-x-0"
     [class.translate-x-0]="menuAberto()"
     [class.-translate-x-full]="!menuAberto()"
   >
     <!-- marca -->
     <div class="flex items-center gap-2.5 px-4 py-4">
-      <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/5">
+      <!-- fundo preto fixo: o aviao do logo e branco e sumiria no menu claro -->
+      <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-[#0b0b0b]">
         <img src="/logo.png" alt="" class="size-7 object-contain" />
       </div>
 
       <div class="flex flex-col leading-none">
-        <span class="text-[14px] font-bold text-white">AJT Viagens</span>
+        <span class="text-[14px] font-bold text-sidebar-strong">AJT Viagens</span>
         <span class="mt-1 text-[10px] text-sidebar-muted">Sistema receptivo</span>
       </div>
 
       <button
         type="button"
-        class="ml-auto flex size-7 items-center justify-center rounded-md text-sidebar-muted hover:bg-white/5 hover:text-white lg:hidden"
+        class="ml-auto flex size-7 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-strong lg:hidden"
         aria-label="Fechar menu"
         (click)="menuAberto.set(false)"
       >
@@ -46,9 +47,9 @@
           @for (item of secao.itens; track item.rota) {
             <a
               [routerLink]="item.rota"
-              routerLinkActive="!bg-sidebar-active !text-white"
+              routerLinkActive="!bg-sidebar-active !text-sidebar-strong"
               class="flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-sidebar-foreground
-                     no-underline transition-colors hover:bg-white/5 hover:text-white"
+                     no-underline transition-colors hover:bg-sidebar-hover hover:text-sidebar-strong"
             >
               <app-icone [nome]="item.icone" class="size-4" />
               <span>{{ item.rotulo }}</span>
@@ -63,7 +64,7 @@
       <a
         href="/"
         class="flex items-center gap-2.5 rounded-md px-3 py-2 text-[12px] text-sidebar-muted no-underline
-               transition-colors hover:bg-white/5 hover:text-white"
+               transition-colors hover:bg-sidebar-hover hover:text-sidebar-strong"
       >
         <app-icone nome="voltar" class="size-3.5" />
         Ir para o site

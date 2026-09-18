@@ -48,6 +48,8 @@ module.exports = {
         'sidebar-muted': token('sidebar-muted'),
         'sidebar-border': token('sidebar-border'),
         'sidebar-active': token('sidebar-active'),
+        'sidebar-hover': token('sidebar-hover'),
+        'sidebar-strong': token('sidebar-strong'),
         'sidebar-accent': token('sidebar-accent'),
 
         'login-bg': token('login-bg'),
