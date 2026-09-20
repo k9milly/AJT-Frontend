@@ -60,11 +60,15 @@
   --status-neutral: 82 82 91;
   --status-neutral-bg: 244 244 245;
 
-  --sidebar: 26 26 29;
-  --sidebar-foreground: 210 210 214;
-  --sidebar-muted: 141 141 149;
-  --sidebar-border: 58 58 65;
-  --sidebar-active: 44 44 49;
+  /* menu lateral no modo claro: branco com borda, igual aos cartoes (antes ficava preto
+     mesmo no modo claro). o modo escuro redefine tudo abaixo em .dark */
+  --sidebar: 255 255 255;
+  --sidebar-foreground: 63 63 70;
+  --sidebar-muted: 113 113 122;
+  --sidebar-border: 228 228 231;
+  --sidebar-hover: 244 244 245;
+  --sidebar-active: 239 239 241;
+  --sidebar-strong: 24 24 27;
   --sidebar-accent: 230 192 77;
 
   /* canvas da tela de login: sempre escuro, independente do tema escolhido no painel */
@@ -73,6 +77,12 @@
   --login-border: 43 43 48;
   --login-foreground: 244 244 245;
   --login-muted: 152 152 159;
+
+  /* dourado do site (landing page), mesmos valores de antes:
+     - ouro: #e6c04d, sobre fundo escuro (titulinhos, destaque do titulo, detalhes de borda)
+     - ouro-profundo: #b69120, texto dourado sobre as secoes claras */
+  --ouro: 230 192 77;
+  --ouro-profundo: 182 145 32;
 }
 
 /* modo escuro: mesma paleta invertida, ligado pela classe .dark no <html> (TemaService) */
@@ -112,7 +122,12 @@
   --status-neutral-bg: 39 39 43;
 
   --sidebar: 16 16 18;
+  --sidebar-foreground: 210 210 214;
+  --sidebar-muted: 141 141 149;
+  --sidebar-border: 44 44 49;
+  --sidebar-hover: 28 28 31;
   --sidebar-active: 35 35 39;
+  --sidebar-strong: 255 255 255;
 
   /* calendario/relogio nativos dos inputs date/time tambem em modo escuro */
   color-scheme: dark;
@@ -354,6 +369,17 @@
     transform: none;
     transition: none;
   }
+}
+
+/* campos da tela de login: o autocompletar do chrome pinta o fundo de azul claro por cima
+   do tema escuro. a sombra interna cobre esse azul com a cor do campo */
+.ajt-campo-login:-webkit-autofill,
+.ajt-campo-login:-webkit-autofill:hover,
+.ajt-campo-login:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #141414 inset;
+  -webkit-text-fill-color: rgb(var(--login-foreground));
+  caret-color: rgb(var(--login-foreground));
+  transition: background-color 9999s ease-out;
 }
 
 /* barra de rolagem discreta dentro do painel */

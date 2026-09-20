@@ -48,6 +48,8 @@ module.exports = {
         'sidebar-muted': token('sidebar-muted'),
         'sidebar-border': token('sidebar-border'),
         'sidebar-active': token('sidebar-active'),
+        'sidebar-hover': token('sidebar-hover'),
+        'sidebar-strong': token('sidebar-strong'),
         'sidebar-accent': token('sidebar-accent'),
 
         'login-bg': token('login-bg'),
@@ -55,6 +57,10 @@ module.exports = {
         'login-border': token('login-border'),
         'login-foreground': token('login-foreground'),
         'login-muted': token('login-muted'),
+
+        // dourado do site (landing page)
+        ouro: token('ouro'),
+        'ouro-profundo': token('ouro-profundo'),
       },
       fontFamily: {
         painel: ['Inter', 'system-ui', 'sans-serif'],
