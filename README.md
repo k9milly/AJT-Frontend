@@ -34,9 +34,9 @@ A aplicação sobe em `http://localhost:4200`.
 
 ### Endereço da API
 
-| Arquivo | Uso | `apiUrl` |
-| --- | --- | --- |
-| `src/environments/environment.ts` | `ng serve` e testes | `http://localhost:8080/api` |
+| Arquivo | Uso | `apiUrl`                        |
+| --- | --- |---------------------------------|
+| `src/environments/environment.ts` | `ng serve` e testes | `http://localhost:9090/api`     |
 | `src/environments/environment.prod.ts` | `ng build` (produção) | `/api` (mesmo domínio do front) |
 
 O backend libera CORS para `http://localhost:4200` por padrão (`AJT_CORS_ORIGINS`).
