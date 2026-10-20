@@ -86,6 +86,8 @@ export const routes: Routes = [
       {
         path: 'passageiros',
         data: { titulo: 'Passageiros' },
+        // documento e dado sensivel: o motorista nao abre o cadastro (backend responde 403)
+        canActivate: [roleGuard('ADMIN', 'GERENTE', 'ATENDENTE')],
         loadComponent: () =>
           import('./features/passageiros/passageiros.component').then(m => m.PassageirosComponent),
       },
@@ -110,6 +112,15 @@ export const routes: Routes = [
         canActivate: [roleGuard('ADMIN')],
         loadComponent: () =>
           import('./features/usuarios/usuarios.component').then(m => m.UsuariosComponent),
+      },
+
+      // historico de alteracoes (HU11): ADMIN e GERENTE
+      {
+        path: 'historico',
+        data: { titulo: 'Histórico' },
+        canActivate: [roleGuard('ADMIN', 'GERENTE')],
+        loadComponent: () =>
+          import('./features/historico/historico.component').then(m => m.HistoricoComponent),
       },
 
       { path: '**', redirectTo: 'painel' },
