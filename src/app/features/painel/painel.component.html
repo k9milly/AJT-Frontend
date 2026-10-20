@@ -15,42 +15,66 @@
     </div>
   }
 
-  <!-- indicadores -->
-  <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+  <!-- indicadores do dia (RF012) -->
+  <div class="grid grid-cols-2 gap-4 lg:grid-cols-4" [class]="mostraFaturamento() ? 'mb-4' : 'mb-6'">
     <app-stat-card
       class="animate-surgir"
-      rotulo="Transfers aguardando OS"
-      [valor]="aguardandoOs()"
-      dica="Precisam entrar numa ordem de serviço"
-      [tom]="$any(aguardandoOs()) > 0 ? 'warning' : 'default'"
-      icone="relogio"
-    />
-    <app-stat-card
-      class="animate-surgir"
-      style="animation-delay: 60ms"
-      rotulo="Transfers confirmados"
-      [valor]="confirmados()"
-      dica="Prontos para execução"
+      rotulo="Transfers de hoje"
+      [valor]="transfersHoje()"
+      dica="Agendados para hoje, em qualquer status"
       icone="rota"
     />
     <app-stat-card
       class="animate-surgir"
+      style="animation-delay: 60ms"
+      rotulo="Sem OS hoje"
+      [valor]="aguardandoOsHoje()"
+      dica="Transfers de hoje que ainda precisam de OS"
+      [tom]="$any(aguardandoOsHoje()) > 0 ? 'warning' : 'default'"
+      icone="relogio"
+    />
+    <app-stat-card
+      class="animate-surgir"
       style="animation-delay: 120ms"
-      rotulo="Ordens de serviço abertas"
-      [valor]="osAbertas()"
+      rotulo="OS de hoje abertas"
+      [valor]="osAbertasHoje()"
       dica="Montadas, ainda não iniciadas"
       icone="prancheta"
     />
     <app-stat-card
       class="animate-surgir"
       style="animation-delay: 180ms"
-      rotulo="Ordens em andamento"
-      [valor]="osEmAndamento()"
+      rotulo="OS de hoje em andamento"
+      [valor]="osEmAndamentoHoje()"
       dica="Motoristas em rota agora"
       tom="success"
       icone="van"
     />
   </div>
+
+  <!-- faturamento (HU08): so ADMIN e GERENTE -->
+  @if (mostraFaturamento()) {
+    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <app-stat-card
+        class="animate-surgir"
+        style="animation-delay: 210ms"
+        rotulo="Faturamento de hoje"
+        [valor]="faturamentoDia()"
+        dica="Valor em reais dos transfers de hoje, sem os cancelados"
+        tom="success"
+        icone="check-circulo"
+      />
+      <app-stat-card
+        class="animate-surgir"
+        style="animation-delay: 240ms"
+        rotulo="Faturamento do mês"
+        [valor]="faturamentoMes()"
+        dica="Do dia 1 até hoje, sem os cancelados"
+        tom="success"
+        icone="calendario"
+      />
+    </div>
+  }
 
   <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
 
