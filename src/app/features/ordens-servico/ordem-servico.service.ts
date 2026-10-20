@@ -41,6 +41,12 @@ export class OrdemServicoService {
     return this.atualizar(id, { ...dados, status });
   }
 
+  // relatorio em pdf da os (RF013) pra imprimir e entregar ao motorista
+  // vem como blob porque a rota exige o token (nao da pra abrir a url direto numa aba)
+  baixarPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.base}/${id}/pdf`, { responseType: 'blob' });
+  }
+
   // remove tambem as paradas da os (cascade no banco); devolve 409 se houver transfer vinculado
   excluir(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);

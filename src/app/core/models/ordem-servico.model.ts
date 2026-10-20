@@ -11,6 +11,11 @@ export interface OrdemServico {
   motoristaId: number | null;
   veiculoId: number | null;
   status: StatusOrdemServico;
+  // lock otimista do backend: reenviar na edicao pra receber 409 se outra pessoa salvou antes
+  versao: number;
 }
 
-export type OrdemServicoRequest = Omit<OrdemServico, 'id'>;
+// so os abertas ou em andamento recebem transfers (o backend responde 400 nas outras)
+export const STATUS_OS_RECEBE_TRANSFER: StatusOrdemServico[] = ['ABERTA', 'EM_ANDAMENTO'];
+
+export type OrdemServicoRequest = Omit<OrdemServico, 'id' | 'versao'> & { versao?: number };

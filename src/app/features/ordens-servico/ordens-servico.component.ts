@@ -3,7 +3,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
-import { mensagemDeErro } from '../../core/http/erro-api';
+import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
 import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
 import { Motorista } from '../../core/models/motorista.model';
 import {
@@ -194,7 +194,8 @@ export class OrdensServicoComponent implements OnInit {
     this.erroFormulario.set(null);
 
     const editando = this.editando();
-    const dados: OrdemServicoRequest = this.form.getRawValue();
+    // na edicao a versao carregada vai junto: se outra pessoa salvou antes, o backend responde 409
+    const dados: OrdemServicoRequest = { ...this.form.getRawValue(), versao: editando?.versao };
 
     const request$ = editando
       ? this.service.atualizar(editando.id, dados)
@@ -217,6 +218,10 @@ export class OrdensServicoComponent implements OnInit {
       error: (err: unknown) => {
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar a ordem de serviço.'));
+        // 409: a lista e recarregada pra a proxima edicao ja partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }

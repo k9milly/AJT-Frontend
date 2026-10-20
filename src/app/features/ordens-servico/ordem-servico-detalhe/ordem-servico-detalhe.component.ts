@@ -3,10 +3,15 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { mensagemDeErro } from '../../../core/http/erro-api';
+import { mensagemDeErro, statusDoErro } from '../../../core/http/erro-api';
 import { TAMANHO_MAXIMO_PAGINA } from '../../../core/models/api.model';
 import { Motorista } from '../../../core/models/motorista.model';
-import { OrdemServico, STATUS_ORDEM_SERVICO, StatusOrdemServico } from '../../../core/models/ordem-servico.model';
+import {
+  OrdemServico,
+  STATUS_ORDEM_SERVICO,
+  STATUS_OS_RECEBE_TRANSFER,
+  StatusOrdemServico,
+} from '../../../core/models/ordem-servico.model';
 import {
   ACOES_PARADA,
   AcaoParada,
@@ -104,9 +109,20 @@ export class OrdemServicoDetalheComponent implements OnInit {
     return this.transfersRecentes().filter(t => t.osId === id);
   });
 
-  transfersDisponiveis = computed(() =>
-    this.transfersRecentes().filter(t => t.osId === null && t.status !== 'CANCELADO' && t.status !== 'CONCLUIDO'),
-  );
+  // o backend so aceita transfer do mesmo dia da os (RF009), entao a lista ja vem filtrada pela data
+  transfersDisponiveis = computed(() => {
+    const data = this.ordem()?.dataServico;
+    return this.transfersRecentes().filter(t =>
+      t.osId === null && t.dataTransfer === data && t.status !== 'CANCELADO' && t.status !== 'CONCLUIDO');
+  });
+
+  // os cancelada ou finalizada nao recebe transfer novo (o backend responde 400)
+  osRecebeTransfers = computed(() => {
+    const status = this.ordem()?.status;
+    return !!status && STATUS_OS_RECEBE_TRANSFER.includes(status);
+  });
+
+  gerandoPdf = signal(false);
 
   // ----- permissoes -----
   podeEditarOs = computed(() => this.auth.podeEscrever('ordens-servico'));
@@ -199,6 +215,49 @@ export class OrdemServicoDetalheComponent implements OnInit {
         this.alterandoStatusOs.set(false);
         seletor.value = ordem.status;
         this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status.'));
+        this.recarregarSeConflito(err);
+      },
+    });
+  }
+
+  // 409 = outra pessoa salvou a os ou o transfer no meio tempo (RNF008): busca os dados novos
+  private recarregarSeConflito(err: unknown): void {
+    if (statusDoErro(err) === 409) {
+      this.carregar();
+    }
+  }
+
+  // ----- relatorio em pdf (RF013) -----
+
+  // a aba abre ja no clique (senao o navegador bloqueia como popup) e recebe o pdf quando chegar
+  imprimirPdf(): void {
+    const ordem = this.ordem();
+    if (!ordem || this.gerandoPdf()) {
+      return;
+    }
+
+    const aba = window.open('', '_blank');
+    this.gerandoPdf.set(true);
+    this.ordemServicoService.baixarPdf(ordem.id).subscribe({
+      next: pdf => {
+        this.gerandoPdf.set(false);
+        const url = URL.createObjectURL(pdf);
+        if (aba) {
+          aba.location.href = url;
+        } else {
+          // popup bloqueado: baixa o arquivo
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `ordem-servico-${ordem.id}.pdf`;
+          link.click();
+        }
+        // da tempo da aba carregar antes de liberar a memoria
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: (err: unknown) => {
+        this.gerandoPdf.set(false);
+        aba?.close();
+        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível gerar o PDF da ordem de serviço.'));
       },
     });
   }
@@ -229,6 +288,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
       error: (err: unknown) => {
         this.alterandoTransferId.set(null);
         this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o vínculo do transfer.'));
+        this.recarregarSeConflito(err);
       },
     });
   }

@@ -59,6 +59,12 @@
         </div>
       </div>
 
+      <div class="flex flex-wrap items-end gap-3">
+      <!-- pdf pra entregar impresso ao motorista (HU10): qualquer perfil -->
+      <button type="button" class="ajt-botao-secundario" [disabled]="gerandoPdf()" (click)="imprimirPdf()">
+        <app-icone nome="prancheta" class="size-3.5" /> {{ gerandoPdf() ? 'Gerando PDF...' : 'Imprimir OS' }}
+      </button>
+
       @if (podeEditarOs()) {
         <div class="w-48">
           <label for="statusOs" class="ajt-rotulo">Status da OS</label>
@@ -75,6 +81,7 @@
           </select>
         </div>
       }
+      </div>
     </div>
 
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -216,7 +223,11 @@
           </ul>
         }
 
-        @if (podeVincularTransfers()) {
+        @if (podeVincularTransfers() && !osRecebeTransfers()) {
+          <p class="border-t border-border p-4 text-xs text-muted-foreground">
+            OS {{ rotuloStatusOs[os.status].toLowerCase() }} não recebe novos transfers.
+          </p>
+        } @else if (podeVincularTransfers()) {
           <div class="border-t border-border p-4">
             <label for="vincular" class="ajt-rotulo">Vincular transfer sem OS</label>
             <select
@@ -227,7 +238,7 @@
               (change)="vincularTransfer(seletorTransfer.value); seletorTransfer.value = ''"
             >
               <option value="">
-                {{ transfersDisponiveis().length ? 'Selecione...' : 'Nenhum transfer disponível' }}
+                {{ transfersDisponiveis().length ? 'Selecione...' : 'Nenhum transfer sem OS neste dia' }}
               </option>
               @for (transfer of transfersDisponiveis(); track transfer.id) {
                 <option [value]="transfer.id">
@@ -235,6 +246,7 @@
                 </option>
               }
             </select>
+            <p class="ajt-ajuda">Só aparecem transfers do mesmo dia da OS ({{ formatarData(os.dataServico) }}).</p>
           </div>
         }
       </div>
