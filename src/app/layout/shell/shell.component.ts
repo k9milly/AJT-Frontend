@@ -48,6 +48,7 @@ const SECOES_EQUIPE: SecaoMenu[] = [
     titulo: 'Administração',
     itens: [
       { rota: '/admin/usuarios', rotulo: 'Usuários', icone: 'escudo', recurso: 'usuarios' },
+      { rota: '/admin/historico', rotulo: 'Histórico', icone: 'relogio', recurso: 'auditoria' },
     ],
   },
 ];

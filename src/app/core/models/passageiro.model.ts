@@ -3,6 +3,7 @@ export const TIPOS_DOCUMENTO: string[] = ['CPF', 'RG', 'CNH', 'PASSAPORTE'];
 
 // passageiro como o backend devolve (PassageiroResponseDTO)
 // o documento e cifrado no banco, mas a api devolve legivel; tratar como dado sensivel na tela
+// (pro motorista o backend devolve o documento mascarado, ex.: "************25")
 export interface Passageiro {
   id: number;
   nome: string;
