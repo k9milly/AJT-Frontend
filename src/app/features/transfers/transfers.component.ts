@@ -2,9 +2,10 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { mensagemDeErro } from '../../core/http/erro-api';
+import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
 import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
-import { OrdemServico } from '../../core/models/ordem-servico.model';
+import { OrdemServico, STATUS_OS_RECEBE_TRANSFER } from '../../core/models/ordem-servico.model';
+import { Passageiro } from '../../core/models/passageiro.model';
 import {
   MOEDAS,
   MOEDA_BASE,
@@ -16,6 +17,8 @@ import {
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { TransferService } from './transfer.service';
 import { OrdemServicoService } from '../ordens-servico/ordem-servico.service';
+import { PassageiroService } from '../passageiros/passageiro.service';
+import { HistoricoListaComponent } from '../historico/historico-lista.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { IconeComponent } from '../../shared/components/icone/icone.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
@@ -45,12 +48,17 @@ const TAMANHO_PAGINA = 20;
 // - o backend calcula o valorBase em reais (cotacao do dia quando a moeda nao e brl)
 // - na edicao, se valor e moeda nao mudaram, o valorBase antigo e reenviado pra nao
 //   reconverter com a cotacao de hoje um valor que ja foi fechado em outro dia
+//
+// sobre a os e o status: so entram os abertas/em andamento do mesmo dia do transfer (RF009);
+// com os o backend marca o transfer como CONFIRMADO, e ao sair dela volta pra AGUARDANDO_OS.
+// a edicao manda a versao carregada: se outra pessoa salvou antes, o backend responde 409 (RNF008).
 @Component({
     selector: 'app-transfers',
     imports: [
         ReactiveFormsModule,
         RouterLink,
         ConfirmDialogComponent,
+        HistoricoListaComponent,
         IconeComponent,
         ModalComponent,
         PaginacaoComponent,
@@ -62,6 +70,7 @@ const TAMANHO_PAGINA = 20;
 export class TransfersComponent implements OnInit {
   private service = inject(TransferService);
   private ordemServicoService = inject(OrdemServicoService);
+  private passageiroService = inject(PassageiroService);
   private auth = inject(AuthService);
   private notificacao = inject(NotificacaoService);
   private route = inject(ActivatedRoute);
@@ -90,6 +99,11 @@ export class TransfersComponent implements OnInit {
 
   podeEscrever = computed(() => this.auth.podeEscrever('transfers'));
   podeExcluir = computed(() => this.auth.podeExcluir('transfers'));
+  podeVerHistorico = computed(() => this.auth.podeLer('auditoria'));
+  podeVerPassageiros = computed(() => this.auth.podeLer('passageiros'));
+
+  // ----- historico do transfer (HU11) -----
+  historicoDe = signal<Transfer | null>(null);
 
   // ----- modal de cadastro/edicao -----
   modalAberto = signal(false);
@@ -99,6 +113,28 @@ export class TransfersComponent implements OnInit {
 
   // opcoes do select de os: as 100 mais recentes (limite de pagina do backend)
   ordensServico = signal<OrdemServico[]>([]);
+
+  // so aparecem as os do mesmo dia do transfer que ainda recebem transfers (+ a atual, na edicao)
+  dataSelecionada = signal('');
+  ordensDoDia = computed(() => {
+    const data = this.dataSelecionada();
+    const atual = this.editando()?.osId ?? null;
+    return this.ordensServico().filter(ordem =>
+      ordem.id === atual || (ordem.dataServico === data && STATUS_OS_RECEBE_TRANSFER.includes(ordem.status)));
+  });
+
+  // ----- passageiros do transfer (RF007) -----
+  // os 100 primeiros do cadastro por nome (limite de pagina do backend)
+  passageiros = signal<Passageiro[]>([]);
+  passageiroIds = signal<number[]>([]);
+  passageirosSelecionados = computed(() => {
+    const porId = new Map(this.passageiros().map(p => [p.id, p]));
+    return this.passageiroIds().map(id => porId.get(id) ?? { id, nome: `Passageiro #${id}` });
+  });
+  passageirosDisponiveis = computed(() => {
+    const escolhidos = new Set(this.passageiroIds());
+    return this.passageiros().filter(p => !escolhidos.has(p.id));
+  });
 
   // regras iguais as do TransferRequestDTO do backend
   form = this.fb.group({
@@ -120,6 +156,14 @@ export class TransfersComponent implements OnInit {
 
   ngOnInit(): void {
     this.form.controls.moedaOrigem.valueChanges.subscribe(moeda => this.moedaSelecionada.set(moeda));
+    this.form.controls.dataTransfer.valueChanges.subscribe(data => {
+      this.dataSelecionada.set(data);
+      // a os escolhida e de outro dia: tira, senao o backend recusa ao salvar
+      const osId = this.form.controls.osId.value;
+      if (osId !== null && !this.ordensDoDia().some(ordem => ordem.id === osId)) {
+        this.form.controls.osId.setValue(null);
+      }
+    });
 
     // o painel pode mandar ?status=AGUARDANDO_OS pra abrir ja filtrado
     const status = this.route.snapshot.queryParamMap.get('status') as StatusTransfer | null;
@@ -175,6 +219,8 @@ export class TransfersComponent implements OnInit {
   abrirCadastro(): void {
     this.editando.set(null);
     this.carregarOrdensServico();
+    this.carregarPassageiros();
+    this.passageiroIds.set([]);
     this.form.reset({
       dataTransfer: '',
       horaTransfer: '',
@@ -198,6 +244,8 @@ export class TransfersComponent implements OnInit {
 
     this.editando.set(transfer);
     this.carregarOrdensServico();
+    this.carregarPassageiros();
+    this.passageiroIds.set([...(transfer.passageiroIds ?? [])]);
     this.form.reset({
       dataTransfer: transfer.dataTransfer,
       horaTransfer: horaParaInput(transfer.horaTransfer),
@@ -251,6 +299,10 @@ export class TransfersComponent implements OnInit {
       error: (err: unknown) => {
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar o transfer.'));
+        // 409: outra pessoa salvou antes; a lista recarrega pra a proxima edicao partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }
@@ -303,7 +355,34 @@ export class TransfersComponent implements OnInit {
       moedaOrigem: moeda,
       valorBase: valorNaoMudou ? original!.valorBase : null,
       osId: valores.osId,
+      passageiroIds: this.passageiroIds(),
+      versao: original?.versao,
     };
+  }
+
+  // ----- passageiros do transfer -----
+
+  adicionarPassageiro(valor: string): void {
+    const id = Number(valor);
+    if (id && !this.passageiroIds().includes(id)) {
+      this.passageiroIds.update(ids => [...ids, id]);
+    }
+  }
+
+  removerPassageiro(id: number): void {
+    this.passageiroIds.update(ids => ids.filter(atual => atual !== id));
+  }
+
+  private carregarPassageiros(): void {
+    if (this.passageiros().length || !this.podeVerPassageiros()) {
+      return;
+    }
+    this.passageiroService
+      .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'nome,asc' })
+      .subscribe({
+        next: pagina => this.passageiros.set(pagina.conteudo),
+        error: () => this.passageiros.set([]),
+      });
   }
 
   private carregarOrdensServico(): void {

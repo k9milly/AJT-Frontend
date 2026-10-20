@@ -98,6 +98,11 @@
                 </td>
 
                 <td class="whitespace-nowrap text-right">
+                  @if (podeVerHistorico()) {
+                    <button type="button" class="ajt-botao-icone" title="Histórico" (click)="historicoDe.set(transfer)">
+                      <app-icone nome="relogio" class="size-3.5" />
+                    </button>
+                  }
                   <!-- pontos de coleta sao filhos do transfer -->
                   <a
                     routerLink="/admin/pontos-coleta"
@@ -169,6 +174,9 @@
             <option [value]="status">{{ rotuloStatus[status] }}</option>
           }
         </select>
+        @if (form.controls.osId.value !== null && form.controls.status.value === 'AGUARDANDO_OS') {
+          <p class="ajt-ajuda">Com OS, o transfer fica como Confirmado ao salvar.</p>
+        }
       </div>
     </div>
 
@@ -221,14 +229,57 @@
       <label for="osId" class="ajt-rotulo">Ordem de serviço</label>
       <select id="osId" formControlName="osId" class="ajt-campo">
         <option [ngValue]="null">Sem ordem de serviço</option>
-        @for (ordem of ordensServico(); track ordem.id) {
+        @for (ordem of ordensDoDia(); track ordem.id) {
           <option [ngValue]="ordem.id">
             OS #{{ ordem.id }} · {{ formatarData(ordem.dataServico) }} · {{ rotuloStatusOs[ordem.status] }}
           </option>
         }
       </select>
-      <p class="ajt-ajuda">Ao vincular, o transfer entra na rota do motorista daquela OS.</p>
+      @if (!dataSelecionada()) {
+        <p class="ajt-ajuda">Escolha a data para ver as ordens de serviço daquele dia.</p>
+      } @else if (!ordensDoDia().length) {
+        <p class="ajt-ajuda">Nenhuma OS aberta ou em andamento em {{ formatarData(dataSelecionada()) }}.</p>
+      } @else {
+        <p class="ajt-ajuda">Ao vincular, o transfer entra na rota do motorista daquela OS.</p>
+      }
     </div>
+
+    <!-- passageiros (RF007) -->
+    @if (podeVerPassageiros()) {
+      <div>
+        <label for="adicionarPassageiro" class="ajt-rotulo">Passageiros</label>
+        @if (passageirosSelecionados().length) {
+          <ul class="mb-2 flex flex-wrap gap-2">
+            @for (passageiro of passageirosSelecionados(); track passageiro.id) {
+              <li class="flex items-center gap-1.5 rounded-md bg-secondary py-1 pl-2.5 pr-1 text-xs text-secondary-foreground">
+                {{ passageiro.nome }}
+                <button type="button" class="ajt-botao-icone !size-5" [title]="'Remover ' + passageiro.nome" (click)="removerPassageiro(passageiro.id)">
+                  <app-icone nome="fechar" class="size-3" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        <select
+          #seletorPassageiro
+          id="adicionarPassageiro"
+          class="ajt-campo"
+          [disabled]="!passageirosDisponiveis().length"
+          (change)="adicionarPassageiro(seletorPassageiro.value); seletorPassageiro.value = ''"
+        >
+          <option value="">
+            {{ passageirosDisponiveis().length ? 'Adicionar passageiro...' : (passageiros().length ? 'Todos os passageiros já foram adicionados' : 'Nenhum passageiro cadastrado') }}
+          </option>
+          @for (passageiro of passageirosDisponiveis(); track passageiro.id) {
+            <option [value]="passageiro.id">{{ passageiro.nome }}</option>
+          }
+        </select>
+        <p class="ajt-ajuda">
+          {{ passageirosSelecionados().length }} passageiro(s).
+          <a routerLink="/admin/passageiros" [queryParams]="{ novo: '1' }" class="underline-offset-2 hover:underline">Cadastrar novo</a>
+        </p>
+      </div>
+    }
 
     @if (erroFormulario()) {
       <div class="ajt-alerta-erro">{{ erroFormulario() }}</div>
@@ -253,3 +304,17 @@
   (cancelar)="paraExcluir.set(null)"
   (confirmar)="confirmarExclusao()"
 />
+
+<!-- ===================== historico do transfer (HU11) ===================== -->
+<app-modal
+  [aberto]="historicoDe() !== null"
+  [titulo]="'Histórico do transfer #' + (historicoDe()?.id ?? '')"
+  (fechar)="historicoDe.set(null)"
+>
+  @if (historicoDe(); as transfer) {
+    <p class="mb-3 text-xs text-muted-foreground">{{ transfer.origem }} → {{ transfer.destino }} · {{ formatarData(transfer.dataTransfer) }}</p>
+    <div class="-mx-5 border-t border-border">
+      <app-historico-lista tabela="transfers" [registroId]="transfer.id" [tamanhoPagina]="10" [mostrarRegistro]="false" />
+    </div>
+  }
+</app-modal>
