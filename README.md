@@ -41,6 +41,24 @@ A aplicação sobe em `http://localhost:4200`.
 
 O backend libera CORS para `http://localhost:4200` por padrão (`AJT_CORS_ORIGINS`).
 
+### Docker
+
+O `Dockerfile` builda o Angular (Node) e serve o resultado com nginx, que também repassa `/api` para o backend (`nginx.conf.template`). Front e API ficam na mesma origem, sem CORS.
+
+O jeito normal de subir é pelo `docker-compose.yml` do **AJT-Backend**, com este repositório clonado ao lado dele (`../AJT-Frontend`):
+
+```bash
+cd ../AJT-Backend
+docker compose up -d --build
+```
+
+O front fica em `http://localhost:8081`. Para rodar só esta imagem contra uma API que já está no ar:
+
+```bash
+docker build -t ajt-frontend .
+docker run --rm -p 8081:80 -e AJT_API_UPSTREAM=http://host.docker.internal:9090 ajt-frontend
+```
+
 ### Primeiro acesso
 
 Usuário `admin` / senha `admin123` (seed do backend). O login devolve `trocarSenha: true` e o painel leva direto para a tela de troca de senha. Usuários criados pelo administrador também trocam a senha no primeiro acesso.

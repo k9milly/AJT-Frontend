@@ -1,0 +1,9 @@
+# fica fora da imagem: o build e feito dentro do container (npm ci + ng build)
+node_modules
+dist
+.angular
+.git
+.vscode
+.idea
+.claude
+*.log
