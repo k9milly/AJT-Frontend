@@ -2,9 +2,9 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { mensagemDeErro } from '../../core/http/erro-api';
+import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
 import { Pagina } from '../../core/models/api.model';
-import { Passageiro, PassageiroRequest, TIPOS_DOCUMENTO } from '../../core/models/passageiro.model';
+import { FiltroPassageiro, Passageiro, PassageiroRequest, TIPOS_DOCUMENTO } from '../../core/models/passageiro.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { PassageiroService } from './passageiro.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -65,10 +65,12 @@ export class PassageirosComponent implements OnInit {
   carregando = signal(true);
   erro = signal<string | null>(null);
 
-  // filtro por nacionalidade (unico filtro que o backend oferece pra passageiros)
-  // guardado separado do input pra paginacao usar o filtro aplicado, nao o que esta sendo digitado
-  termoBusca = signal('');
-  filtroAplicado = signal('');
+  // filtros por nome e nacionalidade (RF015); o aplicado fica separado do que esta sendo
+  // digitado pra paginacao continuar usando o filtro da ultima busca
+  buscaNome = signal('');
+  buscaNacionalidade = signal('');
+  filtroAplicado = signal<FiltroPassageiro>({});
+  filtroAtivo = computed(() => !!(this.filtroAplicado().nome || this.filtroAplicado().nacionalidade));
 
   podeEscrever = computed(() => this.auth.podeEscrever('passageiros'));
   podeExcluir = computed(() => this.auth.podeExcluir('passageiros'));
@@ -100,19 +102,13 @@ export class PassageirosComponent implements OnInit {
     }
   }
 
-  // carrega a pagina pedida, com ou sem o filtro de nacionalidade
+  // carrega a pagina pedida com os filtros aplicados
   carregar(numeroPagina = 0): void {
     this.carregando.set(true);
     this.erro.set(null);
 
     const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'nome,asc' };
-    const nacionalidade = this.filtroAplicado();
-
-    const request$ = nacionalidade
-      ? this.service.buscarPorNacionalidade(nacionalidade, parametros)
-      : this.service.listar(parametros);
-
-    request$.subscribe({
+    this.service.listar(parametros, this.filtroAplicado()).subscribe({
       next: pagina => {
         this.pagina.set(pagina);
         this.carregando.set(false);
@@ -125,13 +121,17 @@ export class PassageirosComponent implements OnInit {
   }
 
   buscar(): void {
-    this.filtroAplicado.set(this.termoBusca().trim());
+    this.filtroAplicado.set({
+      nome: this.buscaNome().trim() || undefined,
+      nacionalidade: this.buscaNacionalidade().trim() || undefined,
+    });
     this.carregar();
   }
 
   limparBusca(): void {
-    this.termoBusca.set('');
-    this.filtroAplicado.set('');
+    this.buscaNome.set('');
+    this.buscaNacionalidade.set('');
+    this.filtroAplicado.set({});
     this.carregar();
   }
 
@@ -190,6 +190,8 @@ export class PassageirosComponent implements OnInit {
       tipoDocumento: valores.tipoDocumento,
       documento: valores.documento.trim(),
       nacionalidade: textoOuNulo(valores.nacionalidade),
+      // RNF008: com a versao carregada, se outra pessoa salvou antes o backend responde 409
+      versao: editando?.versao,
     };
 
     const request$ = editando
@@ -206,6 +208,10 @@ export class PassageirosComponent implements OnInit {
       error: (err: unknown) => {
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar o passageiro.'));
+        // 409: a lista recarrega pra a proxima edicao ja partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }
