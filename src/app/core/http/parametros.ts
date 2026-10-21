@@ -6,7 +6,7 @@ import { ParametrosPagina } from '../models/api.model';
 // valores nulos, indefinidos ou vazios sao ignorados pra nao mandar "?status=" pro backend
 export function montarParametros(
   pagina: ParametrosPagina = {},
-  extras: Record<string, string | number | null | undefined> = {},
+  extras: Record<string, string | number | boolean | null | undefined> = {},
 ): HttpParams {
   let params = new HttpParams();
 

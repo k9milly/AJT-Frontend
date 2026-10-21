@@ -10,6 +10,8 @@ export interface Veiculo {
   capacidade: number;
   tipo: string | null;
   marca: string | null;
+  // lock otimista do backend (RNF008): reenviar na edicao pra receber 409 se outra pessoa salvou antes
+  versao: number;
 }
 
-export type VeiculoRequest = Omit<Veiculo, 'id'>;
+export type VeiculoRequest = Omit<Veiculo, 'id' | 'versao'> & { versao?: number };
