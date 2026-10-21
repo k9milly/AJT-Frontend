@@ -62,6 +62,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/transfers/transfers.component').then(m => m.TransfersComponent),
       },
+      // roteiro do dia do motorista (HU07): so o perfil MOTORISTA (o backend responde 403 pros outros)
+      {
+        path: 'minhas-os',
+        data: { titulo: 'Minhas OS' },
+        canActivate: [roleGuard('MOTORISTA')],
+        loadComponent: () =>
+          import('./features/minhas-os/minhas-os.component').then(m => m.MinhasOsComponent),
+      },
       {
         path: 'ordens-servico',
         data: { titulo: 'Ordens de serviço' },

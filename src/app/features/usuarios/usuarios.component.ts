@@ -1,12 +1,14 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
-import { mensagemDeErro } from '../../core/http/erro-api';
-import { Pagina } from '../../core/models/api.model';
+import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
+import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
 import { PERFIS, Perfil } from '../../core/models/auth.model';
+import { Motorista } from '../../core/models/motorista.model';
 import { Usuario, UsuarioRequest } from '../../core/models/usuario.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { UsuarioService } from './usuario.service';
+import { MotoristaService } from '../motoristas/motorista.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { IconeComponent } from '../../shared/components/icone/icone.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
@@ -25,7 +27,7 @@ const DESCRICAO_PERFIL: Record<Perfil, string> = {
   ADMIN: 'Acesso total, inclusive gestão de usuários.',
   GERENTE: 'Opera tudo e gerencia frota e ordens de serviço.',
   ATENDENTE: 'Cadastra passageiros, transfers e pontos de coleta.',
-  MOTORISTA: 'Consulta as ordens de serviço e atualiza o status das paradas.',
+  MOTORISTA: 'Vê só as ordens de serviço do motorista ligado a ele e atualiza o status das paradas.',
 };
 
 // ---------------------------------------------------------------
@@ -50,6 +52,7 @@ const DESCRICAO_PERFIL: Record<Perfil, string> = {
 })
 export class UsuariosComponent implements OnInit {
   private service = inject(UsuarioService);
+  private motoristaService = inject(MotoristaService);
   private auth = inject(AuthService);
   private notificacao = inject(NotificacaoService);
   private fb = inject(FormBuilder);
@@ -77,7 +80,17 @@ export class UsuariosComponent implements OnInit {
     senha: [''],
     role: ['ATENDENTE' as Perfil, Validators.required],
     ativo: [true],
+    // HU07: cadastro de motorista ligado (so aparece e so vale pro perfil MOTORISTA)
+    motoristaId: this.fb.control<number | null>(null),
   });
+
+  // opcoes do select de motorista (os 100 primeiros por nome, limite de pagina do backend)
+  motoristas = signal<Motorista[]>([]);
+
+  // nome do motorista ligado, pra mostrar na tabela
+  nomeMotorista(id: number | null): string | null {
+    return id ? this.motoristas().find(m => m.id === id)?.nome ?? `Motorista #${id}` : null;
+  }
 
   perfilSelecionado = signal<Perfil>('ATENDENTE');
 
@@ -90,6 +103,7 @@ export class UsuariosComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
+    this.carregarMotoristas();
     this.form.controls.role.valueChanges.subscribe(perfil => this.perfilSelecionado.set(perfil));
   }
 
@@ -133,7 +147,7 @@ export class UsuariosComponent implements OnInit {
   abrirCadastro(): void {
     this.editando.set(null);
     this.configurarSenha(true);
-    this.form.reset({ nome: '', username: '', senha: '', role: 'ATENDENTE', ativo: true });
+    this.form.reset({ nome: '', username: '', senha: '', role: 'ATENDENTE', ativo: true, motoristaId: null });
     this.form.controls.ativo.enable();
     this.erroFormulario.set(null);
     this.modalAberto.set(true);
@@ -148,6 +162,7 @@ export class UsuariosComponent implements OnInit {
       senha: '',
       role: usuario.role,
       ativo: usuario.ativo,
+      motoristaId: usuario.motoristaId,
     });
     // a propria conta nao pode ser desativada pela tela
     if (usuario.username === this.usernameLogado()) {
@@ -182,6 +197,10 @@ export class UsuariosComponent implements OnInit {
       senha: valores.senha ? valores.senha : null,
       role: valores.role,
       ativo: valores.ativo,
+      // so motorista tem vinculo; trocar o perfil pra outro desfaz (o backend faz o mesmo)
+      motoristaId: valores.role === 'MOTORISTA' ? valores.motoristaId : null,
+      // RNF008: com a versao carregada, se outra pessoa salvou antes o backend responde 409
+      versao: editando?.versao,
     };
 
     const request$ = editando
@@ -200,6 +219,10 @@ export class UsuariosComponent implements OnInit {
       error: (err: unknown) => {
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar o usuário.'));
+        // 409: a lista recarrega pra a proxima edicao ja partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }
@@ -240,5 +263,12 @@ export class UsuariosComponent implements OnInit {
         : [Validators.minLength(8), Validators.maxLength(72)],
     );
     senha.updateValueAndValidity();
+  }
+
+  private carregarMotoristas(): void {
+    this.motoristaService.listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'nome,asc' }).subscribe({
+      next: pagina => this.motoristas.set(pagina.conteudo),
+      error: () => this.motoristas.set([]),
+    });
   }
 }

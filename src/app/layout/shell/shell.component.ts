@@ -59,6 +59,7 @@ const SECOES_MOTORISTA: SecaoMenu[] = [
     titulo: 'Meu trabalho',
     itens: [
       { rota: '/admin/painel', rotulo: 'Início', icone: 'painel' },
+      { rota: '/admin/minhas-os', rotulo: 'Minhas OS do dia', icone: 'calendario' },
       { rota: '/admin/ordens-servico', rotulo: 'Ordens de serviço', icone: 'prancheta' },
     ],
   },
