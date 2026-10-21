@@ -18,6 +18,8 @@ export interface ParadaOs {
   acao: AcaoParada | null;
   statusParada: StatusParada;
   transferIds: number[];
+  // lock otimista do backend (RNF008): reenviar na edicao pra receber 409 se outra pessoa salvou antes
+  versao: number;
 }
 
-export type ParadaOsRequest = Omit<ParadaOs, 'id'>;
+export type ParadaOsRequest = Omit<ParadaOs, 'id' | 'versao'> & { versao?: number };

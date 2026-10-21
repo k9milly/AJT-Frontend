@@ -33,3 +33,14 @@ export interface Transfer {
 
 // na criacao nao existe versao; na edicao ela vai junto
 export type TransferRequest = Omit<Transfer, 'id' | 'versao'> & { versao?: number };
+
+// filtros de GET /api/transfers (RF015); todos opcionais e somados (E)
+// datas no formato da api (AAAA-MM-DD); busca = parte da origem ou do destino
+export interface FiltroTransfer {
+  status?: StatusTransfer;
+  dataInicio?: string;
+  dataFim?: string;
+  busca?: string;
+  osId?: number;
+  semOs?: boolean;
+}

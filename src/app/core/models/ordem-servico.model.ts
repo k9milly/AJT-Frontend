@@ -1,3 +1,5 @@
+import { ParadaOs } from './parada-os.model';
+
 // status aceitos pelo backend (enum StatusOrdemServico)
 export type StatusOrdemServico = 'ABERTA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCELADA';
 
@@ -19,3 +21,19 @@ export interface OrdemServico {
 export const STATUS_OS_RECEBE_TRANSFER: StatusOrdemServico[] = ['ABERTA', 'EM_ANDAMENTO'];
 
 export type OrdemServicoRequest = Omit<OrdemServico, 'id' | 'versao'> & { versao?: number };
+
+// filtros de GET /api/ordens-servico (RF015); todos opcionais e somados (E)
+// pro MOTORISTA o backend ignora o motoristaId e devolve so as OS dele (HU07)
+export interface FiltroOrdemServico {
+  status?: StatusOrdemServico;
+  dataInicio?: string;
+  dataFim?: string;
+  motoristaId?: number;
+  veiculoId?: number;
+}
+
+// uma OS do dia do motorista, ja com as paradas (GET /api/ordens-servico/minhas, HU07)
+export interface OrdemServicoDoDia {
+  ordem: OrdemServico;
+  paradas: ParadaOs[];
+}
