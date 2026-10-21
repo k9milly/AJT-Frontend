@@ -15,6 +15,9 @@ import { CanActivateFn } from '@angular/router';
 // saiam cinza-claro em vez de dourado, entre outros efeitos colaterais silenciosos.
 //
 // solucao: manter o link do bootstrap sempre desabilitado (nunca ligar), em qualquer rota.
+// importante: o build de producao tem "inlineCritical": false (angular.json). com ele ligado
+// (padrao do angular), o ng build copia regras do bootstrap pra um <style> dentro do index.html,
+// que este guard nao alcanca — no build de producao os botoes voltavam a sair azuis.
 // se um dia precisar mesmo de um componente do bootstrap em algum lugar, o certo e reativar
 // so ali (com este mesmo guard) e revisar as colisoes de nome antes.
 
