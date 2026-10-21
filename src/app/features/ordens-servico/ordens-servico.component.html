@@ -41,6 +41,38 @@
     </span>
   </div>
 
+
+  <!-- filtros extras (RF015): periodo e motorista -->
+  <form class="ajt-card mb-4 flex flex-wrap items-end gap-3 p-4 animate-surgir" style="animation-delay: 60ms"
+        (submit)="$event.preventDefault(); aplicarFiltros()">
+    <div class="w-full sm:w-auto">
+      <label for="filtroDe" class="ajt-rotulo">De</label>
+      <input id="filtroDe" type="date" class="ajt-campo ajt-dado" [value]="filtroDataInicio()"
+             (input)="filtroDataInicio.set($any($event.target).value)" />
+    </div>
+    <div class="w-full sm:w-auto">
+      <label for="filtroAte" class="ajt-rotulo">Até</label>
+      <input id="filtroAte" type="date" class="ajt-campo ajt-dado" [value]="filtroDataFim()"
+             (input)="filtroDataFim.set($any($event.target).value)" />
+    </div>
+    @if (!ehMotorista()) {
+      <div class="w-full sm:w-56">
+        <label for="filtroMotorista" class="ajt-rotulo">Motorista</label>
+        <select id="filtroMotorista" class="ajt-campo"
+                (change)="filtroMotoristaId.set($any($event.target).value ? +$any($event.target).value : null)">
+          <option value="" [selected]="filtroMotoristaId() === null">Todos</option>
+          @for (motorista of motoristas(); track motorista.id) {
+            <option [value]="motorista.id" [selected]="filtroMotoristaId() === motorista.id">{{ motorista.nome }}</option>
+          }
+        </select>
+      </div>
+    }
+    <button type="submit" class="ajt-botao-secundario">Filtrar</button>
+    @if (temFiltroExtra()) {
+      <button type="button" class="pb-2 text-sm text-muted-foreground hover:text-foreground" (click)="limparFiltros()">Limpar</button>
+    }
+  </form>
+
   <!-- tabela (a linha inteira abre o detalhe) -->
   <div class="ajt-card overflow-hidden animate-surgir" style="animation-delay: 80ms">
     @if (carregando()) {

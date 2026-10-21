@@ -3,7 +3,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, map } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
-import { mensagemDeErro } from '../../core/http/erro-api';
+import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
 import { Pagina, TAMANHO_MAXIMO_PAGINA, paginaUnica } from '../../core/models/api.model';
 import { PontoColeta, PontoColetaRequest } from '../../core/models/ponto-coleta.model';
 import { Transfer } from '../../core/models/transfer.model';
@@ -201,6 +201,8 @@ export class PontosColetaComponent implements OnInit {
       horarioPrevisto: horaParaApi(valores.horarioPrevisto),
       latitude: Number(valores.latitude),
       longitude: Number(valores.longitude),
+      // RNF008: com a versao carregada, se outra pessoa salvou antes o backend responde 409
+      versao: editando?.versao,
     };
 
     const request$ = editando
@@ -217,6 +219,10 @@ export class PontosColetaComponent implements OnInit {
       error: (err: unknown) => {
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar o ponto de coleta.'));
+        // 409: a lista recarrega pra a proxima edicao ja partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }

@@ -302,7 +302,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
     }
 
     this.alterandoParadaId.set(parada.id);
-    this.paradaService.alterarStatus(parada.id, valor as StatusParada).subscribe({
+    this.paradaService.alterarStatus(parada, valor as StatusParada).subscribe({
       next: atualizada => {
         this.paradas.update(lista => lista.map(p => (p.id === atualizada.id ? atualizada : p)));
         this.alterandoParadaId.set(null);
@@ -311,6 +311,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
         this.alterandoParadaId.set(null);
         seletor.value = parada.statusParada;
         this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status da parada.'));
+        this.recarregarSeConflito(err);
       },
     });
   }
@@ -395,6 +396,8 @@ export class OrdemServicoDetalheComponent implements OnInit {
       latitude: numeroOuNulo(valores.latitude),
       longitude: numeroOuNulo(valores.longitude),
       transferIds: valores.transferIds,
+      // RNF008: com a versao carregada, se outra pessoa salvou antes o backend responde 409
+      versao: editando?.versao,
     };
 
     const request$ = editando
@@ -414,6 +417,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
       error: (err: unknown) => {
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar a parada.'));
+        this.recarregarSeConflito(err);
       },
     });
   }

@@ -26,8 +26,9 @@ export class ParadaOsService {
   }
 
   // o corpo leva so o statusParada: se mandar qualquer outro campo o backend recusa pro MOTORISTA
-  alterarStatus(id: number, statusParada: StatusParada): Observable<ParadaOs> {
-    return this.http.patch<ParadaOs>(`${this.base}/${id}`, { statusParada });
+  // so o status (unica coisa que o motorista pode mudar) + a versao carregada (RNF008)
+  alterarStatus(parada: ParadaOs, statusParada: StatusParada): Observable<ParadaOs> {
+    return this.http.patch<ParadaOs>(`${this.base}/${parada.id}`, { statusParada, versao: parada.versao });
   }
 
   excluir(id: number): Observable<void> {
