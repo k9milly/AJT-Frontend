@@ -41,6 +41,35 @@
     </span>
   </div>
 
+
+  <!-- filtros extras (RF015): periodo, texto da rota e so os sem OS -->
+  <form class="ajt-card mb-4 flex flex-wrap items-end gap-3 p-4 animate-surgir" style="animation-delay: 60ms"
+        (submit)="$event.preventDefault(); aplicarFiltros()">
+    <div class="w-full sm:w-auto">
+      <label for="filtroDe" class="ajt-rotulo">De</label>
+      <input id="filtroDe" type="date" class="ajt-campo ajt-dado" [value]="filtroDataInicio()"
+             (input)="filtroDataInicio.set($any($event.target).value)" />
+    </div>
+    <div class="w-full sm:w-auto">
+      <label for="filtroAte" class="ajt-rotulo">Até</label>
+      <input id="filtroAte" type="date" class="ajt-campo ajt-dado" [value]="filtroDataFim()"
+             (input)="filtroDataFim.set($any($event.target).value)" />
+    </div>
+    <div class="w-full sm:w-56">
+      <label for="filtroBusca" class="ajt-rotulo">Origem ou destino</label>
+      <input id="filtroBusca" type="text" class="ajt-campo" placeholder="Ex.: aeroporto" [value]="filtroBusca()"
+             (input)="filtroBusca.set($any($event.target).value)" />
+    </div>
+    <label class="flex items-center gap-2 pb-2 text-sm text-foreground">
+      <input type="checkbox" [checked]="filtroSemOs()" (change)="filtroSemOs.set($any($event.target).checked)" />
+      Só sem OS
+    </label>
+    <button type="submit" class="ajt-botao-secundario">Filtrar</button>
+    @if (temFiltroExtra()) {
+      <button type="button" class="pb-2 text-sm text-muted-foreground hover:text-foreground" (click)="limparFiltros()">Limpar</button>
+    }
+  </form>
+
   <!-- tabela -->
   <div class="ajt-card overflow-hidden animate-surgir" style="animation-delay: 80ms">
     @if (carregando()) {

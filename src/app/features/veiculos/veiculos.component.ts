@@ -180,6 +180,8 @@ export class VeiculosComponent implements OnInit {
       capacidade: Number(valores.capacidade),
       tipo: textoOuNulo(valores.tipo),
       marca: textoOuNulo(valores.marca),
+      // RNF008: com a versao carregada, se outra pessoa salvou antes o backend responde 409
+      versao: editando?.versao,
     };
 
     const request$ = editando
@@ -197,6 +199,10 @@ export class VeiculosComponent implements OnInit {
         // placa duplicada ou campo invalido: a mensagem do backend ja explica
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar o veículo.'));
+        // 409: a lista recarrega pra a proxima edicao ja partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }

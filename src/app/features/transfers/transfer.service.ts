@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Pagina, ParametrosPagina } from '../../core/models/api.model';
-import { StatusTransfer, Transfer, TransferRequest } from '../../core/models/transfer.model';
+import { FiltroTransfer, StatusTransfer, Transfer, TransferRequest } from '../../core/models/transfer.model';
 import { montarParametros } from '../../core/http/parametros';
 
 // acesso a /api/transfers
@@ -13,8 +13,9 @@ export class TransferService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/transfers`;
 
-  listar(pagina: ParametrosPagina = {}): Observable<Pagina<Transfer>> {
-    return this.http.get<Pagina<Transfer>>(this.base, { params: montarParametros(pagina) });
+  // filtros opcionais (RF015): campo vazio nao vai pra url
+  listar(pagina: ParametrosPagina = {}, filtros: FiltroTransfer = {}): Observable<Pagina<Transfer>> {
+    return this.http.get<Pagina<Transfer>>(this.base, { params: montarParametros(pagina, { ...filtros }) });
   }
 
   buscarPorId(id: number): Observable<Transfer> {

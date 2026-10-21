@@ -7,6 +7,7 @@ import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
 import { OrdemServico, STATUS_OS_RECEBE_TRANSFER } from '../../core/models/ordem-servico.model';
 import { Passageiro } from '../../core/models/passageiro.model';
 import {
+  FiltroTransfer,
   MOEDAS,
   MOEDA_BASE,
   STATUS_TRANSFER,
@@ -94,8 +95,16 @@ export class TransfersComponent implements OnInit {
   carregando = signal(true);
   erro = signal<string | null>(null);
 
-  // filtro por status (feito no backend); vazio = todos
+  // filtro por status (abas, aplica na hora); vazio = todos
   filtroStatus = signal<StatusTransfer | ''>('');
+
+  // demais filtros (RF015): o que esta digitado so vale ao clicar em "Filtrar"
+  filtroDataInicio = signal('');
+  filtroDataFim = signal('');
+  filtroBusca = signal('');
+  filtroSemOs = signal(false);
+  filtrosAplicados = signal<FiltroTransfer>({});
+  temFiltroExtra = computed(() => Object.values(this.filtrosAplicados()).some(valor => !!valor));
 
   podeEscrever = computed(() => this.auth.podeEscrever('transfers'));
   podeExcluir = computed(() => this.auth.podeExcluir('transfers'));
@@ -185,13 +194,9 @@ export class TransfersComponent implements OnInit {
     this.erro.set(null);
 
     const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'dataTransfer,desc' };
-    const status = this.filtroStatus();
+    const filtros: FiltroTransfer = { ...this.filtrosAplicados(), status: this.filtroStatus() || undefined };
 
-    const request$ = status
-      ? this.service.buscarPorStatus(status, parametros)
-      : this.service.listar(parametros);
-
-    request$.subscribe({
+    this.service.listar(parametros, filtros).subscribe({
       next: pagina => {
         this.pagina.set(pagina);
         this.carregando.set(false);
@@ -211,6 +216,25 @@ export class TransfersComponent implements OnInit {
       queryParams: { status: valor || null },
       replaceUrl: true,
     });
+    this.carregar();
+  }
+
+  aplicarFiltros(): void {
+    this.filtrosAplicados.set({
+      dataInicio: this.filtroDataInicio() || undefined,
+      dataFim: this.filtroDataFim() || undefined,
+      busca: this.filtroBusca().trim() || undefined,
+      semOs: this.filtroSemOs() || undefined,
+    });
+    this.carregar();
+  }
+
+  limparFiltros(): void {
+    this.filtroDataInicio.set('');
+    this.filtroDataFim.set('');
+    this.filtroBusca.set('');
+    this.filtroSemOs.set(false);
+    this.filtrosAplicados.set({});
     this.carregar();
   }
 
