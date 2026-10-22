@@ -8,6 +8,8 @@ export interface PontoColeta {
   horarioPrevisto: string | null;
   latitude: number;
   longitude: number;
+  // lock otimista do backend (RNF008): reenviar na edicao pra receber 409 se outra pessoa salvou antes
+  versao: number;
 }
 
-export type PontoColetaRequest = Omit<PontoColeta, 'id'>;
+export type PontoColetaRequest = Omit<PontoColeta, 'id' | 'versao'> & { versao?: number };

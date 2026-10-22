@@ -62,6 +62,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/transfers/transfers.component').then(m => m.TransfersComponent),
       },
+      // roteiro do dia do motorista (HU07): so o perfil MOTORISTA (o backend responde 403 pros outros)
+      {
+        path: 'minhas-os',
+        data: { titulo: 'Minhas OS' },
+        canActivate: [roleGuard('MOTORISTA')],
+        loadComponent: () =>
+          import('./features/minhas-os/minhas-os.component').then(m => m.MinhasOsComponent),
+      },
       {
         path: 'ordens-servico',
         data: { titulo: 'Ordens de serviço' },
@@ -86,6 +94,8 @@ export const routes: Routes = [
       {
         path: 'passageiros',
         data: { titulo: 'Passageiros' },
+        // documento e dado sensivel: o motorista nao abre o cadastro (backend responde 403)
+        canActivate: [roleGuard('ADMIN', 'GERENTE', 'ATENDENTE')],
         loadComponent: () =>
           import('./features/passageiros/passageiros.component').then(m => m.PassageirosComponent),
       },
@@ -110,6 +120,15 @@ export const routes: Routes = [
         canActivate: [roleGuard('ADMIN')],
         loadComponent: () =>
           import('./features/usuarios/usuarios.component').then(m => m.UsuariosComponent),
+      },
+
+      // historico de alteracoes (HU11): ADMIN e GERENTE
+      {
+        path: 'historico',
+        data: { titulo: 'Histórico' },
+        canActivate: [roleGuard('ADMIN', 'GERENTE')],
+        loadComponent: () =>
+          import('./features/historico/historico.component').then(m => m.HistoricoComponent),
       },
 
       { path: '**', redirectTo: 'painel' },

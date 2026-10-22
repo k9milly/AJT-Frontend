@@ -48,6 +48,7 @@ const SECOES_EQUIPE: SecaoMenu[] = [
     titulo: 'Administração',
     itens: [
       { rota: '/admin/usuarios', rotulo: 'Usuários', icone: 'escudo', recurso: 'usuarios' },
+      { rota: '/admin/historico', rotulo: 'Histórico', icone: 'relogio', recurso: 'auditoria' },
     ],
   },
 ];
@@ -58,6 +59,7 @@ const SECOES_MOTORISTA: SecaoMenu[] = [
     titulo: 'Meu trabalho',
     itens: [
       { rota: '/admin/painel', rotulo: 'Início', icone: 'painel' },
+      { rota: '/admin/minhas-os', rotulo: 'Minhas OS do dia', icone: 'calendario' },
       { rota: '/admin/ordens-servico', rotulo: 'Ordens de serviço', icone: 'prancheta' },
     ],
   },

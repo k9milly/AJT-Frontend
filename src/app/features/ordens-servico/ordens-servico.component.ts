@@ -3,10 +3,11 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
-import { mensagemDeErro } from '../../core/http/erro-api';
+import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
 import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
 import { Motorista } from '../../core/models/motorista.model';
 import {
+  FiltroOrdemServico,
   OrdemServico,
   OrdemServicoRequest,
   STATUS_ORDEM_SERVICO,
@@ -69,6 +70,15 @@ export class OrdensServicoComponent implements OnInit {
   erro = signal<string | null>(null);
   filtroStatus = signal<StatusOrdemServico | ''>('');
 
+  // demais filtros (RF015): valem ao clicar em "Filtrar". o motorista nao filtra por motorista
+  // (o backend ja devolve so as OS dele, HU07)
+  filtroDataInicio = signal('');
+  filtroDataFim = signal('');
+  filtroMotoristaId = signal<number | null>(null);
+  filtrosAplicados = signal<FiltroOrdemServico>({});
+  temFiltroExtra = computed(() => Object.values(this.filtrosAplicados()).some(valor => !!valor));
+  ehMotorista = computed(() => this.auth.perfil() === 'MOTORISTA');
+
   // motoristas e veiculos pra mostrar nome/placa na tabela e preencher os selects
   // (os 100 primeiros: limite de pagina do backend; suficiente pro tamanho da frota)
   motoristas = signal<Motorista[]>([]);
@@ -111,13 +121,9 @@ export class OrdensServicoComponent implements OnInit {
     this.erro.set(null);
 
     const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'dataServico,desc' };
-    const status = this.filtroStatus();
+    const filtros: FiltroOrdemServico = { ...this.filtrosAplicados(), status: this.filtroStatus() || undefined };
 
-    const request$ = status
-      ? this.service.buscarPorStatus(status, parametros)
-      : this.service.listar(parametros);
-
-    request$.subscribe({
+    this.service.listar(parametros, filtros).subscribe({
       next: pagina => {
         this.pagina.set(pagina);
         this.carregando.set(false);
@@ -131,6 +137,23 @@ export class OrdensServicoComponent implements OnInit {
 
   filtrarPorStatus(valor: string): void {
     this.filtroStatus.set(valor as StatusOrdemServico | '');
+    this.carregar();
+  }
+
+  aplicarFiltros(): void {
+    this.filtrosAplicados.set({
+      dataInicio: this.filtroDataInicio() || undefined,
+      dataFim: this.filtroDataFim() || undefined,
+      motoristaId: this.filtroMotoristaId() ?? undefined,
+    });
+    this.carregar();
+  }
+
+  limparFiltros(): void {
+    this.filtroDataInicio.set('');
+    this.filtroDataFim.set('');
+    this.filtroMotoristaId.set(null);
+    this.filtrosAplicados.set({});
     this.carregar();
   }
 
@@ -194,7 +217,8 @@ export class OrdensServicoComponent implements OnInit {
     this.erroFormulario.set(null);
 
     const editando = this.editando();
-    const dados: OrdemServicoRequest = this.form.getRawValue();
+    // na edicao a versao carregada vai junto: se outra pessoa salvou antes, o backend responde 409
+    const dados: OrdemServicoRequest = { ...this.form.getRawValue(), versao: editando?.versao };
 
     const request$ = editando
       ? this.service.atualizar(editando.id, dados)
@@ -217,6 +241,10 @@ export class OrdensServicoComponent implements OnInit {
       error: (err: unknown) => {
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar a ordem de serviço.'));
+        // 409: a lista e recarregada pra a proxima edicao ja partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }

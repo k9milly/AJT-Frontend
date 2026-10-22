@@ -6,6 +6,8 @@ import { Recurso } from '../../core/auth/permissoes';
 import { mensagemDeErro } from '../../core/http/erro-api';
 import { OrdemServico } from '../../core/models/ordem-servico.model';
 import { Transfer } from '../../core/models/transfer.model';
+import { PainelResumo } from '../../core/models/painel.model';
+import { PainelService } from './painel.service';
 import { TransferService } from '../transfers/transfer.service';
 import { OrdemServicoService } from '../ordens-servico/ordem-servico.service';
 import { IconeComponent, NomeIcone } from '../../shared/components/icone/icone.component';
@@ -16,6 +18,7 @@ import {
   ROTULO_STATUS_TRANSFER,
   formatarData,
   formatarHora,
+  formatarMoeda,
   tomDoStatus,
 } from '../../shared/utils/rotulos';
 
@@ -34,15 +37,16 @@ const ITENS_POR_LISTA = 5;
 // ---------------------------------------------------------------
 // painel inicial (dashboard)
 // ---------------------------------------------------------------
-// o backend nao tem endpoint de resumo, entao os numeros saem do "totalElementos" das buscas
-// paginadas por status (pedindo so 1 item, o suficiente pra ler o total sem trafegar dados).
-// as listas mostram o que precisa de acao: transfers sem os e os ainda abertas.
+// os indicadores sao do dia (RF012) e vem prontos do GET /api/painel/resumo (uma consulta
+// agregada no backend). o faturamento (HU08) so vem preenchido pra ADMIN e GERENTE.
+// as listas mostram o que precisa de acao, de qualquer dia: transfers sem os e os ainda abertas.
 @Component({
     selector: 'app-painel',
     imports: [RouterLink, IconeComponent, StatCardComponent, StatusBadgeComponent],
     templateUrl: './painel.component.html'
 })
 export class PainelComponent implements OnInit {
+  private painelService = inject(PainelService);
   private transferService = inject(TransferService);
   private ordemServicoService = inject(OrdemServicoService);
   auth = inject(AuthService);
@@ -53,11 +57,28 @@ export class PainelComponent implements OnInit {
   formatarData = formatarData;
   formatarHora = formatarHora;
 
-  // indicadores (null = ainda carregando | "—" = api nao respondeu)
-  aguardandoOs = signal<number | string | null>(null);
-  confirmados = signal<number | string | null>(null);
-  osAbertas = signal<number | string | null>(null);
-  osEmAndamento = signal<number | string | null>(null);
+  // resumo do dia (null = ainda carregando)
+  resumo = signal<PainelResumo | null>(null);
+  erroResumo = signal(false);
+
+  // valor de cada card: null = carregando (placeholder) | "—" = api nao respondeu
+  private doResumo<T>(ler: (resumo: PainelResumo) => T): T | string | null {
+    if (this.erroResumo()) {
+      return '—';
+    }
+    const resumo = this.resumo();
+    return resumo ? ler(resumo) : null;
+  }
+
+  transfersHoje = computed(() => this.doResumo(r => r.totalTransfers));
+  aguardandoOsHoje = computed(() => this.doResumo(r => r.transfersPorStatus.AGUARDANDO_OS));
+  osAbertasHoje = computed(() => this.doResumo(r => r.ordensServicoPorStatus.ABERTA));
+  osEmAndamentoHoje = computed(() => this.doResumo(r => r.ordensServicoPorStatus.EM_ANDAMENTO));
+
+  // so ADMIN e GERENTE recebem o faturamento; pros outros perfis os cards nem aparecem
+  mostraFaturamento = computed(() => this.auth.temPerfil('ADMIN', 'GERENTE'));
+  faturamentoDia = computed(() => this.doResumo(r => formatarMoeda(r.faturamentoDia, 'BRL')));
+  faturamentoMes = computed(() => this.doResumo(r => formatarMoeda(r.faturamentoMes, 'BRL')));
 
   transfersSemOs = signal<Transfer[]>([]);
   ordensAbertas = signal<OrdemServico[]>([]);
@@ -87,31 +108,29 @@ export class PainelComponent implements OnInit {
 
   carregar(): void {
     this.erro.set(null);
+    this.erroResumo.set(false);
+    this.resumo.set(null);
     this.carregandoListas.set(true);
-    [this.aguardandoOs, this.confirmados, this.osAbertas, this.osEmAndamento].forEach(indicador => indicador.set(null));
 
-    // size 1: so interessa o totalElementos
-    const soTotal = { page: 0, size: 1 };
+    this.painelService.resumo().subscribe({
+      next: resumo => this.resumo.set(resumo),
+      error: (err: unknown) => {
+        this.erroResumo.set(true);
+        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar o painel.'));
+      },
+    });
 
     forkJoin({
       aguardando: this.transferService.buscarPorStatus('AGUARDANDO_OS', { page: 0, size: ITENS_POR_LISTA, sort: 'dataTransfer,asc' }),
-      confirmados: this.transferService.buscarPorStatus('CONFIRMADO', soTotal),
       abertas: this.ordemServicoService.buscarPorStatus('ABERTA', { page: 0, size: ITENS_POR_LISTA, sort: 'dataServico,asc' }),
-      emAndamento: this.ordemServicoService.buscarPorStatus('EM_ANDAMENTO', soTotal),
     }).subscribe({
       next: resultado => {
-        this.aguardandoOs.set(resultado.aguardando.totalElementos);
-        this.confirmados.set(resultado.confirmados.totalElementos);
-        this.osAbertas.set(resultado.abertas.totalElementos);
-        this.osEmAndamento.set(resultado.emAndamento.totalElementos);
-
         this.transfersSemOs.set(resultado.aguardando.conteudo);
         this.ordensAbertas.set(resultado.abertas.conteudo);
         this.carregandoListas.set(false);
       },
       error: (err: unknown) => {
         this.erro.set(mensagemDeErro(err, 'Não foi possível carregar o painel.'));
-        [this.aguardandoOs, this.confirmados, this.osAbertas, this.osEmAndamento].forEach(indicador => indicador.set('—'));
         this.carregandoListas.set(false);
       },
     });

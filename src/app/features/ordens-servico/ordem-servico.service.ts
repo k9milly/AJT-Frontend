@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Pagina, ParametrosPagina } from '../../core/models/api.model';
-import { OrdemServico, OrdemServicoRequest, StatusOrdemServico } from '../../core/models/ordem-servico.model';
+import { FiltroOrdemServico, OrdemServico, OrdemServicoDoDia, OrdemServicoRequest, StatusOrdemServico } from '../../core/models/ordem-servico.model';
 import { montarParametros } from '../../core/http/parametros';
 
 // acesso a /api/ordens-servico
@@ -13,8 +13,9 @@ export class OrdemServicoService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/ordens-servico`;
 
-  listar(pagina: ParametrosPagina = {}): Observable<Pagina<OrdemServico>> {
-    return this.http.get<Pagina<OrdemServico>>(this.base, { params: montarParametros(pagina) });
+  // filtros opcionais (RF015): campo vazio nao vai pra url
+  listar(pagina: ParametrosPagina = {}, filtros: FiltroOrdemServico = {}): Observable<Pagina<OrdemServico>> {
+    return this.http.get<Pagina<OrdemServico>>(this.base, { params: montarParametros(pagina, { ...filtros }) });
   }
 
   buscarPorId(id: number): Observable<OrdemServico> {
@@ -39,6 +40,17 @@ export class OrdemServicoService {
   alterarStatus(ordem: OrdemServico, status: StatusOrdemServico): Observable<OrdemServico> {
     const { id, ...dados } = ordem;
     return this.atualizar(id, { ...dados, status });
+  }
+
+  // HU07: OS do motorista logado num dia (sem data = hoje no fuso de sao paulo), ja com as paradas
+  minhasDoDia(data?: string): Observable<OrdemServicoDoDia[]> {
+    return this.http.get<OrdemServicoDoDia[]>(`${this.base}/minhas`, { params: montarParametros({}, { data }) });
+  }
+
+  // relatorio em pdf da os (RF013) pra imprimir e entregar ao motorista
+  // vem como blob porque a rota exige o token (nao da pra abrir a url direto numa aba)
+  baixarPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.base}/${id}/pdf`, { responseType: 'blob' });
   }
 
   // remove tambem as paradas da os (cascade no banco); devolve 409 se houver transfer vinculado

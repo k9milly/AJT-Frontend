@@ -38,6 +38,8 @@ describe('TransferService', () => {
     valorOriginal: 100,
     moedaOrigem: 'USD',
     osId: null,
+    passageiroIds: [],
+    versao: 0,
   };
 
   beforeEach(() => {

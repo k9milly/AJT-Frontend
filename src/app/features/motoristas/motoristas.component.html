@@ -18,21 +18,30 @@
     <div class="ajt-alerta-erro mb-4">{{ erro() }}</div>
   }
 
-  <!-- filtros -->
+  <!-- filtros (RF015): parte do texto, sem diferenciar maiusculas -->
   <div class="ajt-card mb-5 animate-surgir" style="animation-delay: 40ms">
     <form class="flex flex-wrap items-center gap-3 p-4" (submit)="$event.preventDefault(); buscar()">
-      <div class="relative w-full max-w-xs">
+      <div class="relative w-full sm:max-w-xs">
         <app-icone nome="busca" class="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           class="ajt-campo pl-8"
-          placeholder="Buscar pela CNH"
-          [value]="termoBusca()"
-          (input)="termoBusca.set($any($event.target).value)"
+          placeholder="Nome"
+          aria-label="Filtrar por nome"
+          [value]="buscaNome()"
+          (input)="buscaNome.set($any($event.target).value)"
         />
       </div>
+      <input
+        type="text"
+        class="ajt-campo w-full sm:max-w-[12rem]"
+        placeholder="CNH"
+        aria-label="Filtrar por CNH"
+        [value]="buscaCnh()"
+        (input)="buscaCnh.set($any($event.target).value)"
+      />
       <button type="submit" class="ajt-botao-secundario">Buscar</button>
-      @if (buscaAtiva()) {
+      @if (filtroAtivo()) {
         <button type="button" class="text-sm text-muted-foreground hover:text-foreground" (click)="limparBusca()">Limpar</button>
       }
       <span class="ajt-dado ml-auto text-xs text-muted-foreground">
@@ -91,9 +100,7 @@
         </table>
       </div>
 
-      @if (!buscaAtiva()) {
-        <app-paginacao [pagina]="pagina()" (mudarPagina)="carregar($event)" />
-      }
+      <app-paginacao [pagina]="pagina()" (mudarPagina)="carregar($event)" />
     }
   </div>
 </div>

@@ -12,9 +12,12 @@ import { Perfil } from '../models/auth.model';
 // | usuarios                               | ADMIN   | ADMIN                      | ADMIN          |
 // | motoristas, veiculos, ordens-servico   | todos   | ADMIN, GERENTE             | ADMIN, GERENTE |
 // | paradas-os                             | todos   | ADMIN, GERENTE (*)         | ADMIN, GERENTE |
-// | passageiros, transfers, pontos-coleta  | todos   | ADMIN, GERENTE, ATENDENTE  | ADMIN, GERENTE |
+// | passageiros                            | ADMIN, GERENTE, ATENDENTE (**) | ADMIN, GERENTE, ATENDENTE | ADMIN, GERENTE |
+// | transfers, pontos-coleta               | todos   | ADMIN, GERENTE, ATENDENTE  | ADMIN, GERENTE |
+// | auditoria (historico)                  | ADMIN, GERENTE | -                   | -              |
 //
 // (*) MOTORISTA pode apenas trocar o status da parada (PATCH so com statusParada)
+// (**) o motorista ve os passageiros da propria os pelo transfer, com o documento mascarado
 
 export type Recurso =
   | 'usuarios'
@@ -24,7 +27,8 @@ export type Recurso =
   | 'paradas-os'
   | 'passageiros'
   | 'transfers'
-  | 'pontos-coleta';
+  | 'pontos-coleta'
+  | 'auditoria';
 
 interface RegraAcesso {
   leitura: Perfil[];
@@ -42,9 +46,10 @@ export const MATRIZ_ACESSO: Record<Recurso, RegraAcesso> = {
   'veiculos': { leitura: TODOS, escrita: GESTAO, exclusao: GESTAO },
   'ordens-servico': { leitura: TODOS, escrita: GESTAO, exclusao: GESTAO },
   'paradas-os': { leitura: TODOS, escrita: GESTAO, exclusao: GESTAO },
-  'passageiros': { leitura: TODOS, escrita: OPERACAO, exclusao: GESTAO },
+  'passageiros': { leitura: OPERACAO, escrita: OPERACAO, exclusao: GESTAO },
   'transfers': { leitura: TODOS, escrita: OPERACAO, exclusao: GESTAO },
   'pontos-coleta': { leitura: TODOS, escrita: OPERACAO, exclusao: GESTAO },
+  'auditoria': { leitura: GESTAO, escrita: [], exclusao: [] },
 };
 
 // perfis que podem trocar so o status de uma parada (alem de quem ja tem escrita completa)

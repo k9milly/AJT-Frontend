@@ -51,7 +51,14 @@
                     </div>
                   </div>
                 </td>
-                <td class="text-muted-foreground">{{ rotuloPerfil[usuario.role] }}</td>
+                <td class="text-muted-foreground">
+                  {{ rotuloPerfil[usuario.role] }}
+                  @if (usuario.role === 'MOTORISTA') {
+                    <p class="text-[11px]" [class.text-status-warning]="!usuario.motoristaId">
+                      {{ nomeMotorista(usuario.motoristaId) ?? 'Sem motorista ligado' }}
+                    </p>
+                  }
+                </td>
                 <td>
                   <app-status-badge [tom]="situacao(usuario).tom" [rotulo]="situacao(usuario).rotulo" />
                 </td>
@@ -130,6 +137,20 @@
       </select>
       <p class="ajt-ajuda">{{ descricaoPerfil[perfilSelecionado()] }}</p>
     </div>
+
+    <!-- HU07: qual cadastro de motorista e este usuario (define as OS que ele ve) -->
+    @if (perfilSelecionado() === 'MOTORISTA') {
+      <div>
+        <label for="motoristaId" class="ajt-rotulo">Motorista</label>
+        <select id="motoristaId" formControlName="motoristaId" class="ajt-campo">
+          <option [ngValue]="null">Nenhum (não vê nenhuma OS)</option>
+          @for (motorista of motoristas(); track motorista.id) {
+            <option [ngValue]="motorista.id">{{ motorista.nome }} · CNH {{ motorista.cnh }}</option>
+          }
+        </select>
+        <p class="ajt-ajuda">Ele vê só as ordens de serviço deste motorista. Cada motorista pode estar ligado a um usuário só.</p>
+      </div>
+    }
 
     <!-- ativo/inativo -->
     <label class="flex cursor-pointer items-center justify-between rounded-md border border-border px-3 py-2.5"

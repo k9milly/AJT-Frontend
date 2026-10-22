@@ -71,6 +71,7 @@ describe('rotulos e formatadores', () => {
     const transfer: Transfer = {
       id: 12, dataTransfer: '2026-09-20', horaTransfer: '14:30:00', origem: 'Aeroporto', destino: 'Hotel',
       status: 'CONFIRMADO', valorBase: null, valorOriginal: null, moedaOrigem: null, osId: null,
+      passageiroIds: [], versao: 0,
     };
 
     expect(descreverTransfer(transfer)).toBe('#12 · 20/09/2026 14:30 · Aeroporto → Hotel');

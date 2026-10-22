@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Pagina, ParametrosPagina } from '../../core/models/api.model';
-import { Motorista, MotoristaRequest } from '../../core/models/motorista.model';
+import { FiltroMotorista, Motorista, MotoristaRequest } from '../../core/models/motorista.model';
 import { montarParametros } from '../../core/http/parametros';
 
 // acesso a /api/motoristas
@@ -13,17 +13,13 @@ export class MotoristaService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/motoristas`;
 
-  listar(pagina: ParametrosPagina = {}): Observable<Pagina<Motorista>> {
-    return this.http.get<Pagina<Motorista>>(this.base, { params: montarParametros(pagina) });
+  // filtros opcionais (RF015): campo vazio nao vai pra url
+  listar(pagina: ParametrosPagina = {}, filtros: FiltroMotorista = {}): Observable<Pagina<Motorista>> {
+    return this.http.get<Pagina<Motorista>>(this.base, { params: montarParametros(pagina, { ...filtros }) });
   }
 
   buscarPorId(id: number): Observable<Motorista> {
     return this.http.get<Motorista>(`${this.base}/${id}`);
-  }
-
-  // busca exata por cnh; devolve 404 quando nao encontra
-  buscarPorCnh(cnh: string): Observable<Motorista> {
-    return this.http.get<Motorista>(`${this.base}/buscar`, { params: montarParametros({}, { cnh }) });
   }
 
   criar(dados: MotoristaRequest): Observable<Motorista> {

@@ -238,6 +238,23 @@
     @apply border-b border-border transition-colors last:border-0 hover:bg-muted/50;
   }
 
+  /* coluna de acoes (a ultima) presa na direita: quando a tabela rola de lado em tela
+     estreita, editar/excluir continuam a vista. o fundo e opaco pra cobrir o que passa
+     por baixo; no hover recebe a mesma camada de muted/50 da linha.
+     a linha de "nenhum registro" (colspan) fica de fora */
+  .ajt-tabela th:last-child,
+  .ajt-tabela td:last-child:not([colspan]) {
+    @apply sticky right-0 bg-card;
+  }
+
+  .ajt-tabela td:last-child:not([colspan]) {
+    box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.25);
+  }
+
+  .ajt-tabela tbody tr:hover td:last-child:not([colspan]) {
+    background-image: linear-gradient(rgb(var(--muted) / 0.5), rgb(var(--muted) / 0.5));
+  }
+
   /* ----- mensagens ----- */
 
   .ajt-alerta-erro {

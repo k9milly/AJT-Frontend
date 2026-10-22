@@ -3,8 +3,8 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina, paginaUnica } from '../../core/models/api.model';
-import { Motorista, MotoristaRequest } from '../../core/models/motorista.model';
+import { Pagina } from '../../core/models/api.model';
+import { FiltroMotorista, Motorista, MotoristaRequest } from '../../core/models/motorista.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { MotoristaService } from './motorista.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -46,9 +46,11 @@ export class MotoristasComponent implements OnInit {
   carregando = signal(true);
   erro = signal<string | null>(null);
 
-  // busca por cnh e exata e feita no backend; enquanto ativa, a paginacao some
-  termoBusca = signal('');
-  buscaAtiva = signal(false);
+  // filtros por nome e cnh (RF015, parte do texto); o aplicado fica separado do digitado
+  buscaNome = signal('');
+  buscaCnh = signal('');
+  filtroAplicado = signal<FiltroMotorista>({});
+  filtroAtivo = computed(() => !!(this.filtroAplicado().nome || this.filtroAplicado().cnh));
 
   podeEscrever = computed(() => this.auth.podeEscrever('motoristas'));
   podeExcluir = computed(() => this.auth.podeExcluir('motoristas'));
@@ -82,9 +84,9 @@ export class MotoristasComponent implements OnInit {
   carregar(numeroPagina = 0): void {
     this.carregando.set(true);
     this.erro.set(null);
-    this.buscaAtiva.set(false);
 
-    this.service.listar({ page: numeroPagina, size: TAMANHO_PAGINA, sort: 'nome,asc' }).subscribe({
+    const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'nome,asc' };
+    this.service.listar(parametros, this.filtroAplicado()).subscribe({
       next: pagina => {
         this.pagina.set(pagina);
         this.carregando.set(false);
@@ -97,35 +99,17 @@ export class MotoristasComponent implements OnInit {
   }
 
   buscar(): void {
-    const cnh = this.termoBusca().trim();
-    if (!cnh) {
-      this.carregar();
-      return;
-    }
-
-    this.carregando.set(true);
-    this.erro.set(null);
-    this.buscaAtiva.set(true);
-
-    this.service.buscarPorCnh(cnh).subscribe({
-      next: motorista => {
-        this.pagina.set(paginaUnica([motorista]));
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        // 404 na busca nao e erro pro usuario: so significa "nenhum resultado"
-        if (statusDoErro(err) === 404) {
-          this.pagina.set(paginaUnica([]));
-        } else {
-          this.erro.set(mensagemDeErro(err, 'Não foi possível buscar o motorista.'));
-        }
-        this.carregando.set(false);
-      },
+    this.filtroAplicado.set({
+      nome: this.buscaNome().trim() || undefined,
+      cnh: this.buscaCnh().trim() || undefined,
     });
+    this.carregar();
   }
 
   limparBusca(): void {
-    this.termoBusca.set('');
+    this.buscaNome.set('');
+    this.buscaCnh.set('');
+    this.filtroAplicado.set({});
     this.carregar();
   }
 
@@ -173,6 +157,8 @@ export class MotoristasComponent implements OnInit {
       // posicao atual nao e editada no painel, mas o PUT sobrescreve: reenvia o que ja existia
       latitudeAtual: editando?.latitudeAtual ?? null,
       longitudeAtual: editando?.longitudeAtual ?? null,
+      // RNF008: com a versao carregada, se outra pessoa salvou antes o backend responde 409
+      versao: editando?.versao,
     };
 
     const request$ = editando
@@ -190,6 +176,10 @@ export class MotoristasComponent implements OnInit {
         // cnh duplicada ou campo invalido: a mensagem do backend ja explica
         this.salvando.set(false);
         this.erroFormulario.set(mensagemDeErro(err, 'Não foi possível salvar o motorista.'));
+        // 409: a lista recarrega pra a proxima edicao ja partir dos dados novos
+        if (statusDoErro(err) === 409) {
+          this.carregar(this.pagina()?.pagina ?? 0);
+        }
       },
     });
   }
@@ -223,8 +213,8 @@ export class MotoristasComponent implements OnInit {
   // se o item excluido era o ultimo da pagina, volta uma pagina pra nao mostrar tabela vazia
   private recarregarAposExclusao(): void {
     const atual = this.pagina();
-    if (this.buscaAtiva() || !atual) {
-      this.limparBusca();
+    if (!atual) {
+      this.carregar();
       return;
     }
     const voltarUma = atual.conteudo.length === 1 && atual.pagina > 0;
