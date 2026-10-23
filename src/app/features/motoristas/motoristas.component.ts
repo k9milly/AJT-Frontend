@@ -12,7 +12,7 @@ import { IconeComponent } from '../../shared/components/icone/icone.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
-import { iniciais, textoOuNulo } from '../../shared/utils/rotulos';
+import { formatarTelefone, iniciais, textoOuNulo } from '../../shared/utils/rotulos';
 
 const TAMANHO_PAGINA = 20;
 
@@ -40,6 +40,7 @@ export class MotoristasComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   iniciais = iniciais;
+  formatarTelefone = formatarTelefone;
 
   // ----- listagem -----
   pagina = signal<Pagina<Motorista> | null>(null);
