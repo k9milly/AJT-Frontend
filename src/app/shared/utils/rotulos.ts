@@ -127,6 +127,22 @@ export function descreverTransfer(transfer: Transfer): string {
     + ` · ${transfer.origem} → ${transfer.destino}`;
 }
 
+// "45999990000" -> "(45) 99999-0000" | "4533334444" -> "(45) 3333-4444"
+// fora desses tamanhos (ramal, numero estrangeiro) mostra como foi digitado
+export function formatarTelefone(telefone: string | null | undefined): string {
+  if (!telefone) {
+    return '—';
+  }
+  const digitos = telefone.replace(/\D/g, '');
+  if (digitos.length === 11) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+  }
+  if (digitos.length === 10) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+  }
+  return telefone;
+}
+
 // texto vazio vira null (campos opcionais do backend esperam null, nao "")
 export function textoOuNulo(valor: string | null | undefined): string | null {
   const limpo = valor?.trim();
