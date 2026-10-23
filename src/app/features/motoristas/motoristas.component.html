@@ -77,7 +77,7 @@
                   </div>
                 </td>
                 <td class="ajt-dado text-muted-foreground">{{ motorista.cnh }}</td>
-                <td class="ajt-dado text-muted-foreground">{{ formatarTelefone(motorista.telefone) }}</td>
+                <td class="ajt-dado text-muted-foreground">{{ motorista.telefone || '—' }}</td>
                 <td class="whitespace-nowrap text-right">
                   @if (podeEscrever()) {
                     <button type="button" class="ajt-botao-icone" title="Editar" (click)="abrirEdicao(motorista)">

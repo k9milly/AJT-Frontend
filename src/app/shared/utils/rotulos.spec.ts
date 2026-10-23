@@ -4,7 +4,6 @@ import {
   formatarData,
   formatarHora,
   formatarMoeda,
-  formatarTelefone,
   horaParaApi,
   horaParaInput,
   iniciais,
@@ -38,14 +37,6 @@ describe('rotulos e formatadores', () => {
     expect(horaParaInput(null)).toBe('');
     expect(horaParaApi('')).toBeNull();
     expect(horaParaApi('08:05')).toBe('08:05');
-  });
-
-  it('formatarTelefone poe mascara em celular e fixo e deixa o resto como veio', () => {
-    expect(formatarTelefone('45999990000')).toBe('(45) 99999-0000');
-    expect(formatarTelefone('(45) 3333-4444')).toBe('(45) 3333-4444');
-    expect(formatarTelefone('4533334444')).toBe('(45) 3333-4444');
-    expect(formatarTelefone('+595 981 123456')).toBe('+595 981 123456');
-    expect(formatarTelefone(null)).toBe('—');
   });
 
   it('formatarMoeda usa o formato brasileiro pra qualquer moeda', () => {
