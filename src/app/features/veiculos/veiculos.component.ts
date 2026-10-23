@@ -63,8 +63,7 @@ export class VeiculosComponent implements OnInit {
   // tamanhos iguais aos do VeiculoRequestDTO do backend
   form = this.fb.group({
     label: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
-    // mesmo padrao do backend: ABC1234 / ABC-1234 (antigo) ou ABC1D23 (Mercosul)
-    placa: this.fb.nonNullable.control('', [Validators.required, Validators.pattern(/^\s*[A-Za-z]{3}-?[0-9][A-Za-z0-9][0-9]{2}\s*$/)]),
+    placa: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(10)]),
     capacidade: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
     tipo: this.fb.nonNullable.control('VAN', Validators.maxLength(50)),
     marca: this.fb.nonNullable.control('', Validators.maxLength(50)),

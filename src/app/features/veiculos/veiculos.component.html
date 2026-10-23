@@ -129,7 +129,7 @@
         <input id="placa" type="text" formControlName="placa" placeholder="ABC1D23" class="ajt-campo ajt-dado uppercase"
                [class.ajt-campo-invalido]="form.controls.placa.touched && form.controls.placa.invalid" />
         @if (form.controls.placa.touched && form.controls.placa.invalid) {
-          <p class="ajt-erro-campo">Placa inválida: use ABC1234 ou ABC1D23 (Mercosul).</p>
+          <p class="ajt-erro-campo">Informe a placa (até 10 caracteres).</p>
         }
       </div>
     </div>
