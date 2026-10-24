@@ -1,6 +1,6 @@
 # AJT-Frontend
 
-Front-end do sistema receptivo da **AJT Viagens e Turismo** (antiga SOS Viale), desenvolvido em Angular 18 (standalone components) com Tailwind CSS. Consome a API REST do [AJT-Backend](https://github.com/guiPinheiroAfK/AJT-Backend).
+Front-end do sistema receptivo da **AJT Viagens e Turismo** (antiga SOS Viale), desenvolvido em Angular 19 (standalone components) com Tailwind CSS. Consome a API REST do [AJT-Backend](https://github.com/guiPinheiroAfK/AJT-Backend).
 
 O projeto tem duas áreas:
 
@@ -11,7 +11,7 @@ O projeto tem duas áreas:
 
 | Camada | Tecnologia |
 | --- | --- |
-| Framework | Angular 18 (standalone components, signals) |
+| Framework | Angular 19 (standalone components, signals) |
 | Estilo | Tailwind CSS (painel) + Bootstrap (somente navbar da landing) |
 | Formulários | Angular Reactive Forms |
 | Autenticação | JWT emitido pelo AJT-Backend |
@@ -19,9 +19,9 @@ O projeto tem duas áreas:
 
 ## Requisitos
 
-- Node.js 18+
-- npm 9+
-- AJT-Backend rodando (padrão `http://localhost:8080`)
+- Node.js 22+ (o `Dockerfile` usa o 24)
+- npm 11+: o `package-lock.json` foi gerado pelo npm 11 e o npm 10 recusa o lock no `npm ci` (com Node 22, atualize com `npm install -g npm@11`; o Node 24 já vem com o npm 11)
+- AJT-Backend rodando em `http://localhost:9090` (porta do `docker compose` do backend)
 
 ## Configuração rápida
 
@@ -38,6 +38,8 @@ A aplicação sobe em `http://localhost:4200`.
 | --- | --- |---------------------------------|
 | `src/environments/environment.ts` | `ng serve` e testes | `http://localhost:9090/api`     |
 | `src/environments/environment.prod.ts` | `ng build` (produção) | `/api` (mesmo domínio do front) |
+
+Se o backend estiver rodando com `mvn spring-boot:run`, ele sobe na porta `8080`: troque o `apiUrl` do `environment.ts` para `http://localhost:8080/api`.
 
 O backend libera CORS para `http://localhost:4200` por padrão (`AJT_CORS_ORIGINS`).
 

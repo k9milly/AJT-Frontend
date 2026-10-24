@@ -181,7 +181,8 @@
       <div>
         <label for="dataTransfer" class="ajt-rotulo">Data</label>
         <input id="dataTransfer" type="date" formControlName="dataTransfer" class="ajt-campo ajt-dado"
-               [class.ajt-campo-invalido]="form.controls.dataTransfer.touched && form.controls.dataTransfer.invalid" />
+               [attr.min]="editando() ? null : hoje"
+               [class.ajt-campo-invalido]="(form.controls.dataTransfer.touched && form.controls.dataTransfer.invalid) || form.hasError('dataHoraNoPassado')" />
         @if (form.controls.dataTransfer.touched && form.controls.dataTransfer.invalid) {
           <p class="ajt-erro-campo">Informe a data.</p>
         }
@@ -190,21 +191,28 @@
       <div>
         <label for="horaTransfer" class="ajt-rotulo">Hora</label>
         <input id="horaTransfer" type="time" formControlName="horaTransfer" class="ajt-campo ajt-dado"
-               [class.ajt-campo-invalido]="form.controls.horaTransfer.touched && form.controls.horaTransfer.invalid" />
+               [class.ajt-campo-invalido]="(form.controls.horaTransfer.touched && form.controls.horaTransfer.invalid) || form.hasError('dataHoraNoPassado')" />
         @if (form.controls.horaTransfer.touched && form.controls.horaTransfer.invalid) {
           <p class="ajt-erro-campo">Informe a hora.</p>
+        } @else if (form.hasError('dataHoraNoPassado')) {
+          <p class="ajt-erro-campo">Esse horário já passou: agende a partir de agora.</p>
         }
       </div>
 
       <div>
         <label for="status" class="ajt-rotulo">Status</label>
-        <select id="status" formControlName="status" class="ajt-campo">
-          @for (status of statusOpcoes; track status) {
+        <select id="status" formControlName="status" class="ajt-campo"
+                [class.ajt-campo-invalido]="form.hasError('statusIncompativelComOs')">
+          @for (status of statusOpcoesDoFormulario(); track status) {
             <option [value]="status">{{ rotuloStatus[status] }}</option>
           }
         </select>
-        @if (form.controls.osId.value !== null && form.controls.status.value === 'AGUARDANDO_OS') {
-          <p class="ajt-ajuda">Com OS, o transfer fica como Confirmado ao salvar.</p>
+        @if (form.hasError('statusIncompativelComOs')) {
+          <p class="ajt-erro-campo">
+            {{ osSelecionada() === null ? 'Sem OS, o status é Aguardando OS ou Cancelado.' : 'Com OS, o transfer não fica Aguardando OS.' }}
+          </p>
+        } @else {
+          <p class="ajt-ajuda">O status acompanha a OS: sem OS, Aguardando OS; com OS, Confirmado em diante.</p>
         }
       </div>
     </div>

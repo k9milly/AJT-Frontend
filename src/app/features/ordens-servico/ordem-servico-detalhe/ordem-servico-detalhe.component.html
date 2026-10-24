@@ -268,6 +268,9 @@
         <label for="ordemParada" class="ajt-rotulo">Ordem</label>
         <input id="ordemParada" type="number" min="1" formControlName="ordemParada" class="ajt-campo ajt-dado"
                [class.ajt-campo-invalido]="form.controls.ordemParada.touched && form.controls.ordemParada.invalid" />
+        @if (form.controls.ordemParada.touched && form.controls.ordemParada.invalid) {
+          <p class="ajt-erro-campo">Informe a ordem (maior que zero).</p>
+        }
       </div>
 
       <div>
@@ -311,11 +314,17 @@
         <label for="latitude" class="ajt-rotulo">Latitude (opcional)</label>
         <input id="latitude" type="number" step="any" formControlName="latitude" class="ajt-campo ajt-dado"
                [class.ajt-campo-invalido]="form.controls.latitude.touched && form.controls.latitude.invalid" />
+        @if (form.controls.latitude.touched && form.controls.latitude.invalid) {
+          <p class="ajt-erro-campo">Latitude entre -90 e 90.</p>
+        }
       </div>
       <div>
         <label for="longitude" class="ajt-rotulo">Longitude (opcional)</label>
         <input id="longitude" type="number" step="any" formControlName="longitude" class="ajt-campo ajt-dado"
                [class.ajt-campo-invalido]="form.controls.longitude.touched && form.controls.longitude.invalid" />
+        @if (form.controls.longitude.touched && form.controls.longitude.invalid) {
+          <p class="ajt-erro-campo">Longitude entre -180 e 180.</p>
+        }
       </div>
     </div>
 

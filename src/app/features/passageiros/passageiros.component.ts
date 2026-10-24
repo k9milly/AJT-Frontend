@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
@@ -12,25 +12,16 @@ import { IconeComponent } from '../../shared/components/icone/icone.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
-import { iniciais, textoOuNulo } from '../../shared/utils/rotulos';
+import { cpfValido, formatarCpf, iniciais, textoOuNulo } from '../../shared/utils/rotulos';
 
 const TAMANHO_PAGINA = 20;
 
-// formata o cpf enquanto digita (000.000.000-00)
-// a validacao do digito verificador fica a cargo do backend
-export function formatarCpf(valorDigitado: string): string {
-  const digitos = valorDigitado.replace(/\D/g, '').slice(0, 11);
-
-  if (digitos.length > 9) {
-    return digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
-  }
-  if (digitos.length > 6) {
-    return digitos.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-  }
-  if (digitos.length > 3) {
-    return digitos.replace(/(\d{3})(\d{1,3})/, '$1.$2');
-  }
-  return digitos;
+// com tipo CPF o numero precisa ser um cpf valido (mesma regra do backend);
+// os outros tipos de documento sao texto livre
+function cpfQuandoTipoCpf(controle: AbstractControl): ValidationErrors | null {
+  const tipo = controle.parent?.get('tipoDocumento')?.value;
+  const valor = controle.value as string;
+  return tipo === 'CPF' && valor?.trim() && !cpfValido(valor) ? { cpfInvalido: true } : null;
 }
 
 // ---------------------------------------------------------------
@@ -85,7 +76,7 @@ export class PassageirosComponent implements OnInit {
   form = this.fb.nonNullable.group({
     nome: ['', [Validators.required, Validators.maxLength(100)]],
     tipoDocumento: ['CPF', [Validators.required, Validators.maxLength(20)]],
-    documento: ['', [Validators.required, Validators.maxLength(50)]],
+    documento: ['', [Validators.required, Validators.maxLength(50), cpfQuandoTipoCpf]],
     nacionalidade: ['Brasileira', Validators.maxLength(50)],
   });
 
@@ -95,6 +86,7 @@ export class PassageirosComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
+    this.form.controls.tipoDocumento.valueChanges.subscribe(tipo => this.ajustarDocumentoAoTipo(tipo));
 
     // atalho do painel: ?novo=1 abre o cadastro direto
     if (this.route.snapshot.queryParamMap.get('novo') && this.podeEscrever()) {
@@ -139,7 +131,7 @@ export class PassageirosComponent implements OnInit {
 
   abrirCadastro(): void {
     this.editando.set(null);
-    this.form.reset({ nome: '', tipoDocumento: 'CPF', documento: '', nacionalidade: 'Brasileira' });
+    this.form.reset({ nome: '', tipoDocumento: 'CPF', documento: '', nacionalidade: 'Brasileira' }, { emitEvent: false });
     this.erroFormulario.set(null);
     this.modalAberto.set(true);
   }
@@ -150,12 +142,13 @@ export class PassageirosComponent implements OnInit {
       this.tiposDocumento.update(lista => [...lista, passageiro.tipoDocumento]);
     }
     this.editando.set(passageiro);
+    // emitEvent false: a troca de tipo abaixo e so pra quando o usuario muda o select
     this.form.reset({
       nome: passageiro.nome,
       tipoDocumento: passageiro.tipoDocumento,
-      documento: passageiro.documento,
+      documento: passageiro.tipoDocumento === 'CPF' ? formatarCpf(passageiro.documento) : passageiro.documento,
       nacionalidade: passageiro.nacionalidade ?? '',
-    });
+    }, { emitEvent: false });
     this.erroFormulario.set(null);
     this.modalAberto.set(true);
   }
@@ -172,6 +165,19 @@ export class PassageirosComponent implements OnInit {
       return;
     }
     this.form.controls.documento.setValue(formatarCpf(valorDigitado), { emitEvent: false });
+  }
+
+  // trocou o tipo depois de digitar: virou CPF -> aplica a mascara (se nao tiver letras);
+  // deixou de ser CPF -> tira a mascara de cpf que ficou. nos dois casos revalida o numero
+  private ajustarDocumentoAoTipo(tipo: string): void {
+    const documento = this.form.controls.documento;
+    const atual = documento.value;
+    if (tipo === 'CPF' && !/[A-Za-z]/.test(atual)) {
+      documento.setValue(formatarCpf(atual), { emitEvent: false });
+    } else if (tipo !== 'CPF' && /^\d{3}\.\d{1,3}(\.\d{1,3}(-\d{1,2})?)?$/.test(atual)) {
+      documento.setValue(atual.replace(/[.-]/g, ''), { emitEvent: false });
+    }
+    documento.updateValueAndValidity({ emitEvent: false });
   }
 
   salvar(): void {

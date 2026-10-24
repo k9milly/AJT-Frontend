@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
@@ -14,6 +14,8 @@ import {
   StatusTransfer,
   Transfer,
   TransferRequest,
+  ajustarStatusAoVinculo,
+  statusPermitidoParaVinculo,
 } from '../../core/models/transfer.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { TransferService } from './transfer.service';
@@ -31,13 +33,22 @@ import {
   ROTULO_STATUS_TRANSFER,
   formatarData,
   formatarHora,
+  dataHoraNoPassado,
   formatarMoeda,
+  hojeLocal,
   horaParaApi,
   horaParaInput,
   tomDoStatus,
 } from '../../shared/utils/rotulos';
 
 const TAMANHO_PAGINA = 20;
+
+// o formulario nao salva status que contradiz o vinculo (ex.: Confirmado sem OS)
+function statusCompativelComOs(grupo: AbstractControl): ValidationErrors | null {
+  const status = grupo.get('status')?.value as StatusTransfer;
+  const temOs = grupo.get('osId')?.value !== null;
+  return statusPermitidoParaVinculo(status, temOs) ? null : { statusIncompativelComOs: true };
+}
 
 // ---------------------------------------------------------------
 // tela de transfers: listagem + cadastro/edicao em modal
@@ -123,13 +134,24 @@ export class TransfersComponent implements OnInit {
   // opcoes do select de os: as 100 mais recentes (limite de pagina do backend)
   ordensServico = signal<OrdemServico[]>([]);
 
-  // so aparecem as os do mesmo dia do transfer que ainda recebem transfers (+ a atual, na edicao)
+  // so aparecem as os do mesmo dia do transfer que ainda recebem transfers; a os atual (na edicao)
+  // continua aparecendo mesmo finalizada, mas so enquanto a data do transfer for a dela
   dataSelecionada = signal('');
   ordensDoDia = computed(() => {
     const data = this.dataSelecionada();
     const atual = this.editando()?.osId ?? null;
     return this.ordensServico().filter(ordem =>
-      ordem.id === atual || (ordem.dataServico === data && STATUS_OS_RECEBE_TRANSFER.includes(ordem.status)));
+      ordem.dataServico === data && (ordem.id === atual || STATUS_OS_RECEBE_TRANSFER.includes(ordem.status)));
+  });
+
+  // opcoes do select de status conforme o vinculo; um status antigo fora da regra continua
+  // visivel (pra o select nao ficar em branco), mas o formulario nao salva ate corrigir
+  osSelecionada = signal<number | null>(null);
+  statusSelecionado = signal<StatusTransfer>('AGUARDANDO_OS');
+  statusOpcoesDoFormulario = computed(() => {
+    const temOs = this.osSelecionada() !== null;
+    const atual = this.statusSelecionado();
+    return STATUS_TRANSFER.filter(status => status === atual || statusPermitidoParaVinculo(status, temOs));
   });
 
   // ----- passageiros do transfer (RF007) -----
@@ -155,7 +177,10 @@ export class TransfersComponent implements OnInit {
     valor: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(99999999.99)]),
     moedaOrigem: this.fb.nonNullable.control(MOEDA_BASE, Validators.pattern(/^[A-Za-z]{3}$/)),
     osId: this.fb.control<number | null>(null),
-  });
+  }, { validators: [statusCompativelComOs, grupo => this.validarDataHoraNoFuturo(grupo)] });
+
+  // no cadastro o calendario ja nao deixa escolher dia passado (a hora e conferida pelo validador)
+  hoje = hojeLocal();
 
   moedaSelecionada = signal(MOEDA_BASE);
 
@@ -165,12 +190,22 @@ export class TransfersComponent implements OnInit {
 
   ngOnInit(): void {
     this.form.controls.moedaOrigem.valueChanges.subscribe(moeda => this.moedaSelecionada.set(moeda));
+    this.form.controls.status.valueChanges.subscribe(status => this.statusSelecionado.set(status));
     this.form.controls.dataTransfer.valueChanges.subscribe(data => {
       this.dataSelecionada.set(data);
       // a os escolhida e de outro dia: tira, senao o backend recusa ao salvar
       const osId = this.form.controls.osId.value;
       if (osId !== null && !this.ordensDoDia().some(ordem => ordem.id === osId)) {
         this.form.controls.osId.setValue(null);
+      }
+    });
+    // entrou ou saiu de uma os: o status vai junto (Aguardando OS <-> Confirmado)
+    this.form.controls.osId.valueChanges.subscribe(osId => {
+      this.osSelecionada.set(osId);
+      const status = this.form.controls.status;
+      const ajustado = ajustarStatusAoVinculo(status.value, osId !== null);
+      if (ajustado !== status.value) {
+        status.setValue(ajustado);
       }
     });
 
@@ -242,10 +277,11 @@ export class TransfersComponent implements OnInit {
 
   abrirCadastro(): void {
     this.editando.set(null);
+    this.hoje = hojeLocal();
     this.carregarOrdensServico();
     this.carregarPassageiros();
     this.passageiroIds.set([]);
-    this.form.reset({
+    this.preencherFormulario({
       dataTransfer: '',
       horaTransfer: '',
       origem: '',
@@ -270,7 +306,7 @@ export class TransfersComponent implements OnInit {
     this.carregarOrdensServico();
     this.carregarPassageiros();
     this.passageiroIds.set([...(transfer.passageiroIds ?? [])]);
-    this.form.reset({
+    this.preencherFormulario({
       dataTransfer: transfer.dataTransfer,
       horaTransfer: horaParaInput(transfer.horaTransfer),
       origem: transfer.origem,
@@ -291,6 +327,8 @@ export class TransfersComponent implements OnInit {
   }
 
   salvar(): void {
+    // o relogio andou desde que o modal abriu: confere de novo se o horario ainda nao passou
+    this.form.updateValueAndValidity();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -356,6 +394,31 @@ export class TransfersComponent implements OnInit {
         this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o transfer.'));
       },
     });
+  }
+
+  // nao deixa agendar no passado. na edicao so confere se a data ou a hora mudaram:
+  // um transfer que ja aconteceu continua editavel (ex.: marcar como concluido)
+  private validarDataHoraNoFuturo(grupo: AbstractControl): ValidationErrors | null {
+    const data = grupo.get('dataTransfer')?.value as string;
+    const hora = grupo.get('horaTransfer')?.value as string;
+    if (!data || !hora) {
+      return null;
+    }
+    const original = this.editando();
+    if (original && original.dataTransfer === data && horaParaInput(original.horaTransfer) === hora) {
+      return null;
+    }
+    return dataHoraNoPassado(data, hora) ? { dataHoraNoPassado: true } : null;
+  }
+
+  // carrega os valores sem disparar as reacoes do formulario (limpar os, ajustar status):
+  // elas sao pra quando o usuario mexe nos campos, nao pra quando o modal abre
+  private preencherFormulario(valores: ReturnType<TransfersComponent['form']['getRawValue']>): void {
+    this.form.reset(valores, { emitEvent: false });
+    this.dataSelecionada.set(valores.dataTransfer);
+    this.moedaSelecionada.set(valores.moedaOrigem);
+    this.osSelecionada.set(valores.osId);
+    this.statusSelecionado.set(valores.status);
   }
 
   // converte o formulario no corpo esperado pela api

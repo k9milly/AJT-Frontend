@@ -1,9 +1,9 @@
-import { formatarCpf } from './passageiros.component';
+import { formatarCpf } from './rotulos';
 
 /*
  * o que testa: a mascara de cpf aplicada enquanto o usuario digita no cadastro de passageiros.
  *
- * como rodar: teste unitario puro da funcao exportada, sem renderizar a tela. roda com "npm test".
+ * como rodar: teste unitario puro (a funcao fica em shared/utils/rotulos.ts), sem renderizar a tela. roda com "npm test".
  *
  * por que existe: a mascara roda a cada tecla. se ela nao lidar com texto colado (com pontos,
  * tracos ou espacos) ou com digitos a mais, o documento e salvo errado. o documento e cifrado

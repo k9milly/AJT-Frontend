@@ -51,7 +51,9 @@
       <input mdbInput id="confirmacao" type="password" autocomplete="new-password" formControlName="confirmacao" class="form-control" />
       <label mdbLabel for="confirmacao" class="form-label">Confirmar nova senha</label>
     </mdb-form-control>
-    @if (form.controls.confirmacao.touched && form.hasError('senhasDiferentes')) {
+    @if (form.controls.confirmacao.touched && form.controls.confirmacao.hasError('required')) {
+      <p class="text-[11px] text-[#f87171]">Confirme a nova senha.</p>
+    } @else if (form.controls.confirmacao.touched && form.hasError('senhasDiferentes')) {
       <p class="text-[11px] text-[#f87171]">As senhas não conferem.</p>
     }
 

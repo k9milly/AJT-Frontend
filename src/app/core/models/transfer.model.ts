@@ -3,6 +3,23 @@ export type StatusTransfer = 'AGUARDANDO_OS' | 'CONFIRMADO' | 'EM_ANDAMENTO' | '
 
 export const STATUS_TRANSFER: StatusTransfer[] = ['AGUARDANDO_OS', 'CONFIRMADO', 'EM_ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
 
+// o status acompanha o vinculo com a os: sem os o transfer esta aguardando (ou foi cancelado);
+// com os ele ja foi confirmado e pode andar ate concluido
+export const STATUS_TRANSFER_SEM_OS: StatusTransfer[] = ['AGUARDANDO_OS', 'CANCELADO'];
+export const STATUS_TRANSFER_COM_OS: StatusTransfer[] = ['CONFIRMADO', 'EM_ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
+
+export function statusPermitidoParaVinculo(status: StatusTransfer, temOs: boolean): boolean {
+  return (temOs ? STATUS_TRANSFER_COM_OS : STATUS_TRANSFER_SEM_OS).includes(status);
+}
+
+// ao entrar ou sair de uma os, leva o status pro equivalente (igual o backend faz com AGUARDANDO_OS/CONFIRMADO)
+export function ajustarStatusAoVinculo(status: StatusTransfer, temOs: boolean): StatusTransfer {
+  if (statusPermitidoParaVinculo(status, temOs)) {
+    return status;
+  }
+  return temOs ? 'CONFIRMADO' : 'AGUARDANDO_OS';
+}
+
 // moeda base do sistema; valores em outra moeda sao convertidos pelo backend
 export const MOEDA_BASE = 'BRL';
 
