@@ -146,7 +146,9 @@
           [class.ajt-campo-invalido]="form.controls.documento.touched && form.controls.documento.invalid"
           (input)="aplicarMascaraDocumento($any($event.target).value)"
         />
-        @if (form.controls.documento.touched && form.controls.documento.invalid) {
+        @if (form.controls.documento.touched && form.controls.documento.hasError('cpfInvalido')) {
+          <p class="ajt-erro-campo">CPF inválido: confira os 11 dígitos.</p>
+        } @else if (form.controls.documento.touched && form.controls.documento.invalid) {
           <p class="ajt-erro-campo">Informe o documento (até 50 caracteres).</p>
         }
       </div>

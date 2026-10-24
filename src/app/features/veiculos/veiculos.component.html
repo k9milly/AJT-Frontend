@@ -128,8 +128,10 @@
         <label for="placa" class="ajt-rotulo">Placa</label>
         <input id="placa" type="text" formControlName="placa" placeholder="ABC1D23" class="ajt-campo ajt-dado uppercase"
                [class.ajt-campo-invalido]="form.controls.placa.touched && form.controls.placa.invalid" />
-        @if (form.controls.placa.touched && form.controls.placa.invalid) {
-          <p class="ajt-erro-campo">Informe a placa (até 10 caracteres).</p>
+        @if (form.controls.placa.touched && form.controls.placa.hasError('required')) {
+          <p class="ajt-erro-campo">Informe a placa.</p>
+        } @else if (form.controls.placa.touched && form.controls.placa.invalid) {
+          <p class="ajt-erro-campo">Placa inválida: use ABC1234 ou ABC1D23 (Mercosul).</p>
         }
       </div>
     </div>

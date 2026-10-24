@@ -12,7 +12,7 @@ import { IconeComponent } from '../../shared/components/icone/icone.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
-import { textoOuNulo } from '../../shared/utils/rotulos';
+import { normalizarPlaca, textoOuNulo } from '../../shared/utils/rotulos';
 
 const TAMANHO_PAGINA = 20;
 
@@ -63,7 +63,9 @@ export class VeiculosComponent implements OnInit {
   // tamanhos iguais aos do VeiculoRequestDTO do backend
   form = this.fb.group({
     label: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
-    placa: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(10)]),
+    // padrao antigo (ABC1234, aceita digitar ABC-1234) ou Mercosul (ABC1D23);
+    // ao salvar e ao buscar a placa e normalizada (sem hifen, maiuscula), ver normalizarPlaca
+    placa: this.fb.nonNullable.control('', [Validators.required, Validators.pattern(/^\s*[A-Za-z]{3}-?[0-9][A-Za-z0-9][0-9]{2}\s*$/)]),
     capacidade: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
     tipo: this.fb.nonNullable.control('VAN', Validators.maxLength(50)),
     marca: this.fb.nonNullable.control('', Validators.maxLength(50)),
@@ -100,7 +102,7 @@ export class VeiculosComponent implements OnInit {
   }
 
   buscar(): void {
-    const placa = this.termoBusca().trim().toUpperCase();
+    const placa = normalizarPlaca(this.termoBusca());
     if (!placa) {
       this.carregar();
       return;
@@ -176,7 +178,7 @@ export class VeiculosComponent implements OnInit {
     const valores = this.form.getRawValue();
     const dados: VeiculoRequest = {
       label: valores.label.trim(),
-      placa: valores.placa.trim().toUpperCase(),
+      placa: normalizarPlaca(valores.placa),
       capacidade: Number(valores.capacidade),
       tipo: textoOuNulo(valores.tipo),
       marca: textoOuNulo(valores.marca),

@@ -1,19 +1,24 @@
 import { Transfer } from '../../core/models/transfer.model';
 import {
+  cpfValido,
+  dataHoraNoPassado,
   descreverTransfer,
   formatarData,
   formatarHora,
   formatarMoeda,
+  formatarTelefone,
+  hojeLocal,
   horaParaApi,
   horaParaInput,
   iniciais,
+  normalizarPlaca,
   textoOuNulo,
   tomDoStatus,
 } from './rotulos';
 
 /*
  * o que testa: os formatadores e conversoes usados em todas as telas do painel
- * (datas, horas, moedas, iniciais do avatar, cor dos status e limpeza de campos opcionais).
+ * (datas, horas, moedas, telefone, cpf, placa, iniciais do avatar, cor dos status e limpeza de campos opcionais).
  *
  * como rodar: teste unitario puro, sem TestBed. roda com "npm test".
  *
@@ -37,6 +42,14 @@ describe('rotulos e formatadores', () => {
     expect(horaParaInput(null)).toBe('');
     expect(horaParaApi('')).toBeNull();
     expect(horaParaApi('08:05')).toBe('08:05');
+  });
+
+  it('formatarTelefone poe mascara em celular e fixo e deixa o resto como veio', () => {
+    expect(formatarTelefone('45999990000')).toBe('(45) 99999-0000');
+    expect(formatarTelefone('(45) 3333-4444')).toBe('(45) 3333-4444');
+    expect(formatarTelefone('4533334444')).toBe('(45) 3333-4444');
+    expect(formatarTelefone('+595 981 123456')).toBe('+595 981 123456');
+    expect(formatarTelefone(null)).toBe('—');
   });
 
   it('formatarMoeda usa o formato brasileiro pra qualquer moeda', () => {
@@ -65,6 +78,35 @@ describe('rotulos e formatadores', () => {
     expect(textoOuNulo('   ')).toBeNull();
     expect(textoOuNulo('')).toBeNull();
     expect(textoOuNulo('  Brasileira ')).toBe('Brasileira');
+  });
+
+  it('hojeLocal usa a data do fuso do navegador, nao a de UTC', () => {
+    expect(hojeLocal(new Date(2026, 9, 24, 23, 50))).toBe('2026-10-24');
+    expect(hojeLocal(new Date(2026, 0, 5, 0, 10))).toBe('2026-01-05');
+  });
+
+  it('dataHoraNoPassado recusa horario que ja passou e aceita o minuto atual em diante', () => {
+    const agora = new Date(2026, 9, 24, 9, 7, 30); // 24/10/2026 09:07:30
+    expect(dataHoraNoPassado('2026-10-24', '09:06', agora)).toBeTrue();
+    expect(dataHoraNoPassado('2026-10-23', '23:59', agora)).toBeTrue();
+    expect(dataHoraNoPassado('2026-10-24', '09:07', agora)).toBeFalse();
+    expect(dataHoraNoPassado('2026-10-24', '09:08:00', agora)).toBeFalse();
+    expect(dataHoraNoPassado('2026-10-25', '08:00', agora)).toBeFalse();
+  });
+
+  it('cpfValido segue a regra do backend: 11 digitos, nao repetidos e verificadores certos', () => {
+    expect(cpfValido('529.982.247-25')).toBeTrue();
+    expect(cpfValido('52998224725')).toBeTrue();
+    expect(cpfValido('529.982.247-24')).toBeFalse();
+    expect(cpfValido('111.111.111-11')).toBeFalse();
+    expect(cpfValido('123')).toBeFalse();
+    expect(cpfValido(null)).toBeFalse();
+  });
+
+  it('normalizarPlaca tira hifen e espacos e poe em maiuscula', () => {
+    expect(normalizarPlaca('abc-1234')).toBe('ABC1234');
+    expect(normalizarPlaca(' ABC1D23 ')).toBe('ABC1D23');
+    expect(normalizarPlaca(null)).toBe('');
   });
 
   it('descreverTransfer resume data, hora e rota', () => {

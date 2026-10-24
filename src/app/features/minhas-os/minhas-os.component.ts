@@ -14,16 +14,9 @@ import {
   ROTULO_STATUS_PARADA,
   formatarData,
   formatarHora,
+  hojeLocal,
   tomDoStatus,
 } from '../../shared/utils/rotulos';
-
-// "2026-10-21" no fuso do navegador (o input type=date trabalha nesse formato)
-function hojeLocal(): string {
-  const agora = new Date();
-  const mes = String(agora.getMonth() + 1).padStart(2, '0');
-  const dia = String(agora.getDate()).padStart(2, '0');
-  return `${agora.getFullYear()}-${mes}-${dia}`;
-}
 
 // ---------------------------------------------------------------
 // minhas OS do dia (HU07), so pro perfil MOTORISTA
