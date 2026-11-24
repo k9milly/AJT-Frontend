@@ -43,30 +43,39 @@
 
 
   <!-- filtros extras (RF015): periodo, texto da rota e so os sem OS -->
-  <form class="ajt-card mb-4 flex flex-wrap items-end gap-3 p-4 animate-surgir" style="animation-delay: 60ms"
+  <form class="ajt-card mb-4 p-4 animate-surgir" style="animation-delay: 60ms"
         (submit)="$event.preventDefault(); aplicarFiltros()">
-    <div class="w-full sm:w-auto">
-      <label for="filtroDe" class="ajt-rotulo">De</label>
-      <input id="filtroDe" type="date" class="ajt-campo ajt-dado" [value]="filtroDataInicio()"
-             (input)="filtroDataInicio.set($any($event.target).value)" />
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="w-full sm:w-auto">
+        <label for="filtroDe" class="ajt-rotulo">De</label>
+        <input id="filtroDe" type="date" class="ajt-campo ajt-dado" [value]="filtroDataInicio()"
+               [attr.max]="filtroDataFim() || null"
+               [class.ajt-campo-invalido]="intervaloFiltroInvalido()"
+               (input)="filtroDataInicio.set($any($event.target).value)" />
+      </div>
+      <div class="w-full sm:w-auto">
+        <label for="filtroAte" class="ajt-rotulo">Até</label>
+        <input id="filtroAte" type="date" class="ajt-campo ajt-dado" [value]="filtroDataFim()"
+               [attr.min]="filtroDataInicio() || null"
+               [class.ajt-campo-invalido]="intervaloFiltroInvalido()"
+               (input)="filtroDataFim.set($any($event.target).value)" />
+      </div>
+      <div class="w-full sm:w-56">
+        <label for="filtroBusca" class="ajt-rotulo">Origem ou destino</label>
+        <input id="filtroBusca" type="text" class="ajt-campo" placeholder="Ex.: aeroporto" [value]="filtroBusca()"
+               (input)="filtroBusca.set($any($event.target).value)" />
+      </div>
+      <label class="flex items-center gap-2 pb-2 text-sm text-foreground">
+        <input type="checkbox" [checked]="filtroSemOs()" (change)="filtroSemOs.set($any($event.target).checked)" />
+        Só sem OS
+      </label>
+      <button type="submit" class="ajt-botao-secundario" [disabled]="intervaloFiltroInvalido()">Filtrar</button>
+      @if (temFiltroExtra()) {
+        <button type="button" class="pb-2 text-sm text-muted-foreground hover:text-foreground" (click)="limparFiltros()">Limpar</button>
+      }
     </div>
-    <div class="w-full sm:w-auto">
-      <label for="filtroAte" class="ajt-rotulo">Até</label>
-      <input id="filtroAte" type="date" class="ajt-campo ajt-dado" [value]="filtroDataFim()"
-             (input)="filtroDataFim.set($any($event.target).value)" />
-    </div>
-    <div class="w-full sm:w-56">
-      <label for="filtroBusca" class="ajt-rotulo">Origem ou destino</label>
-      <input id="filtroBusca" type="text" class="ajt-campo" placeholder="Ex.: aeroporto" [value]="filtroBusca()"
-             (input)="filtroBusca.set($any($event.target).value)" />
-    </div>
-    <label class="flex items-center gap-2 pb-2 text-sm text-foreground">
-      <input type="checkbox" [checked]="filtroSemOs()" (change)="filtroSemOs.set($any($event.target).checked)" />
-      Só sem OS
-    </label>
-    <button type="submit" class="ajt-botao-secundario">Filtrar</button>
-    @if (temFiltroExtra()) {
-      <button type="button" class="pb-2 text-sm text-muted-foreground hover:text-foreground" (click)="limparFiltros()">Limpar</button>
+    @if (intervaloFiltroInvalido()) {
+      <p class="ajt-erro-campo mt-2">A data inicial não pode ser posterior à data final.</p>
     }
   </form>
 
@@ -170,6 +179,7 @@
 <!-- ===================== cadastro/edicao ===================== -->
 <app-modal
   [aberto]="modalAberto()"
+  [bloqueado]="salvando()"
   [titulo]="editando() ? 'Editar transfer' : 'Novo transfer'"
   largura="larga"
   (fechar)="fecharModal()"
@@ -181,7 +191,7 @@
       <div>
         <label for="dataTransfer" class="ajt-rotulo">Data</label>
         <input id="dataTransfer" type="date" formControlName="dataTransfer" class="ajt-campo ajt-dado"
-               [attr.min]="editando() ? null : hoje"
+               [attr.min]="editando() ? null : hoje()"
                [class.ajt-campo-invalido]="(form.controls.dataTransfer.touched && form.controls.dataTransfer.invalid) || form.hasError('dataHoraNoPassado')" />
         @if (form.controls.dataTransfer.touched && form.controls.dataTransfer.invalid) {
           <p class="ajt-erro-campo">Informe a data.</p>
@@ -297,20 +307,30 @@
             }
           </ul>
         }
-        <select
-          #seletorPassageiro
-          id="adicionarPassageiro"
-          class="ajt-campo"
-          [disabled]="!passageirosDisponiveis().length"
-          (change)="adicionarPassageiro(seletorPassageiro.value); seletorPassageiro.value = ''"
-        >
-          <option value="">
-            {{ passageirosDisponiveis().length ? 'Adicionar passageiro...' : (passageiros().length ? 'Todos os passageiros já foram adicionados' : 'Nenhum passageiro cadastrado') }}
-          </option>
-          @for (passageiro of passageirosDisponiveis(); track passageiro.id) {
-            <option [value]="passageiro.id">{{ passageiro.nome }}</option>
-          }
-        </select>
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-[12rem_1fr]">
+          <input
+            type="text"
+            class="ajt-campo"
+            placeholder="Filtrar passageiro..."
+            aria-label="Filtrar passageiro pelo nome"
+            [value]="buscaPassageiro()"
+            (input)="filtrarPassageirosNoModal($any($event.target).value)"
+          />
+          <select
+            #seletorPassageiro
+            id="adicionarPassageiro"
+            class="ajt-campo"
+            [disabled]="!passageirosDisponiveis().length"
+            (change)="adicionarPassageiro(seletorPassageiro.value); seletorPassageiro.value = ''"
+          >
+            <option value="">
+              {{ passageirosDisponiveis().length ? 'Adicionar passageiro...' : (passageiros().length ? 'Todos os passageiros listados já foram adicionados' : 'Nenhum passageiro encontrado') }}
+            </option>
+            @for (passageiro of passageirosDisponiveis(); track passageiro.id) {
+              <option [value]="passageiro.id">{{ passageiro.nome }}</option>
+            }
+          </select>
+        </div>
         <p class="ajt-ajuda">
           {{ passageirosSelecionados().length }} passageiro(s).
           <a routerLink="/admin/passageiros" [queryParams]="{ novo: '1' }" class="underline-offset-2 hover:underline">Cadastrar novo</a>

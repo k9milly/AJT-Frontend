@@ -95,15 +95,22 @@ describe('TransferService', () => {
     excluir.flush(null);
   });
 
-  it('vincular a uma os reenvia o transfer inteiro mantendo o valorBase', () => {
+  it('vincular e desvincular de uma os reenvia o transfer mantendo valorBase e ajustando o status', () => {
     service.alterarOrdemServico(transfer, 9).subscribe();
 
     const req = http.expectOne(`${base}/5`);
     expect(req.request.method).toBe('PUT');
     expect(req.request.body.osId).toBe(9);
+    expect(req.request.body.status).toBe('CONFIRMADO');
     expect(req.request.body.valorBase).toBe(550);
     expect(req.request.body.moedaOrigem).toBe('USD');
     expect(req.request.body.id).toBeUndefined();
-    req.flush({ ...transfer, osId: 9 });
+    req.flush({ ...transfer, osId: 9, status: 'CONFIRMADO' });
+
+    service.alterarOrdemServico({ ...transfer, osId: 9, status: 'EM_ANDAMENTO' }, null).subscribe();
+    const desvinculo = http.expectOne(`${base}/5`);
+    expect(desvinculo.request.body.osId).toBeNull();
+    expect(desvinculo.request.body.status).toBe('AGUARDANDO_OS');
+    desvinculo.flush({ ...transfer, osId: null, status: 'AGUARDANDO_OS' });
   });
 });

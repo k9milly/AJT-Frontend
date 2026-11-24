@@ -1,9 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subject, Subscription, debounceTime, distinctUntilChanged, switchMap, catchError, of } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
+import { Pagina, TAMANHO_MAXIMO_PAGINA, paginaAposExclusao } from '../../core/models/api.model';
 import { OrdemServico, STATUS_OS_RECEBE_TRANSFER } from '../../core/models/ordem-servico.model';
 import { Passageiro } from '../../core/models/passageiro.model';
 import {
@@ -40,6 +42,7 @@ import {
   horaParaInput,
   tomDoStatus,
 } from '../../shared/utils/rotulos';
+import { periodoInvalido, textoObrigatorio } from '../../shared/utils/validadores';
 
 const TAMANHO_PAGINA = 20;
 
@@ -53,7 +56,7 @@ function statusCompativelComOs(grupo: AbstractControl): ValidationErrors | null 
 // ---------------------------------------------------------------
 // tela de transfers: listagem + cadastro/edicao em modal
 // ---------------------------------------------------------------
-// leitura: todos os perfis | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
+// leitura: ADMIN, GERENTE, ATENDENTE (na tela) | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
 //
 // sobre o valor:
 // - o usuario informa o valor e a moeda em que foi negociado (valorOriginal + moedaOrigem)
@@ -77,7 +80,8 @@ function statusCompativelComOs(grupo: AbstractControl): ValidationErrors | null 
         StatusBadgeComponent,
         TabelaSkeletonComponent,
     ],
-    templateUrl: './transfers.component.html'
+    templateUrl: './transfers.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransfersComponent implements OnInit {
   private service = inject(TransferService);
@@ -88,6 +92,11 @@ export class TransfersComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
+  private ordensSub?: Subscription;
+  private buscaPassageiro$ = new Subject<string>();
 
   // helpers de exibicao usados no template
   statusOpcoes = STATUS_TRANSFER;
@@ -116,6 +125,7 @@ export class TransfersComponent implements OnInit {
   filtroSemOs = signal(false);
   filtrosAplicados = signal<FiltroTransfer>({});
   temFiltroExtra = computed(() => Object.values(this.filtrosAplicados()).some(valor => !!valor));
+  intervaloFiltroInvalido = computed(() => periodoInvalido(this.filtroDataInicio(), this.filtroDataFim()));
 
   podeEscrever = computed(() => this.auth.podeEscrever('transfers'));
   podeExcluir = computed(() => this.auth.podeExcluir('transfers'));
@@ -131,7 +141,7 @@ export class TransfersComponent implements OnInit {
   salvando = signal(false);
   erroFormulario = signal<string | null>(null);
 
-  // opcoes do select de os: as 100 mais recentes (limite de pagina do backend)
+  // ordens de servico carregadas sob demanda para a data escolhida no formulario
   ordensServico = signal<OrdemServico[]>([]);
 
   // so aparecem as os do mesmo dia do transfer que ainda recebem transfers; a os atual (na edicao)
@@ -155,12 +165,14 @@ export class TransfersComponent implements OnInit {
   });
 
   // ----- passageiros do transfer (RF007) -----
-  // os 100 primeiros do cadastro por nome (limite de pagina do backend)
+  // busca no servidor por nome (nao trava no limite de 100 registros) + cache dos ja selecionados
+  buscaPassageiro = signal('');
   passageiros = signal<Passageiro[]>([]);
+  passageirosConhecidos = signal<ReadonlyMap<number, Passageiro>>(new Map());
   passageiroIds = signal<number[]>([]);
   passageirosSelecionados = computed(() => {
-    const porId = new Map(this.passageiros().map(p => [p.id, p]));
-    return this.passageiroIds().map(id => porId.get(id) ?? { id, nome: `Passageiro #${id}` });
+    const conhecidos = this.passageirosConhecidos();
+    return this.passageiroIds().map(id => conhecidos.get(id) ?? { id, nome: `Passageiro #${id}` });
   });
   passageirosDisponiveis = computed(() => {
     const escolhidos = new Set(this.passageiroIds());
@@ -171,8 +183,8 @@ export class TransfersComponent implements OnInit {
   form = this.fb.group({
     dataTransfer: this.fb.nonNullable.control('', Validators.required),
     horaTransfer: this.fb.nonNullable.control('', Validators.required),
-    origem: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
-    destino: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
+    origem: this.fb.nonNullable.control('', [textoObrigatorio, Validators.maxLength(100)]),
+    destino: this.fb.nonNullable.control('', [textoObrigatorio, Validators.maxLength(100)]),
     status: this.fb.nonNullable.control<StatusTransfer>('AGUARDANDO_OS', Validators.required),
     valor: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(99999999.99)]),
     moedaOrigem: this.fb.nonNullable.control(MOEDA_BASE, Validators.pattern(/^[A-Za-z]{3}$/)),
@@ -180,7 +192,7 @@ export class TransfersComponent implements OnInit {
   }, { validators: [statusCompativelComOs, grupo => this.validarDataHoraNoFuturo(grupo)] });
 
   // no cadastro o calendario ja nao deixa escolher dia passado (a hora e conferida pelo validador)
-  hoje = hojeLocal();
+  hoje = signal(hojeLocal());
 
   moedaSelecionada = signal(MOEDA_BASE);
 
@@ -189,25 +201,54 @@ export class TransfersComponent implements OnInit {
   excluindo = signal(false);
 
   ngOnInit(): void {
-    this.form.controls.moedaOrigem.valueChanges.subscribe(moeda => this.moedaSelecionada.set(moeda));
-    this.form.controls.status.valueChanges.subscribe(status => this.statusSelecionado.set(status));
-    this.form.controls.dataTransfer.valueChanges.subscribe(data => {
-      this.dataSelecionada.set(data);
-      // a os escolhida e de outro dia: tira, senao o backend recusa ao salvar
-      const osId = this.form.controls.osId.value;
-      if (osId !== null && !this.ordensDoDia().some(ordem => ordem.id === osId)) {
-        this.form.controls.osId.setValue(null);
-      }
-    });
+    this.form.controls.moedaOrigem.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(moeda => this.moedaSelecionada.set(moeda));
+
+    this.form.controls.status.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(status => this.statusSelecionado.set(status));
+
+    this.form.controls.dataTransfer.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(data => {
+        this.dataSelecionada.set(data);
+        // trocou o dia: limpa o vinculo anterior e busca as OS daquele dia no servidor
+        if (this.form.controls.osId.value !== null) {
+          this.form.controls.osId.setValue(null);
+        }
+        this.carregarOrdensDoDia(data, null);
+      });
+
     // entrou ou saiu de uma os: o status vai junto (Aguardando OS <-> Confirmado)
-    this.form.controls.osId.valueChanges.subscribe(osId => {
-      this.osSelecionada.set(osId);
-      const status = this.form.controls.status;
-      const ajustado = ajustarStatusAoVinculo(status.value, osId !== null);
-      if (ajustado !== status.value) {
-        status.setValue(ajustado);
-      }
-    });
+    this.form.controls.osId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(osId => {
+        this.osSelecionada.set(osId);
+        const status = this.form.controls.status;
+        const ajustado = ajustarStatusAoVinculo(status.value, osId !== null);
+        if (ajustado !== status.value) {
+          status.setValue(ajustado);
+        }
+      });
+
+    // busca de passageiros no modal com debounce e cancelamento automatico
+    this.buscaPassageiro$
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(),
+        switchMap(termo =>
+          this.passageiroService
+            .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'nome,asc' }, { nome: termo.trim() || undefined })
+            .pipe(catchError(() => of(null))),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(pagina => {
+        const lista = pagina?.conteudo ?? [];
+        this.passageiros.set(lista);
+        this.registrarPassageirosConhecidos(lista);
+      });
 
     // o painel pode mandar ?status=AGUARDANDO_OS pra abrir ja filtrado
     const status = this.route.snapshot.queryParamMap.get('status') as StatusTransfer | null;
@@ -225,22 +266,25 @@ export class TransfersComponent implements OnInit {
 
   // mais recentes primeiro
   carregar(numeroPagina = 0): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
 
     const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'dataTransfer,desc' };
     const filtros: FiltroTransfer = { ...this.filtrosAplicados(), status: this.filtroStatus() || undefined };
 
-    this.service.listar(parametros, filtros).subscribe({
-      next: pagina => {
-        this.pagina.set(pagina);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os transfers.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.service.listar(parametros, filtros)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.pagina.set(pagina);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os transfers.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   // troca o filtro e mantem a url sincronizada (recarregar a pagina mantem o filtro)
@@ -255,6 +299,9 @@ export class TransfersComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
+    if (this.intervaloFiltroInvalido()) {
+      return;
+    }
     this.filtrosAplicados.set({
       dataInicio: this.filtroDataInicio() || undefined,
       dataFim: this.filtroDataFim() || undefined,
@@ -277,10 +324,10 @@ export class TransfersComponent implements OnInit {
 
   abrirCadastro(): void {
     this.editando.set(null);
-    this.hoje = hojeLocal();
-    this.carregarOrdensServico();
-    this.carregarPassageiros();
+    this.hoje.set(hojeLocal());
+    this.ordensServico.set([]);
     this.passageiroIds.set([]);
+    this.iniciarBuscaPassageiros([]);
     this.preencherFormulario({
       dataTransfer: '',
       horaTransfer: '',
@@ -302,10 +349,11 @@ export class TransfersComponent implements OnInit {
       this.moedas.update(lista => [...lista, moeda]);
     }
 
+    const idsPassageiros = [...(transfer.passageiroIds ?? [])];
     this.editando.set(transfer);
-    this.carregarOrdensServico();
-    this.carregarPassageiros();
-    this.passageiroIds.set([...(transfer.passageiroIds ?? [])]);
+    this.passageiroIds.set(idsPassageiros);
+    this.carregarOrdensDoDia(transfer.dataTransfer, transfer.osId);
+    this.iniciarBuscaPassageiros(idsPassageiros);
     this.preencherFormulario({
       dataTransfer: transfer.dataTransfer,
       horaTransfer: horaParaInput(transfer.horaTransfer),
@@ -328,7 +376,7 @@ export class TransfersComponent implements OnInit {
 
   salvar(): void {
     // o relogio andou desde que o modal abriu: confere de novo se o horario ainda nao passou
-    this.form.updateValueAndValidity();
+    this.form.updateValueAndValidity({ emitEvent: false });
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -344,7 +392,7 @@ export class TransfersComponent implements OnInit {
       ? this.service.atualizar(editando.id, dados)
       : this.service.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: salvo => {
         this.salvando.set(false);
         this.modalAberto.set(false);
@@ -379,21 +427,21 @@ export class TransfersComponent implements OnInit {
 
     this.excluindo.set(true);
 
-    this.service.excluir(transfer.id).subscribe({
-      next: () => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.sucesso('Transfer excluído.');
-        const atual = this.pagina();
-        const voltarUma = !!atual && atual.conteudo.length === 1 && atual.pagina > 0;
-        this.carregar(atual ? (voltarUma ? atual.pagina - 1 : atual.pagina) : 0);
-      },
-      error: (err: unknown) => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o transfer.'));
-      },
-    });
+    this.service.excluir(transfer.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.sucesso('Transfer excluído.');
+          this.carregar(paginaAposExclusao(this.pagina()));
+        },
+        error: (err: unknown) => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o transfer.'));
+        },
+      });
   }
 
   // nao deixa agendar no passado. na edicao so confere se a data ou a hora mudaram:
@@ -447,7 +495,12 @@ export class TransfersComponent implements OnInit {
     };
   }
 
-  // ----- passageiros do transfer -----
+  // ----- passageiros e OS do transfer -----
+
+  filtrarPassageirosNoModal(termo: string): void {
+    this.buscaPassageiro.set(termo);
+    this.buscaPassageiro$.next(termo);
+  }
 
   adicionarPassageiro(valor: string): void {
     const id = Number(valor);
@@ -460,26 +513,76 @@ export class TransfersComponent implements OnInit {
     this.passageiroIds.update(ids => ids.filter(atual => atual !== id));
   }
 
-  private carregarPassageiros(): void {
-    if (this.passageiros().length || !this.podeVerPassageiros()) {
+  private iniciarBuscaPassageiros(idsSelecionados: number[]): void {
+    if (!this.podeVerPassageiros()) {
       return;
     }
+    this.buscaPassageiro.set('');
     this.passageiroService
       .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'nome,asc' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: pagina => this.passageiros.set(pagina.conteudo),
+        next: pagina => {
+          this.passageiros.set(pagina.conteudo);
+          this.registrarPassageirosConhecidos(pagina.conteudo);
+          this.garantirPassageirosSelecionados(idsSelecionados);
+        },
         error: () => this.passageiros.set([]),
       });
   }
 
-  private carregarOrdensServico(): void {
-    if (this.ordensServico().length) {
+  private registrarPassageirosConhecidos(lista: Passageiro[]): void {
+    if (!lista.length) {
       return;
     }
-    this.ordemServicoService
-      .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'dataServico,desc' })
+    this.passageirosConhecidos.update(atual => {
+      const proximo = new Map(atual);
+      for (const p of lista) {
+        proximo.set(p.id, p);
+      }
+      return proximo;
+    });
+  }
+
+  // passageiros ja vinculados que estao alem da primeira pagina de 100 sao buscados por id
+  private garantirPassageirosSelecionados(ids: number[]): void {
+    const conhecidos = this.passageirosConhecidos();
+    for (const id of ids) {
+      if (conhecidos.has(id)) {
+        continue;
+      }
+      this.passageiroService.buscarPorId(id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: passageiro => this.registrarPassageirosConhecidos([passageiro]),
+          error: () => {},
+        });
+    }
+  }
+
+  // consulta as OS especificamente do dia escolhido (RF015), evitando o teto global de 100 OSs
+  private carregarOrdensDoDia(data: string, osAtualId: number | null): void {
+    this.ordensSub?.unsubscribe();
+    if (!data) {
+      this.ordensServico.set([]);
+      return;
+    }
+
+    this.ordensSub = this.ordemServicoService
+      .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'id,desc' }, { dataInicio: data, dataFim: data })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: pagina => this.ordensServico.set(pagina.conteudo),
+        next: pagina => {
+          this.ordensServico.set(pagina.conteudo);
+          if (osAtualId && !pagina.conteudo.some(o => o.id === osAtualId)) {
+            this.ordemServicoService.buscarPorId(osAtualId)
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: os => this.ordensServico.update(lista => [os, ...lista]),
+                error: () => {},
+              });
+          }
+        },
         error: () => this.ordensServico.set([]),
       });
   }
