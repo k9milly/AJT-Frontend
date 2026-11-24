@@ -12,7 +12,7 @@ O projeto tem duas áreas:
 | Camada | Tecnologia |
 | --- | --- |
 | Framework | Angular 19 (standalone components, signals) |
-| Estilo | Tailwind CSS (painel) + Bootstrap (somente navbar da landing) |
+| Estilo | Tailwind CSS + MDB Angular UI Kit |
 | Formulários | Angular Reactive Forms |
 | Autenticação | JWT emitido pelo AJT-Backend |
 | Testes | Jasmine + Karma |
@@ -76,13 +76,14 @@ Usuário `admin` / senha `admin123` (seed do backend). O login devolve `trocarSe
 | Seção | Tela | Rota |
 | --- | --- | --- |
 | Operação | Painel (indicadores e pendências) | `/admin/painel` |
+| Operação | Minhas OS do dia (somente MOTORISTA) | `/admin/minhas-os` |
 | Operação | Transfers | `/admin/transfers` |
 | Operação | Ordens de serviço e detalhe da rota (paradas) | `/admin/ordens-servico`, `/admin/ordens-servico/:id` |
 | Operação | Pontos de coleta | `/admin/pontos-coleta` |
 | Cadastros | Passageiros, Motoristas, Veículos | `/admin/passageiros`, `/admin/motoristas`, `/admin/veiculos` |
-| Administração | Usuários (somente ADMIN) | `/admin/usuarios` |
+| Administração | Usuários (somente ADMIN) e Histórico (ADMIN e GERENTE) | `/admin/usuarios`, `/admin/historico` |
 
-Cadastro e edição abrem em modal dentro de cada tela. O perfil `MOTORISTA` vê um menu reduzido (Início e Ordens de serviço) e só pode alterar o status das paradas.
+Cadastro e edição abrem em modal dentro de cada tela. O perfil `MOTORISTA` acessa apenas seu painel inicial, Minhas OS do dia e Ordens de serviço, podendo alterar somente o status das paradas.
 
 ### Permissões por perfil
 
@@ -133,7 +134,7 @@ src/app/
 
 ### Bootstrap x Tailwind
 
-O Bootstrap é gerado como bundle separado (`angular.json`) e fica ativo **somente na landing page**. Várias classes dele têm o mesmo nome das do Tailwind (`bg-primary`, `border`, `p-4`, `gap-3`...), com `!important` e outra escala. Os guards em `core/layout/estilos-site.ts` desligam o arquivo no login e no painel.
+O Bootstrap é gerado como bundle separado (`angular.json`) e mantido desativado em todas as rotas pelo guard em `core/layout/estilos-site.ts`, pois várias classes utilitárias dele têm o mesmo nome das do Tailwind (`bg-primary`, `border`, `p-4`, `gap-3`...), com `!important` e outra escala.
 
 ## Testes
 

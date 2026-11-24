@@ -16,8 +16,12 @@ server {
     gzip on;
     gzip_types text/css application/javascript application/json image/svg+xml;
 
-    # API: sem barra no fim do proxy_pass o caminho vai inteiro (/api/transfers -> /api/transfers)
-    location /api/ {
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # API: ^~ garante prioridade sobre os blocos regex de extensao abaixo
+    # sem barra no fim do proxy_pass o caminho vai inteiro (/api/transfers -> /api/transfers)
+    location ^~ /api/ {
         proxy_pass ${AJT_API_UPSTREAM};
         # $http_host leva a porta junto (localhost:8081). com $host (sem porta) o Spring compara
         # o Origin do navegador com outro endereco, acha que e CORS e responde 403
@@ -27,16 +31,27 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # js/css com hash no nome mudam a cada build: podem ficar em cache por muito tempo
-    location ~* \.(?:js|css|woff2?|png|jpg|jpeg|gif|svg|ico)$ {
+    # bundles gerados pelo Angular com hash no nome (ex: main-ABCD1234.js): cache longo e imutavel
+    # (a regex fica entre aspas: sem elas o nginx le o "{" do {8} como inicio de bloco e nao sobe)
+    location ~* "-[0-9a-zA-Z]{8}\.(?:js|css|woff2?)$" {
         expires 30d;
         add_header Cache-Control "public, immutable";
+        add_header X-Content-Type-Options "nosniff" always;
+        try_files $uri =404;
+    }
+
+    # demais arquivos estaticos sem hash no nome (ex: logo.png em public/): revalidam apos 1 dia
+    location ~* \.(?:js|css|woff2?|png|jpg|jpeg|gif|svg|ico)$ {
+        expires 1d;
+        add_header Cache-Control "public, must-revalidate";
+        add_header X-Content-Type-Options "nosniff" always;
         try_files $uri =404;
     }
 
     # rotas do Angular (/admin/transfers, /login...) nao existem como arquivo: devolve o index.html
     location / {
         add_header Cache-Control "no-cache";
+        add_header X-Content-Type-Options "nosniff" always;
         try_files $uri $uri/ /index.html;
     }
 }
