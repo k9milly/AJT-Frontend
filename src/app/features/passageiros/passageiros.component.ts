@@ -195,6 +195,8 @@ export class PassageirosComponent implements OnInit {
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      // o erro do servidor era da tentativa anterior: nao pode ficar junto com os erros novos
+      this.erroFormulario.set(null);
       return;
     }
 
