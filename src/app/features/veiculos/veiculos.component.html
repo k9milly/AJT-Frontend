@@ -110,6 +110,7 @@
 <!-- ===================== cadastro/edicao ===================== -->
 <app-modal
   [aberto]="modalAberto()"
+  [bloqueado]="salvando()"
   [titulo]="editando() ? 'Editar veículo' : 'Novo veículo'"
   (fechar)="fecharModal()"
 >
@@ -149,17 +150,21 @@
 
       <div>
         <label for="capacidade" class="ajt-rotulo">Capacidade (lugares)</label>
-        <input id="capacidade" type="number" min="1" formControlName="capacidade" class="ajt-campo ajt-dado"
+        <input id="capacidade" type="number" min="1" step="1" formControlName="capacidade" class="ajt-campo ajt-dado"
                [class.ajt-campo-invalido]="form.controls.capacidade.touched && form.controls.capacidade.invalid" />
         @if (form.controls.capacidade.touched && form.controls.capacidade.invalid) {
-          <p class="ajt-erro-campo">Informe uma capacidade maior que zero.</p>
+          <p class="ajt-erro-campo">Informe um número inteiro maior que zero.</p>
         }
       </div>
     </div>
 
     <div>
       <label for="marca" class="ajt-rotulo">Marca</label>
-      <input id="marca" type="text" formControlName="marca" placeholder="Ex.: Mercedes-Benz" class="ajt-campo" />
+      <input id="marca" type="text" formControlName="marca" placeholder="Ex.: Mercedes-Benz" class="ajt-campo"
+             [class.ajt-campo-invalido]="form.controls.marca.touched && form.controls.marca.invalid" />
+      @if (form.controls.marca.touched && form.controls.marca.invalid) {
+        <p class="ajt-erro-campo">Máximo de 50 caracteres.</p>
+      }
     </div>
 
     @if (erroFormulario()) {

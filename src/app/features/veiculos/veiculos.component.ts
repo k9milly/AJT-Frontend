@@ -1,9 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina, paginaUnica } from '../../core/models/api.model';
+import { Pagina, paginaAposExclusao, paginaUnica } from '../../core/models/api.model';
 import { TIPOS_VEICULO, Veiculo, VeiculoRequest } from '../../core/models/veiculo.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { VeiculoService } from './veiculo.service';
@@ -13,13 +15,14 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
 import { normalizarPlaca, textoOuNulo } from '../../shared/utils/rotulos';
+import { inteiroPositivo, textoObrigatorio } from '../../shared/utils/validadores';
 
 const TAMANHO_PAGINA = 20;
 
 // ---------------------------------------------------------------
 // tela de veiculos: listagem + cadastro/edicao em modal
 // ---------------------------------------------------------------
-// leitura: todos os perfis | escrita e exclusao: ADMIN, GERENTE
+// leitura: ADMIN, GERENTE, ATENDENTE (na tela) | escrita e exclusao: ADMIN, GERENTE
 @Component({
     selector: 'app-veiculos',
     imports: [
@@ -30,7 +33,8 @@ const TAMANHO_PAGINA = 20;
         PaginacaoComponent,
         TabelaSkeletonComponent,
     ],
-    templateUrl: './veiculos.component.html'
+    templateUrl: './veiculos.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VeiculosComponent implements OnInit {
   private service = inject(VeiculoService);
@@ -38,6 +42,9 @@ export class VeiculosComponent implements OnInit {
   private notificacao = inject(NotificacaoService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
 
   // lista sugerida; se um veiculo tiver tipo fora dela, ele e acrescentado ao abrir a edicao
   tipos = signal<string[]>(TIPOS_VEICULO);
@@ -62,11 +69,11 @@ export class VeiculosComponent implements OnInit {
 
   // tamanhos iguais aos do VeiculoRequestDTO do backend
   form = this.fb.group({
-    label: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
+    label: this.fb.nonNullable.control('', [textoObrigatorio, Validators.maxLength(50)]),
     // padrao antigo (ABC1234, aceita digitar ABC-1234) ou Mercosul (ABC1D23);
     // ao salvar e ao buscar a placa e normalizada (sem hifen, maiuscula), ver normalizarPlaca
-    placa: this.fb.nonNullable.control('', [Validators.required, Validators.pattern(/^\s*[A-Za-z]{3}-?[0-9][A-Za-z0-9][0-9]{2}\s*$/)]),
-    capacidade: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
+    placa: this.fb.nonNullable.control('', [textoObrigatorio, Validators.pattern(/^\s*[A-Za-z]{3}-?[0-9][A-Za-z0-9][0-9]{2}\s*$/)]),
+    capacidade: this.fb.control<number | null>(null, [Validators.required, inteiroPositivo]),
     tipo: this.fb.nonNullable.control('VAN', Validators.maxLength(50)),
     marca: this.fb.nonNullable.control('', Validators.maxLength(50)),
   });
@@ -85,20 +92,23 @@ export class VeiculosComponent implements OnInit {
   }
 
   carregar(numeroPagina = 0): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
     this.buscaAtiva.set(false);
 
-    this.service.listar({ page: numeroPagina, size: TAMANHO_PAGINA, sort: 'label,asc' }).subscribe({
-      next: pagina => {
-        this.pagina.set(pagina);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os veículos.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.service.listar({ page: numeroPagina, size: TAMANHO_PAGINA, sort: 'label,asc' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.pagina.set(pagina);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os veículos.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   buscar(): void {
@@ -108,25 +118,28 @@ export class VeiculosComponent implements OnInit {
       return;
     }
 
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
     this.buscaAtiva.set(true);
 
-    this.service.buscarPorPlaca(placa).subscribe({
-      next: veiculo => {
-        this.pagina.set(paginaUnica([veiculo]));
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        // 404 na busca so significa "nenhum resultado"
-        if (statusDoErro(err) === 404) {
-          this.pagina.set(paginaUnica([]));
-        } else {
-          this.erro.set(mensagemDeErro(err, 'Não foi possível buscar o veículo.'));
-        }
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.service.buscarPorPlaca(placa)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: veiculo => {
+          this.pagina.set(paginaUnica([veiculo]));
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          // 404 na busca so significa "nenhum resultado"
+          if (statusDoErro(err) === 404) {
+            this.pagina.set(paginaUnica([]));
+          } else {
+            this.erro.set(mensagemDeErro(err, 'Não foi possível buscar o veículo.'));
+          }
+          this.carregando.set(false);
+        },
+      });
   }
 
   limparBusca(): void {
@@ -190,7 +203,7 @@ export class VeiculosComponent implements OnInit {
       ? this.service.atualizar(editando.id, dados)
       : this.service.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.modalAberto.set(false);
@@ -219,20 +232,22 @@ export class VeiculosComponent implements OnInit {
 
     this.excluindo.set(true);
 
-    this.service.excluir(veiculo.id).subscribe({
-      next: () => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.sucesso('Veículo excluído.');
-        this.recarregarAposExclusao();
-      },
-      error: (err: unknown) => {
-        // 409 = veiculo vinculado a uma ordem de servico
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o veículo.'));
-      },
-    });
+    this.service.excluir(veiculo.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.sucesso('Veículo excluído.');
+          this.recarregarAposExclusao();
+        },
+        error: (err: unknown) => {
+          // 409 = veiculo vinculado a uma ordem de servico
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o veículo.'));
+        },
+      });
   }
 
   // se o item excluido era o ultimo da pagina, volta uma pagina pra nao mostrar tabela vazia
@@ -242,7 +257,6 @@ export class VeiculosComponent implements OnInit {
       this.limparBusca();
       return;
     }
-    const voltarUma = atual.conteudo.length === 1 && atual.pagina > 0;
-    this.carregar(voltarUma ? atual.pagina - 1 : atual.pagina);
+    this.carregar(paginaAposExclusao(atual));
   }
 }
