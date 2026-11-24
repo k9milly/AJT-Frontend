@@ -61,6 +61,12 @@ docker build -t ajt-frontend .
 docker run --rm -p 8081:80 -e AJT_API_UPSTREAM=http://host.docker.internal:9090 ajt-frontend
 ```
 
+### Produção (AWS EC2)
+
+Em produção o front não usa Docker: o script `deploy/provisionar-ec2.sh` do [AJT-Backend](https://github.com/guiPinheiroAfK/AJT-Backend) baixa este repositório, roda `npm ci` e `npm run build -- --configuration production` e publica o conteúdo de `dist/ajt-front/browser` no nginx da EC2. O nginx devolve o `index.html` nas rotas do Angular (fallback de SPA) e repassa `/api` para o back-end, por isso o build de produção usa `apiUrl: '/api'` e não tem nenhum `localhost` fixo.
+
+O passo a passo (criar a EC2, Security Group e rodar o script) está na seção **Deploy na AWS (EC2)** do README do backend.
+
 ### Primeiro acesso
 
 Usuário `admin` / senha `admin123` (seed do backend). O login devolve `trocarSenha: true` e o painel leva direto para a tela de troca de senha. Usuários criados pelo administrador também trocam a senha no primeiro acesso.
