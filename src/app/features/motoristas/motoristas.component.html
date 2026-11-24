@@ -108,6 +108,7 @@
 <!-- ===================== cadastro/edicao ===================== -->
 <app-modal
   [aberto]="modalAberto()"
+  [bloqueado]="salvando()"
   [titulo]="editando() ? 'Editar motorista' : 'Novo motorista'"
   (fechar)="fecharModal()"
 >
@@ -133,7 +134,11 @@
 
       <div>
         <label for="telefone" class="ajt-rotulo">Telefone</label>
-        <input id="telefone" type="tel" formControlName="telefone" placeholder="(00) 00000-0000" class="ajt-campo ajt-dado" />
+        <input id="telefone" type="tel" formControlName="telefone" placeholder="(00) 00000-0000" class="ajt-campo ajt-dado"
+               [class.ajt-campo-invalido]="form.controls.telefone.touched && form.controls.telefone.invalid" />
+        @if (form.controls.telefone.touched && form.controls.telefone.invalid) {
+          <p class="ajt-erro-campo">Máximo de 20 caracteres.</p>
+        }
       </div>
     </div>
 

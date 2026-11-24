@@ -1,10 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, map } from 'rxjs';
+import { Observable, Subscription, map } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina, TAMANHO_MAXIMO_PAGINA, paginaUnica } from '../../core/models/api.model';
+import { Pagina, TAMANHO_MAXIMO_PAGINA, paginaAposExclusao, paginaUnica } from '../../core/models/api.model';
 import { PontoColeta, PontoColetaRequest } from '../../core/models/ponto-coleta.model';
 import { Transfer } from '../../core/models/transfer.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
@@ -16,13 +17,14 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
 import { descreverTransfer, formatarHora, horaParaApi, horaParaInput } from '../../shared/utils/rotulos';
+import { inteiroPositivo, textoObrigatorio } from '../../shared/utils/validadores';
 
 const TAMANHO_PAGINA = 20;
 
 // ---------------------------------------------------------------
 // tela de pontos de coleta: listagem + cadastro/edicao em modal
 // ---------------------------------------------------------------
-// leitura: todos os perfis | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
+// leitura: ADMIN, GERENTE, ATENDENTE (na tela) | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
 // cada ponto pertence a um transfer. sem filtro a lista e geral e paginada; com um transfer
 // escolhido, mostra so os pontos dele na ordem da rota (lista "filha", sem paginacao no backend).
 // a tela de transfers abre esta ja filtrada via ?transferId=...
@@ -36,7 +38,8 @@ const TAMANHO_PAGINA = 20;
         PaginacaoComponent,
         TabelaSkeletonComponent,
     ],
-    templateUrl: './pontos-coleta.component.html'
+    templateUrl: './pontos-coleta.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PontosColetaComponent implements OnInit {
   private service = inject(PontoColetaService);
@@ -46,6 +49,9 @@ export class PontosColetaComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
 
   formatarHora = formatarHora;
   descreverTransfer = descreverTransfer;
@@ -56,7 +62,6 @@ export class PontosColetaComponent implements OnInit {
   erro = signal<string | null>(null);
 
   // transfers pro select de filtro, pro formulario e pra descrever a rota na tabela
-  // (os 100 mais recentes: limite de pagina do backend)
   transfers = signal<Transfer[]>([]);
   filtroTransferId = signal<number | null>(null);
 
@@ -75,8 +80,8 @@ export class PontosColetaComponent implements OnInit {
   // latitude/longitude sao obrigatorias (o banco nao aceita ponto sem coordenada)
   form = this.fb.group({
     transferId: this.fb.control<number | null>(null, Validators.required),
-    localColeta: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
-    ordemParada: this.fb.control<number | null>(null, Validators.min(1)),
+    localColeta: this.fb.nonNullable.control('', [textoObrigatorio, Validators.maxLength(100)]),
+    ordemParada: this.fb.control<number | null>(null, inteiroPositivo),
     horarioPrevisto: this.fb.nonNullable.control(''),
     latitude: this.fb.control<number | null>(null, [Validators.required, Validators.min(-90), Validators.max(90)]),
     longitude: this.fb.control<number | null>(null, [Validators.required, Validators.min(-180), Validators.max(180)]),
@@ -90,12 +95,13 @@ export class PontosColetaComponent implements OnInit {
     this.carregarTransfers();
 
     const transferId = Number(this.route.snapshot.queryParamMap.get('transferId'));
-    this.filtroTransferId.set(transferId > 0 ? transferId : null);
+    this.filtroTransferId.set(Number.isInteger(transferId) && transferId > 0 ? transferId : null);
 
     this.carregar();
   }
 
   carregar(numeroPagina = 0): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
 
@@ -106,16 +112,21 @@ export class PontosColetaComponent implements OnInit {
       ? this.service.listarPorTransfer(transferId).pipe(map(pontos => paginaUnica(pontos)))
       : this.service.listar({ page: numeroPagina, size: TAMANHO_PAGINA, sort: 'id,desc' });
 
-    request$.subscribe({
-      next: pagina => {
-        this.pagina.set(pagina);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os pontos de coleta.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = request$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.pagina.set(pagina);
+          for (const ponto of pagina.conteudo) {
+            this.garantirTransferNaLista(ponto.transferId);
+          }
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os pontos de coleta.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   // troca o filtro e mantem a url sincronizada (recarregar a pagina mantem o filtro)
@@ -197,7 +208,7 @@ export class PontosColetaComponent implements OnInit {
     const dados: PontoColetaRequest = {
       transferId: Number(valores.transferId),
       localColeta: valores.localColeta.trim(),
-      ordemParada: valores.ordemParada ? Number(valores.ordemParada) : null,
+      ordemParada: valores.ordemParada !== null && (valores.ordemParada as unknown) !== '' ? Number(valores.ordemParada) : null,
       horarioPrevisto: horaParaApi(valores.horarioPrevisto),
       latitude: Number(valores.latitude),
       longitude: Number(valores.longitude),
@@ -209,7 +220,7 @@ export class PontosColetaComponent implements OnInit {
       ? this.service.atualizar(editando.id, dados)
       : this.service.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.modalAberto.set(false);
@@ -237,26 +248,27 @@ export class PontosColetaComponent implements OnInit {
 
     this.excluindo.set(true);
 
-    this.service.excluir(ponto.id).subscribe({
-      next: () => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.sucesso('Ponto de coleta excluído.');
-        const atual = this.pagina();
-        const voltarUma = !!atual && atual.conteudo.length === 1 && atual.pagina > 0;
-        this.carregar(atual ? (voltarUma ? atual.pagina - 1 : atual.pagina) : 0);
-      },
-      error: (err: unknown) => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o ponto de coleta.'));
-      },
-    });
+    this.service.excluir(ponto.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.sucesso('Ponto de coleta excluído.');
+          this.carregar(paginaAposExclusao(this.pagina()));
+        },
+        error: (err: unknown) => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o ponto de coleta.'));
+        },
+      });
   }
 
   private carregarTransfers(): void {
     this.transferService
       .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'dataTransfer,desc' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: pagina => {
           this.transfers.set(pagina.conteudo);
@@ -264,19 +276,24 @@ export class PontosColetaComponent implements OnInit {
           if (filtrado) {
             this.garantirTransferNaLista(filtrado);
           }
+          for (const ponto of this.pagina()?.conteudo ?? []) {
+            this.garantirTransferNaLista(ponto.transferId);
+          }
         },
         error: () => this.transfers.set([]),
       });
   }
 
-  // transfer mais antigo que os 100 carregados e buscado a parte pra aparecer nos selects
+  // transfer mais antigo que os 100 carregados e buscado a parte pra aparecer nos selects e na tabela
   private garantirTransferNaLista(transferId: number): void {
-    if (this.transfers().some(t => t.id === transferId)) {
+    if (!transferId || this.transfers().some(t => t.id === transferId)) {
       return;
     }
-    this.transferService.buscarPorId(transferId).subscribe({
-      next: transfer => this.transfers.update(lista => [transfer, ...lista]),
-      error: () => {},
-    });
+    this.transferService.buscarPorId(transferId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: transfer => this.transfers.update(lista => (lista.some(t => t.id === transfer.id) ? lista : [transfer, ...lista])),
+        error: () => {},
+      });
   }
 }

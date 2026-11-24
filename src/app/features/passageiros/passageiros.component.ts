@@ -1,9 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina } from '../../core/models/api.model';
+import { Pagina, paginaAposExclusao } from '../../core/models/api.model';
 import { FiltroPassageiro, Passageiro, PassageiroRequest, TIPOS_DOCUMENTO } from '../../core/models/passageiro.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { PassageiroService } from './passageiro.service';
@@ -13,6 +15,7 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
 import { cpfValido, formatarCpf, iniciais, textoOuNulo } from '../../shared/utils/rotulos';
+import { textoObrigatorio } from '../../shared/utils/validadores';
 
 const TAMANHO_PAGINA = 20;
 
@@ -27,7 +30,7 @@ function cpfQuandoTipoCpf(controle: AbstractControl): ValidationErrors | null {
 // ---------------------------------------------------------------
 // tela de passageiros: listagem + cadastro/edicao em modal
 // ---------------------------------------------------------------
-// leitura: todos os perfis | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
+// leitura: ADMIN, GERENTE, ATENDENTE | escrita: ADMIN, GERENTE, ATENDENTE | exclusao: ADMIN, GERENTE
 // o documento e cifrado no banco, mas volta legivel da api: e dado sensivel (lgpd)
 @Component({
     selector: 'app-passageiros',
@@ -39,7 +42,8 @@ function cpfQuandoTipoCpf(controle: AbstractControl): ValidationErrors | null {
         PaginacaoComponent,
         TabelaSkeletonComponent,
     ],
-    templateUrl: './passageiros.component.html'
+    templateUrl: './passageiros.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PassageirosComponent implements OnInit {
   private service = inject(PassageiroService);
@@ -47,6 +51,9 @@ export class PassageirosComponent implements OnInit {
   private notificacao = inject(NotificacaoService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
 
   iniciais = iniciais;
   tiposDocumento = signal<string[]>(TIPOS_DOCUMENTO);
@@ -74,9 +81,9 @@ export class PassageirosComponent implements OnInit {
 
   // tamanhos iguais aos do PassageiroRequestDTO do backend
   form = this.fb.nonNullable.group({
-    nome: ['', [Validators.required, Validators.maxLength(100)]],
-    tipoDocumento: ['CPF', [Validators.required, Validators.maxLength(20)]],
-    documento: ['', [Validators.required, Validators.maxLength(50), cpfQuandoTipoCpf]],
+    nome: ['', [textoObrigatorio, Validators.maxLength(100)]],
+    tipoDocumento: ['CPF', [textoObrigatorio, Validators.maxLength(20)]],
+    documento: ['', [textoObrigatorio, Validators.maxLength(50), cpfQuandoTipoCpf]],
     nacionalidade: ['Brasileira', Validators.maxLength(50)],
   });
 
@@ -86,7 +93,9 @@ export class PassageirosComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
-    this.form.controls.tipoDocumento.valueChanges.subscribe(tipo => this.ajustarDocumentoAoTipo(tipo));
+    this.form.controls.tipoDocumento.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(tipo => this.ajustarDocumentoAoTipo(tipo));
 
     // atalho do painel: ?novo=1 abre o cadastro direto
     if (this.route.snapshot.queryParamMap.get('novo') && this.podeEscrever()) {
@@ -96,20 +105,23 @@ export class PassageirosComponent implements OnInit {
 
   // carrega a pagina pedida com os filtros aplicados
   carregar(numeroPagina = 0): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
 
     const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'nome,asc' };
-    this.service.listar(parametros, this.filtroAplicado()).subscribe({
-      next: pagina => {
-        this.pagina.set(pagina);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os passageiros.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.service.listar(parametros, this.filtroAplicado())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.pagina.set(pagina);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os passageiros.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   buscar(): void {
@@ -204,7 +216,7 @@ export class PassageirosComponent implements OnInit {
       ? this.service.atualizar(editando.id, dados)
       : this.service.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.modalAberto.set(false);
@@ -232,21 +244,20 @@ export class PassageirosComponent implements OnInit {
 
     this.excluindo.set(true);
 
-    this.service.excluir(passageiro.id).subscribe({
-      next: () => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.sucesso('Passageiro excluído.');
-        // se era o ultimo item da pagina, volta uma pagina pra nao mostrar tabela vazia
-        const atual = this.pagina();
-        const voltarUma = !!atual && atual.conteudo.length === 1 && atual.pagina > 0;
-        this.carregar(atual ? (voltarUma ? atual.pagina - 1 : atual.pagina) : 0);
-      },
-      error: (err: unknown) => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o passageiro.'));
-      },
-    });
+    this.service.excluir(passageiro.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.sucesso('Passageiro excluído.');
+          this.carregar(paginaAposExclusao(this.pagina()));
+        },
+        error: (err: unknown) => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o passageiro.'));
+        },
+      });
   }
 }
