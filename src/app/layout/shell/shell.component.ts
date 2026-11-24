@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -69,9 +69,10 @@ const SECOES_MOTORISTA: SecaoMenu[] = [
 @Component({
     selector: 'app-shell',
     imports: [RouterOutlet, RouterLink, RouterLinkActive, IconeComponent],
-    templateUrl: './shell.component.html'
+    templateUrl: './shell.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ShellComponent implements OnInit {
+export class ShellComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
@@ -115,20 +116,38 @@ export class ShellComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.tema.ativarNoPainel();
     this.atualizarTitulo();
+
+    const perfilAntes = this.auth.perfil();
 
     // ao abrir/recarregar o painel, confirma a sessao no backend e atualiza nome/perfil
     // se o token ja nao valer, o interceptor recebe 401 e manda pro login
-    this.auth.carregarUsuarioLogado().subscribe({
-      next: () => {
-        // o admin pode ter redefinido a senha deste usuario enquanto ele estava logado
-        if (this.auth.precisaTrocarSenha()) {
-          this.router.navigateByUrl('/trocar-senha');
-        }
-      },
-      // erro de rede nao derruba o painel; cada tela mostra o proprio erro ao chamar a api
-      error: () => {},
-    });
+    this.auth.carregarUsuarioLogado()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: usuario => {
+          if (!usuario.ativo) {
+            this.router.navigateByUrl('/login');
+            return;
+          }
+          // o admin pode ter redefinido a senha deste usuario enquanto ele estava logado
+          if (this.auth.precisaTrocarSenha()) {
+            this.router.navigateByUrl('/trocar-senha');
+            return;
+          }
+          // se o perfil mudou no backend (ex.: rebaixado), volta pro inicio do painel pra reavaliar acessos
+          if (perfilAntes && perfilAntes !== usuario.role) {
+            this.router.navigateByUrl('/admin/painel');
+          }
+        },
+        // erro de rede nao derruba o painel; cada tela mostra o proprio erro ao chamar a api
+        error: () => {},
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.tema.desativarForaDoPainel();
   }
 
   sair(): void {
