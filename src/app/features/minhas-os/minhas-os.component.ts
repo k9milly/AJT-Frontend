@@ -1,5 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
 import { OrdemServicoDoDia } from '../../core/models/ordem-servico.model';
 import { ParadaOs, STATUS_PARADA, StatusParada } from '../../core/models/parada-os.model';
@@ -27,6 +29,7 @@ import {
 @Component({
   selector: 'app-minhas-os',
   imports: [RouterLink, IconeComponent, StatusBadgeComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-4xl p-5 sm:p-6">
       <div class="mb-5 flex flex-wrap items-end justify-between gap-3 animate-surgir">
@@ -95,7 +98,7 @@ import {
                         #seletor
                         class="ajt-campo w-full sm:w-40"
                         [attr.aria-label]="'Status da parada ' + parada.ordemParada"
-                        [disabled]="alterandoParadaId() === parada.id"
+                        [disabled]="estaAlterandoParada(parada.id)"
                         (change)="alterarStatus(parada, seletor)"
                       >
                         @for (status of statusParada; track status) {
@@ -117,6 +120,9 @@ export class MinhasOsComponent implements OnInit {
   private ordemServicoService = inject(OrdemServicoService);
   private paradaService = inject(ParadaOsService);
   private notificacao = inject(NotificacaoService);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
 
   statusParada = STATUS_PARADA;
   rotuloStatusOs = ROTULO_STATUS_OS;
@@ -130,25 +136,32 @@ export class MinhasOsComponent implements OnInit {
   ordens = signal<OrdemServicoDoDia[]>([]);
   carregando = signal(true);
   erro = signal<string | null>(null);
-  alterandoParadaId = signal<number | null>(null);
+  paradasEmAlteracao = signal<ReadonlySet<number>>(new Set());
 
   ngOnInit(): void {
     this.carregar();
   }
 
+  estaAlterandoParada(paradaId: number): boolean {
+    return this.paradasEmAlteracao().has(paradaId);
+  }
+
   carregar(): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
-    this.ordemServicoService.minhasDoDia(this.data()).subscribe({
-      next: ordens => {
-        this.ordens.set(ordens);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar suas ordens de serviço.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.ordemServicoService.minhasDoDia(this.data())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ordens => {
+          this.ordens.set(ordens);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar suas ordens de serviço.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   trocarDia(data: string): void {
@@ -161,29 +174,43 @@ export class MinhasOsComponent implements OnInit {
   // recebe o <select> pra voltar o valor antigo se a api recusar
   alterarStatus(parada: ParadaOs, seletor: HTMLSelectElement): void {
     const valor = seletor.value as StatusParada;
-    if (valor === parada.statusParada) {
+    if (valor === parada.statusParada || this.estaAlterandoParada(parada.id)) {
       return;
     }
 
-    this.alterandoParadaId.set(parada.id);
-    this.paradaService.alterarStatus(parada, valor).subscribe({
-      next: atualizada => {
-        this.ordens.update(lista => lista.map(item => ({
-          ...item,
-          paradas: item.paradas.map(p => (p.id === atualizada.id ? atualizada : p)),
-        })));
-        this.alterandoParadaId.set(null);
-        this.notificacao.sucesso(`Parada ${atualizada.ordemParada}: ${this.rotuloStatusParada[atualizada.statusParada]}.`);
-      },
-      error: (err: unknown) => {
-        this.alterandoParadaId.set(null);
-        seletor.value = parada.statusParada;
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status da parada.'));
-        // 409: alguem mexeu na parada no meio tempo; recarrega pra mostrar o estado atual
-        if (statusDoErro(err) === 409) {
-          this.carregar();
-        }
-      },
+    this.marcarParadaEmAlteracao(parada.id, true);
+    this.paradaService.alterarStatus(parada, valor)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: atualizada => {
+          this.ordens.update(lista => lista.map(item => ({
+            ...item,
+            paradas: item.paradas.map(p => (p.id === atualizada.id ? atualizada : p)),
+          })));
+          this.marcarParadaEmAlteracao(parada.id, false);
+          this.notificacao.sucesso(`Parada ${atualizada.ordemParada}: ${this.rotuloStatusParada[atualizada.statusParada]}.`);
+        },
+        error: (err: unknown) => {
+          this.marcarParadaEmAlteracao(parada.id, false);
+          seletor.value = parada.statusParada;
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status da parada.'));
+          // 409: alguem mexeu na parada no meio tempo; recarrega pra mostrar o estado atual
+          if (statusDoErro(err) === 409) {
+            this.carregar();
+          }
+        },
+      });
+  }
+
+  private marcarParadaEmAlteracao(paradaId: number, emAlteracao: boolean): void {
+    this.paradasEmAlteracao.update(atual => {
+      const proximo = new Set(atual);
+      if (emAlteracao) {
+        proximo.add(paradaId);
+      } else {
+        proximo.delete(paradaId);
+      }
+      return proximo;
     });
   }
 }
