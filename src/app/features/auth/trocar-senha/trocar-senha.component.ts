@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -35,6 +36,7 @@ export class TrocarSenhaComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private notificacao = inject(NotificacaoService);
+  private destroyRef = inject(DestroyRef);
   authService = inject(AuthService);
 
   salvando = signal(false);
@@ -61,7 +63,9 @@ export class TrocarSenhaComponent {
     this.erro.set(null);
 
     // o auth service ja troca o token guardado pelo novo que vem na resposta
-    this.authService.trocarSenha({ senhaAtual, novaSenha }).subscribe({
+    this.authService.trocarSenha({ senhaAtual, novaSenha })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.salvando.set(false);
         this.notificacao.sucesso('Senha alterada com sucesso.');
