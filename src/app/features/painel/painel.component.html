@@ -4,7 +4,7 @@
   <div class="mb-6 animate-surgir">
     <h2 class="text-xl font-semibold text-foreground">Olá, {{ primeiroNome() }}</h2>
     <p class="text-sm text-muted-foreground">
-      Resumo da operação · <span class="inline-block first-letter:uppercase">{{ hoje }}</span>
+      {{ ehMotorista() ? 'Seu roteiro de hoje' : 'Resumo da operação' }} · <span class="inline-block first-letter:uppercase">{{ hoje }}</span>
     </p>
   </div>
 
@@ -15,159 +15,236 @@
     </div>
   }
 
-  <!-- indicadores do dia (RF012) -->
-  <div class="grid grid-cols-2 gap-4 lg:grid-cols-4" [class]="mostraFaturamento() ? 'mb-4' : 'mb-6'">
-    <app-stat-card
-      class="animate-surgir"
-      rotulo="Transfers de hoje"
-      [valor]="transfersHoje()"
-      dica="Agendados para hoje, em qualquer status"
-      icone="rota"
-    />
-    <app-stat-card
-      class="animate-surgir"
-      style="animation-delay: 60ms"
-      rotulo="Sem OS hoje"
-      [valor]="aguardandoOsHoje()"
-      dica="Transfers de hoje que ainda precisam de OS"
-      [tom]="$any(aguardandoOsHoje()) > 0 ? 'warning' : 'default'"
-      icone="relogio"
-    />
-    <app-stat-card
-      class="animate-surgir"
-      style="animation-delay: 120ms"
-      rotulo="OS de hoje abertas"
-      [valor]="osAbertasHoje()"
-      dica="Montadas, ainda não iniciadas"
-      icone="prancheta"
-    />
-    <app-stat-card
-      class="animate-surgir"
-      style="animation-delay: 180ms"
-      rotulo="OS de hoje em andamento"
-      [valor]="osEmAndamentoHoje()"
-      dica="Motoristas em rota agora"
-      tom="success"
-      icone="van"
-    />
-  </div>
-
-  <!-- faturamento (HU08): so ADMIN e GERENTE -->
-  @if (mostraFaturamento()) {
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+  @if (ehMotorista()) {
+    <!-- ===================== visao do motorista (HU07) ===================== -->
+    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
       <app-stat-card
         class="animate-surgir"
-        style="animation-delay: 210ms"
-        rotulo="Faturamento de hoje"
-        [valor]="faturamentoDia()"
-        dica="Valor em reais dos transfers de hoje, sem os cancelados"
+        rotulo="Minhas OS de hoje"
+        [valor]="totalMinhasOsHoje()"
+        dica="Ordens de serviço atribuídas a você hoje"
+        icone="prancheta"
+      />
+      <app-stat-card
+        class="animate-surgir"
+        style="animation-delay: 60ms"
+        rotulo="Paradas pendentes"
+        [valor]="paradasPendentesHoje()"
+        dica="Embarques e desembarques a concluir"
+        [tom]="$any(paradasPendentesHoje()) > 0 ? 'warning' : 'default'"
+        icone="relogio"
+      />
+      <app-stat-card
+        class="animate-surgir"
+        style="animation-delay: 120ms"
+        rotulo="Paradas concluídas"
+        [valor]="paradasConcluidasHoje()"
+        dica="Finalizadas no roteiro de hoje"
         tom="success"
         icone="check-circulo"
       />
-      <app-stat-card
-        class="animate-surgir"
-        style="animation-delay: 240ms"
-        rotulo="Faturamento do mês"
-        [valor]="faturamentoMes()"
-        dica="Do dia 1 até hoje, sem os cancelados"
-        tom="success"
-        icone="calendario"
-      />
     </div>
-  }
 
-  <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-
-    <!-- transfers sem os -->
-    <div class="ajt-card animate-surgir hover:shadow-md" style="animation-delay: 240ms">
+    <div class="ajt-card mb-6 animate-surgir hover:shadow-md" style="animation-delay: 180ms">
       <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
-        <h3 class="text-sm font-semibold text-foreground">Aguardando ordem de serviço</h3>
+        <h3 class="text-sm font-semibold text-foreground">Ordens de serviço do dia</h3>
         <a
-          routerLink="/admin/transfers"
-          [queryParams]="{ status: 'AGUARDANDO_OS' }"
+          routerLink="/admin/minhas-os"
           class="flex items-center gap-1 text-xs text-muted-foreground no-underline hover:text-foreground"
         >
-          Ver todos <app-icone nome="avancar" class="size-3" />
+          Abrir roteiro <app-icone nome="avancar" class="size-3" />
         </a>
       </div>
 
       @if (carregandoListas()) {
         <div class="space-y-3 p-5">
-          @for (i of [1, 2, 3]; track i) {
+          @for (i of [1, 2]; track i) {
             <div class="h-9 rounded bg-muted animate-pulsar"></div>
           }
         </div>
       } @else if (erro()) {
         <p class="px-5 py-8 text-center text-xs text-muted-foreground">Sem dados no momento.</p>
-      } @else if (!transfersSemOs().length) {
+      } @else if (!minhasOsHoje()?.length) {
         <div class="flex flex-col items-center gap-2 px-5 py-8 text-center">
           <app-icone nome="check-circulo" class="size-6 text-status-success" />
-          <p class="text-xs text-muted-foreground">Nenhum transfer esperando ordem de serviço.</p>
+          <p class="text-xs text-muted-foreground">Nenhuma ordem de serviço atribuída para hoje.</p>
         </div>
       } @else {
         <ul class="divide-y divide-border">
-          @for (transfer of transfersSemOs(); track transfer.id) {
-            <li class="flex items-center justify-between gap-3 px-5 py-3">
-              <div class="min-w-0">
-                <p class="truncate text-[13px] font-medium text-foreground">
-                  {{ transfer.origem }} <span class="text-muted-foreground">→</span> {{ transfer.destino }}
-                </p>
-                <p class="ajt-dado text-[11px] text-muted-foreground">
-                  {{ formatarData(transfer.dataTransfer) }} · {{ formatarHora(transfer.horaTransfer) }}
-                </p>
-              </div>
-              <app-status-badge [tom]="tomDoStatus(transfer.status)" [rotulo]="rotuloStatusTransfer[transfer.status]" />
-            </li>
-          }
-        </ul>
-      }
-    </div>
-
-    <!-- os abertas -->
-    <div class="ajt-card animate-surgir hover:shadow-md" style="animation-delay: 300ms">
-      <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
-        <h3 class="text-sm font-semibold text-foreground">Ordens de serviço abertas</h3>
-        <a
-          routerLink="/admin/ordens-servico"
-          class="flex items-center gap-1 text-xs text-muted-foreground no-underline hover:text-foreground"
-        >
-          Ver todas <app-icone nome="avancar" class="size-3" />
-        </a>
-      </div>
-
-      @if (carregandoListas()) {
-        <div class="space-y-3 p-5">
-          @for (i of [1, 2, 3]; track i) {
-            <div class="h-9 rounded bg-muted animate-pulsar"></div>
-          }
-        </div>
-      } @else if (erro()) {
-        <p class="px-5 py-8 text-center text-xs text-muted-foreground">Sem dados no momento.</p>
-      } @else if (!ordensAbertas().length) {
-        <div class="flex flex-col items-center gap-2 px-5 py-8 text-center">
-          <app-icone nome="check-circulo" class="size-6 text-status-success" />
-          <p class="text-xs text-muted-foreground">Nenhuma ordem de serviço aberta.</p>
-        </div>
-      } @else {
-        <ul class="divide-y divide-border">
-          @for (ordem of ordensAbertas(); track ordem.id) {
+          @for (item of minhasOsHoje(); track item.ordem.id) {
             <li>
               <a
-                [routerLink]="['/admin/ordens-servico', ordem.id]"
+                [routerLink]="['/admin/ordens-servico', item.ordem.id]"
                 class="flex items-center justify-between gap-3 px-5 py-3 no-underline transition-colors hover:bg-muted/50"
               >
                 <div>
-                  <p class="text-[13px] font-medium text-foreground">OS #{{ ordem.id }}</p>
-                  <p class="ajt-dado text-[11px] text-muted-foreground">{{ formatarData(ordem.dataServico) }}</p>
+                  <p class="text-[13px] font-medium text-foreground">OS #{{ item.ordem.id }}</p>
+                  <p class="ajt-dado text-[11px] text-muted-foreground">{{ item.paradas.length }} parada(s) na rota</p>
                 </div>
-                <app-status-badge [tom]="tomDoStatus(ordem.status)" [rotulo]="rotuloStatusOs[ordem.status]" />
+                <app-status-badge [tom]="tomDoStatus(item.ordem.status)" [rotulo]="rotuloStatusOs[item.ordem.status]" />
               </a>
             </li>
           }
         </ul>
       }
     </div>
-  </div>
+
+  } @else {
+    <!-- ===================== visao da equipe ===================== -->
+    <!-- indicadores do dia (RF012) -->
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4" [class]="mostraFaturamento() ? 'mb-4' : 'mb-6'">
+      <app-stat-card
+        class="animate-surgir"
+        rotulo="Transfers de hoje"
+        [valor]="transfersHoje()"
+        dica="Agendados para hoje, em qualquer status"
+        icone="rota"
+      />
+      <app-stat-card
+        class="animate-surgir"
+        style="animation-delay: 60ms"
+        rotulo="Sem OS hoje"
+        [valor]="aguardandoOsHoje()"
+        dica="Transfers de hoje que ainda precisam de OS"
+        [tom]="$any(aguardandoOsHoje()) > 0 ? 'warning' : 'default'"
+        icone="relogio"
+      />
+      <app-stat-card
+        class="animate-surgir"
+        style="animation-delay: 120ms"
+        rotulo="OS de hoje abertas"
+        [valor]="osAbertasHoje()"
+        dica="Montadas, ainda não iniciadas"
+        icone="prancheta"
+      />
+      <app-stat-card
+        class="animate-surgir"
+        style="animation-delay: 180ms"
+        rotulo="OS de hoje em andamento"
+        [valor]="osEmAndamentoHoje()"
+        dica="Motoristas em rota agora"
+        tom="success"
+        icone="van"
+      />
+    </div>
+
+    <!-- faturamento (HU08): so ADMIN e GERENTE -->
+    @if (mostraFaturamento()) {
+      <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <app-stat-card
+          class="animate-surgir"
+          style="animation-delay: 210ms"
+          rotulo="Faturamento de hoje"
+          [valor]="faturamentoDia()"
+          dica="Valor em reais dos transfers de hoje, sem os cancelados"
+          tom="success"
+          icone="check-circulo"
+        />
+        <app-stat-card
+          class="animate-surgir"
+          style="animation-delay: 240ms"
+          rotulo="Faturamento do mês"
+          [valor]="faturamentoMes()"
+          dica="Do dia 1 até hoje, sem os cancelados"
+          tom="success"
+          icone="calendario"
+        />
+      </div>
+    }
+
+    <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+      <!-- transfers sem os -->
+      <div class="ajt-card animate-surgir hover:shadow-md" style="animation-delay: 240ms">
+        <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <h3 class="text-sm font-semibold text-foreground">Aguardando ordem de serviço</h3>
+          <a
+            routerLink="/admin/transfers"
+            [queryParams]="{ status: 'AGUARDANDO_OS' }"
+            class="flex items-center gap-1 text-xs text-muted-foreground no-underline hover:text-foreground"
+          >
+            Ver todos <app-icone nome="avancar" class="size-3" />
+          </a>
+        </div>
+
+        @if (carregandoListas()) {
+          <div class="space-y-3 p-5">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="h-9 rounded bg-muted animate-pulsar"></div>
+            }
+          </div>
+        } @else if (erro()) {
+          <p class="px-5 py-8 text-center text-xs text-muted-foreground">Sem dados no momento.</p>
+        } @else if (!transfersSemOs().length) {
+          <div class="flex flex-col items-center gap-2 px-5 py-8 text-center">
+            <app-icone nome="check-circulo" class="size-6 text-status-success" />
+            <p class="text-xs text-muted-foreground">Nenhum transfer esperando ordem de serviço.</p>
+          </div>
+        } @else {
+          <ul class="divide-y divide-border">
+            @for (transfer of transfersSemOs(); track transfer.id) {
+              <li class="flex items-center justify-between gap-3 px-5 py-3">
+                <div class="min-w-0">
+                  <p class="truncate text-[13px] font-medium text-foreground">
+                    {{ transfer.origem }} <span class="text-muted-foreground">→</span> {{ transfer.destino }}
+                  </p>
+                  <p class="ajt-dado text-[11px] text-muted-foreground">
+                    {{ formatarData(transfer.dataTransfer) }} · {{ formatarHora(transfer.horaTransfer) }}
+                  </p>
+                </div>
+                <app-status-badge [tom]="tomDoStatus(transfer.status)" [rotulo]="rotuloStatusTransfer[transfer.status]" />
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <!-- os abertas -->
+      <div class="ajt-card animate-surgir hover:shadow-md" style="animation-delay: 300ms">
+        <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <h3 class="text-sm font-semibold text-foreground">Ordens de serviço abertas</h3>
+          <a
+            routerLink="/admin/ordens-servico"
+            class="flex items-center gap-1 text-xs text-muted-foreground no-underline hover:text-foreground"
+          >
+            Ver todas <app-icone nome="avancar" class="size-3" />
+          </a>
+        </div>
+
+        @if (carregandoListas()) {
+          <div class="space-y-3 p-5">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="h-9 rounded bg-muted animate-pulsar"></div>
+            }
+          </div>
+        } @else if (erro()) {
+          <p class="px-5 py-8 text-center text-xs text-muted-foreground">Sem dados no momento.</p>
+        } @else if (!ordensAbertas().length) {
+          <div class="flex flex-col items-center gap-2 px-5 py-8 text-center">
+            <app-icone nome="check-circulo" class="size-6 text-status-success" />
+            <p class="text-xs text-muted-foreground">Nenhuma ordem de serviço aberta.</p>
+          </div>
+        } @else {
+          <ul class="divide-y divide-border">
+            @for (ordem of ordensAbertas(); track ordem.id) {
+              <li>
+                <a
+                  [routerLink]="['/admin/ordens-servico', ordem.id]"
+                  class="flex items-center justify-between gap-3 px-5 py-3 no-underline transition-colors hover:bg-muted/50"
+                >
+                  <div>
+                    <p class="text-[13px] font-medium text-foreground">OS #{{ ordem.id }}</p>
+                    <p class="ajt-dado text-[11px] text-muted-foreground">{{ formatarData(ordem.dataServico) }}</p>
+                  </div>
+                  <app-status-badge [tom]="tomDoStatus(ordem.status)" [rotulo]="rotuloStatusOs[ordem.status]" />
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
 
   <!-- atalhos -->
   @if (atalhosVisiveis().length) {

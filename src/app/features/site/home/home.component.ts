@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { RevealDirective } from '../../../shared/directives/reveal.directive';
@@ -11,7 +11,8 @@ const CHAVE_IDIOMA = 'ajt_idioma_home';
 @Component({
     selector: 'app-home',
     imports: [RouterLink, RevealDirective],
-    templateUrl: './home.component.html'
+    templateUrl: './home.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnDestroy {
   private document = inject(DOCUMENT);
@@ -25,6 +26,7 @@ export class HomeComponent implements OnDestroy {
   // seletor de idioma compacto: botao "PT ▾" que abre a lista de idiomas
   readonly idiomaAtual = computed(() => IDIOMAS.find(i => i.codigo === this.idioma()) ?? IDIOMAS[0]);
   readonly menuIdiomaAberto = signal(false);
+  readonly menuMobileAberto = signal(false);
   private seletorIdioma = viewChild<ElementRef<HTMLElement>>('seletorIdioma');
 
   constructor() {
@@ -39,6 +41,14 @@ export class HomeComponent implements OnDestroy {
     this.menuIdiomaAberto.update(aberto => !aberto);
   }
 
+  alternarMenuMobile(): void {
+    this.menuMobileAberto.update(aberto => !aberto);
+  }
+
+  fecharMenuMobile(): void {
+    this.menuMobileAberto.set(false);
+  }
+
   // fecha o menu ao clicar fora dele
   @HostListener('document:click', ['$event'])
   aoClicarNaPagina(evento: MouseEvent): void {
@@ -51,6 +61,7 @@ export class HomeComponent implements OnDestroy {
   @HostListener('document:keydown.escape')
   aoApertarEsc(): void {
     this.menuIdiomaAberto.set(false);
+    this.menuMobileAberto.set(false);
   }
 
   trocarIdioma(idioma: Idioma): void {
