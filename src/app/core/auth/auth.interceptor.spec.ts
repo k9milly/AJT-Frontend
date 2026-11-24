@@ -71,10 +71,14 @@ describe('authInterceptor', () => {
 
   it('nao vaza o token pra urls fora da api', () => {
     http.get('https://api.externa.com/dados').subscribe();
+    const reqExterna = controle.expectOne('https://api.externa.com/dados');
+    expect(reqExterna.request.headers.has('Authorization')).toBeFalse();
+    reqExterna.flush({});
 
-    const req = controle.expectOne('https://api.externa.com/dados');
-    expect(req.request.headers.has('Authorization')).toBeFalse();
-    req.flush({});
+    http.get(`${api}-outro-servico/dados`).subscribe();
+    const reqPrefixo = controle.expectOne(`${api}-outro-servico/dados`);
+    expect(reqPrefixo.request.headers.has('Authorization')).toBeFalse();
+    reqPrefixo.flush({});
   });
 
   it('401 numa chamada da api desloga e redireciona com aviso de sessao expirada', () => {
