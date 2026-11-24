@@ -1,10 +1,11 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 // linhas "fantasma" enquanto a listagem carrega (no lugar do texto "carregando...")
 // larguras variam de proposito pra parecer dado de verdade chegando, nao uma grade uniforme
 @Component({
   selector: 'app-tabela-skeleton',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="divide-y divide-border">
       @for (linha of linhasArray(); track linha) {

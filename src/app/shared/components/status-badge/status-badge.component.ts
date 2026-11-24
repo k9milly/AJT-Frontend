@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 export type TomStatus = 'info' | 'warning' | 'success' | 'danger' | 'neutral';
 
@@ -26,6 +26,7 @@ const CLASSE_PONTO: Record<TomStatus, string> = {
 @Component({
   selector: 'app-status-badge',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span [class]="'inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium ' + classeTom()">
       <span [class]="'size-1.5 rounded-full ' + classePonto()"></span>
