@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Pagina } from '../../../core/models/api.model';
 import { IconeComponent } from '../icone/icone.component';
 
@@ -13,6 +13,7 @@ import { IconeComponent } from '../icone/icone.component';
 @Component({
     selector: 'app-paginacao',
     imports: [IconeComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     @if (pagina(); as p) {
       @if (p.totalPaginas > 1) {

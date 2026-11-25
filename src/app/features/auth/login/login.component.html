@@ -87,8 +87,10 @@
             class="ajt-campo-login w-full rounded-lg border border-[#262626] bg-[#141414] py-2.5 pl-9 pr-3.5 text-sm text-login-foreground
                    outline-none transition-colors focus:border-[#6b6b6b]"
           />
-          @if (form.controls.username.touched && form.controls.username.invalid) {
+          @if (form.controls.username.touched && form.controls.username.hasError('required')) {
             <p class="mt-1 text-[11px] text-[#f87171]">Informe o usuário.</p>
+          } @else if (form.controls.username.touched && form.controls.username.invalid) {
+            <p class="mt-1 text-[11px] text-[#f87171]">Máximo de 50 caracteres.</p>
           }
         </div>
 
@@ -112,8 +114,10 @@
           >
             <app-icone nome="olho" class="size-4" />
           </button>
-          @if (form.controls.senha.touched && form.controls.senha.invalid) {
+          @if (form.controls.senha.touched && form.controls.senha.hasError('required')) {
             <p class="mt-1 text-[11px] text-[#f87171]">Informe a senha.</p>
+          } @else if (form.controls.senha.touched && form.controls.senha.invalid) {
+            <p class="mt-1 text-[11px] text-[#f87171]">Máximo de 72 caracteres.</p>
           }
         </div>
 

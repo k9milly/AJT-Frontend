@@ -107,6 +107,23 @@ describe('AuthService', () => {
     expect(service.precisaTrocarSenha()).toBeFalse();
   });
 
+  it('/me com usuario desativado encerra a sessao local', () => {
+    criarServico();
+    service.login('admin', 'admin123').subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/login`).flush(respostaLogin);
+
+    service.carregarUsuarioLogado().subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({
+      id: 1, nome: 'Administrador', username: 'admin', role: 'ADMIN',
+      ativo: false, trocarSenha: false, ultimoLogin: null, criadoEm: '2026-09-17T10:00:00',
+      motoristaId: null, versao: 1,
+    });
+
+    expect(service.isAutenticado()).toBeFalse();
+    expect(service.getToken()).toBeNull();
+    expect(sessaoSalva()).toBeNull();
+  });
+
   it('token vencido pelo relogio local derruba a sessao', () => {
     const vencida: Sessao = { token: 't', username: 'u', role: 'ATENDENTE', trocarSenha: false, expiraEmMs: Date.now() - 1 };
     localStorage.setItem('ajt_sessao', JSON.stringify(vencida));

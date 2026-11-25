@@ -53,6 +53,10 @@ export class AuthService {
         if (!sessao) {
           return;
         }
+        if (!usuario.ativo) {
+          this.logout();
+          return;
+        }
         this.salvar({
           ...sessao,
           nome: usuario.nome,
@@ -81,21 +85,24 @@ export class AuthService {
   // ----- consultas usadas por guard, interceptor e telas -----
 
   // autenticado = tem token e ele ainda nao venceu pelo relogio local
-  // (o backend continua sendo a fonte da verdade: se ele responder 401 o interceptor desloga)
+  // leitura pura (sem mutar signal), segura pra usar dentro de computed() e templates
   isAutenticado(): boolean {
-    const sessao = this.sessaoAtual();
-    if (!sessao) {
-      return false;
+    return this.sessaoValida() !== null;
+  }
+
+  // usado pelos guards de rota: se a sessao expirou localmente, limpa o storage antes de redirecionar
+  encerrarSeExpirada(): boolean {
+    if (this.sessaoValida()) {
+      return true;
     }
-    if (Date.now() >= sessao.expiraEmMs) {
+    if (this.sessaoAtual()) {
       this.logout();
-      return false;
     }
-    return true;
+    return false;
   }
 
   getToken(): string | null {
-    return this.sessaoAtual()?.token ?? null;
+    return this.sessaoValida()?.token ?? null;
   }
 
   temPerfil(...perfis: Perfil[]): boolean {
@@ -139,7 +146,15 @@ export class AuthService {
     this.sessaoAtual.set(sessao);
   }
 
-  // le a sessao salva; se o json estiver corrompido (ou for de uma versao antiga do front), descarta
+  private sessaoValida(): Sessao | null {
+    const sessao = this.sessaoAtual();
+    if (!sessao || typeof sessao.expiraEmMs !== 'number' || Date.now() >= sessao.expiraEmMs) {
+      return null;
+    }
+    return sessao;
+  }
+
+  // le a sessao salva; se o json estiver corrompido, incompleto ou ja expirado, descarta
   private carregarSessao(): Sessao | null {
     const bruto = localStorage.getItem(CHAVE_SESSAO);
     if (!bruto) {
@@ -147,7 +162,17 @@ export class AuthService {
     }
     try {
       const sessao = JSON.parse(bruto) as Sessao;
-      return sessao?.token && sessao?.role ? sessao : null;
+      const valida = Boolean(
+        sessao?.token
+        && sessao?.role
+        && typeof sessao.expiraEmMs === 'number'
+        && Date.now() < sessao.expiraEmMs,
+      );
+      if (!valida) {
+        localStorage.removeItem(CHAVE_SESSAO);
+        return null;
+      }
+      return sessao;
     } catch {
       localStorage.removeItem(CHAVE_SESSAO);
       return null;

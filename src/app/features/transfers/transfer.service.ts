@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Pagina, ParametrosPagina } from '../../core/models/api.model';
-import { FiltroTransfer, StatusTransfer, Transfer, TransferRequest } from '../../core/models/transfer.model';
+import { FiltroTransfer, StatusTransfer, Transfer, TransferRequest, ajustarStatusAoVinculo } from '../../core/models/transfer.model';
 import { montarParametros } from '../../core/http/parametros';
 
 // acesso a /api/transfers
@@ -39,10 +39,12 @@ export class TransferService {
 
   // vincula (ou desvincula, com null) o transfer a uma ordem de servico
   // o backend nao tem PATCH que aceite osId nulo, entao reenvia o transfer inteiro via PUT.
-  // o valorBase atual vai junto pra o backend nao reconverter o valor com a cotacao de hoje
+  // o valorBase atual vai junto pra o backend nao reconverter o valor com a cotacao de hoje,
+  // e o status acompanha o novo vinculo (sem OS -> AGUARDANDO_OS; com OS -> CONFIRMADO em diante)
   alterarOrdemServico(transfer: Transfer, osId: number | null): Observable<Transfer> {
     const { id, ...dados } = transfer;
-    return this.atualizar(id, { ...dados, osId });
+    const status = ajustarStatusAoVinculo(transfer.status, osId !== null);
+    return this.atualizar(id, { ...dados, osId, status });
   }
 
   // remove tambem os pontos de coleta do transfer (cascade no banco)

@@ -1,12 +1,14 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { mensagemDeErro } from '../../core/http/erro-api';
 import { Pagina } from '../../core/models/api.model';
 import { ROTULO_TABELA_AUDITADA, RegistroAuditoria, TabelaAuditada } from '../../core/models/auditoria.model';
 import { AuditoriaService } from './auditoria.service';
 import { IconeComponent } from '../../shared/components/icone/icone.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
-import { ROTULO_STATUS_OS, ROTULO_STATUS_TRANSFER } from '../../shared/utils/rotulos';
+import { ROTULO_STATUS_OS, ROTULO_STATUS_TRANSFER, formatarDataHora } from '../../shared/utils/rotulos';
 
 // status do backend (AGUARDANDO_OS) -> rotulo da tela (Aguardando OS), pra mensagem ficar legivel
 const ROTULOS_STATUS: Record<string, string> = { ...ROTULO_STATUS_OS, ...ROTULO_STATUS_TRANSFER };
@@ -29,13 +31,6 @@ function montarLinha(registro: RegistroAuditoria): LinhaHistorico {
   return { registro, texto, autor: autor?.[1] ?? null, quando: formatarDataHora(registro.dataHora) };
 }
 
-// "2026-10-19T20:23:39.807" -> "19/10/2026 20:23" (o backend grava sem fuso, no horario do servidor)
-function formatarDataHora(valor: string): string {
-  const [data, hora = ''] = valor.split('T');
-  const [ano, mes, dia] = data.split('-');
-  return `${dia}/${mes}/${ano} ${hora.slice(0, 5)}`;
-}
-
 // ---------------------------------------------------------------
 // lista da trilha de auditoria (HU11, RF014)
 // ---------------------------------------------------------------
@@ -44,6 +39,7 @@ function formatarDataHora(valor: string): string {
 @Component({
   selector: 'app-historico-lista',
   imports: [RouterLink, IconeComponent, PaginacaoComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (erro()) {
       <div class="ajt-alerta-erro m-4">{{ erro() }}</div>
@@ -86,6 +82,8 @@ function formatarDataHora(valor: string): string {
 })
 export class HistoricoListaComponent {
   private service = inject(AuditoriaService);
+  private destroyRef = inject(DestroyRef);
+  private cargaSub?: Subscription;
 
   tabela = input<TabelaAuditada | null>(null);
   registroId = input<number | null>(null);
@@ -99,7 +97,7 @@ export class HistoricoListaComponent {
   erro = signal<string | null>(null);
 
   constructor() {
-    // filtro mudou -> volta pra primeira pagina
+    // filtro mudou -> volta pra primeira pagina (cancelando requisicao anterior em voo)
     effect(() => {
       this.tabela();
       this.registroId();
@@ -108,10 +106,12 @@ export class HistoricoListaComponent {
   }
 
   carregar(numeroPagina: number): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
-    this.service
+    this.cargaSub = this.service
       .listar({ tabela: this.tabela(), registroId: this.registroId() }, { page: numeroPagina, size: this.tamanhoPagina() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: pagina => {
           this.pagina.set(pagina);

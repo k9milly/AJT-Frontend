@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 // ---------------------------------------------------------------
@@ -51,6 +51,7 @@ export type NomeIcone = keyof typeof ICONES;
 @Component({
   selector: 'app-icone',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'inline-flex shrink-0', 'aria-hidden': 'true' },
   template: `
     <svg

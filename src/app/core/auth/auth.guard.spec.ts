@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
 import { Sessao } from '../models/auth.model';
-import { authGuard, sessaoAtivaGuard } from './auth.guard';
+import { authChildGuard, authGuard, sessaoAtivaGuard } from './auth.guard';
 import { roleGuard } from './role.guard';
 
 /*
@@ -87,5 +87,10 @@ describe('guards de sessao e perfil', () => {
     salvarSessao({ role: 'ADMIN' });
     configurar();
     expect(destino(executar(roleGuard('ADMIN')))).toBeTrue();
+  });
+
+  it('authChildGuard protege tambem a navegacao entre rotas filhas', () => {
+    configurar();
+    expect(destino(executar(authChildGuard))).toBe('/login');
   });
 });

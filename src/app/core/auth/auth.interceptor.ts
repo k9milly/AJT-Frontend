@@ -19,7 +19,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  const ehChamadaDaApi = req.url.startsWith(environment.apiUrl);
+  const ehChamadaDaApi = req.url === environment.apiUrl || req.url.startsWith(`${environment.apiUrl}/`);
   const ehLogin = req.url.endsWith('/auth/login');
   const token = authService.getToken();
 

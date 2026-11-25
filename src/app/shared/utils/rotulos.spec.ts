@@ -4,6 +4,7 @@ import {
   dataHoraNoPassado,
   descreverTransfer,
   formatarData,
+  formatarDataHora,
   formatarHora,
   formatarMoeda,
   formatarTelefone,
@@ -34,6 +35,11 @@ describe('rotulos e formatadores', () => {
     expect(formatarData('2026-09-20')).toBe('20/09/2026');
     expect(formatarData('2026-01-01T00:30:00')).toBe('01/01/2026');
     expect(formatarData(null)).toBe('—');
+  });
+
+  it('formatarDataHora junta data e hora sem fuso e aceita texto padrao pra nulo', () => {
+    expect(formatarDataHora('2026-10-19T20:23:39.807')).toBe('19/10/2026 20:23');
+    expect(formatarDataHora(null, 'Nunca acessou')).toBe('Nunca acessou');
   });
 
   it('hora da api vira hora de input e vice-versa', () => {

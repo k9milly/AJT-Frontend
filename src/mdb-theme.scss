@@ -14,4 +14,5 @@
 // ele precisa ficar sempre ligado pros componentes mdb (login/trocar-senha, modais) renderizarem certo.
 $enable-important-utilities: false;
 
-@import 'mdb-angular-ui-kit/assets/scss/mdb.free.scss';
+// caminho relativo pra funcionar tanto no esbuild (ng build) quanto no sass-loader do karma (ng test)
+@import '../node_modules/mdb-angular-ui-kit/assets/scss/mdb.free.scss';

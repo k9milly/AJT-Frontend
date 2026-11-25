@@ -48,3 +48,13 @@ export function paginaUnica<T>(itens: T[]): Pagina<T> {
     ultima: true,
   };
 }
+
+// calcula qual pagina recarregar depois de excluir um item:
+// se era o ultimo registro de uma pagina > 0, recua uma pagina pra nao cair numa tabela vazia
+export function paginaAposExclusao(atual: Pagina<unknown> | null): number {
+  if (!atual) {
+    return 0;
+  }
+  const voltarUma = atual.conteudo.length === 1 && atual.pagina > 0;
+  return voltarUma ? atual.pagina - 1 : atual.pagina;
+}

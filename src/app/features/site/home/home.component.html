@@ -2,121 +2,164 @@
 
   <header
     class="sticky top-0 z-50
-           h-20 px-6 lg:px-12
-           flex items-center justify-between
            border-b border-[#1f1f1f]
            bg-[#0b0b0b]"
   >
-    <div class="flex items-center gap-3">
-      <img
-        src="/logo.png"
-        [alt]="t().logoAlt"
-        class="w-12 h-12 object-contain"
-      />
+    <div
+      class="h-20 px-6 lg:px-12
+             flex items-center justify-between"
+    >
+      <div class="flex items-center gap-3">
+        <img
+          src="/logo.png"
+          [alt]="t().logoAlt"
+          class="w-12 h-12 object-contain"
+        />
 
-      <div>
-        <h1 class="text-lg font-bold text-white">
-          AJT Viagens
-        </h1>
+        <div>
+          <h1 class="text-lg font-bold text-white">
+            AJT Viagens
+          </h1>
 
-        <p class="text-xs text-[#9a9a9a]">
-          {{ t().marcaSubtitulo }}
-        </p>
+          <p class="text-xs text-[#9a9a9a]">
+            {{ t().marcaSubtitulo }}
+          </p>
+        </div>
       </div>
-    </div>
 
-    <div class="flex items-center gap-8">
+      <div class="flex items-center gap-3 md:gap-8">
 
-    <nav class="hidden md:flex items-center gap-8 text-sm">
+      <nav class="hidden md:flex items-center gap-8 text-sm">
 
-      <a
-        href="#inicio"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
-      >
-        {{ t().nav.inicio }}
-      </a>
+        <a
+          href="#inicio"
+          class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
+        >
+          {{ t().nav.inicio }}
+        </a>
 
-      <a
-        href="#sobre"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
-      >
-        {{ t().nav.sobre }}
-      </a>
+        <a
+          href="#sobre"
+          class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
+        >
+          {{ t().nav.sobre }}
+        </a>
 
-      <a
-        href="#servicos"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
-      >
-        {{ t().nav.servicos }}
-      </a>
+        <a
+          href="#servicos"
+          class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
+        >
+          {{ t().nav.servicos }}
+        </a>
 
-      <a
-        href="#diferenciais"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
-      >
-        {{ t().nav.porQue }}
-      </a>
+        <a
+          href="#diferenciais"
+          class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
+        >
+          {{ t().nav.porQue }}
+        </a>
 
-      <a
-        href="#contato"
-        class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
-      >
-        {{ t().nav.contato }}
-      </a>
+        <a
+          href="#contato"
+          class="ajt-site-nav-link text-[#c4c4c4] hover:text-white"
+        >
+          {{ t().nav.contato }}
+        </a>
 
-    </nav>
+      </nav>
 
-    <!-- seletor de idioma (so a home e traduzida): "PT ▾" abre a lista; visivel tambem no celular -->
-    <div #seletorIdioma class="relative">
+      <!-- seletor de idioma (so a home e traduzida): "PT ▾" abre a lista; visivel tambem no celular -->
+      <div #seletorIdioma class="relative">
+        <button
+          type="button"
+          (click)="alternarMenuIdioma()"
+          aria-haspopup="true"
+          [attr.aria-expanded]="menuIdiomaAberto()"
+          [attr.aria-label]="t().seletorIdioma + ': ' + idiomaAtual().nome"
+          class="flex items-center gap-1.5 rounded-md px-2 py-1.5
+                 text-xs font-semibold tracking-wider text-[#c4c4c4]
+                 transition-colors hover:text-white"
+        >
+          {{ idiomaAtual().rotulo }}
+          <svg
+            viewBox="0 0 10 6"
+            class="w-2.5 h-1.5 transition-transform duration-200"
+            [class.rotate-180]="menuIdiomaAberto()"
+            aria-hidden="true"
+          >
+            <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        @if (menuIdiomaAberto()) {
+          <ul
+            class="absolute right-0 top-full mt-2 min-w-[150px]
+                   rounded-lg border border-[#262626] bg-[#141414]
+                   py-1 shadow-[0_12px_30px_rgba(0,0,0,0.45)]
+                   animate-aparecer"
+          >
+            @for (opcao of idiomas; track opcao.codigo) {
+              <li>
+                <button
+                  type="button"
+                  (click)="trocarIdioma(opcao.codigo)"
+                  [attr.aria-current]="idioma() === opcao.codigo ? 'true' : null"
+                  [attr.lang]="opcao.lang"
+                  class="flex w-full items-center justify-between gap-4 px-3.5 py-2
+                         text-left text-sm transition-colors hover:bg-[#1f1f1f]"
+                  [class]="idioma() === opcao.codigo ? 'text-ouro' : 'text-[#c4c4c4] hover:text-white'"
+                >
+                  {{ opcao.nome }}
+                  <span class="text-[10px] font-semibold tracking-wider opacity-60">{{ opcao.rotulo }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <!-- menu mobile -->
       <button
         type="button"
-        (click)="alternarMenuIdioma()"
-        aria-haspopup="true"
-        [attr.aria-expanded]="menuIdiomaAberto()"
-        [attr.aria-label]="t().seletorIdioma + ': ' + idiomaAtual().nome"
-        class="flex items-center gap-1.5 rounded-md px-2 py-1.5
-               text-xs font-semibold tracking-wider text-[#c4c4c4]
-               transition-colors hover:text-white"
+        class="flex size-9 items-center justify-center rounded-md text-[#c4c4c4] transition-colors hover:bg-[#1f1f1f] hover:text-white md:hidden"
+        [attr.aria-expanded]="menuMobileAberto()"
+        [attr.aria-label]="t().rodape.navegacao"
+        (click)="alternarMenuMobile()"
       >
-        {{ idiomaAtual().rotulo }}
-        <svg
-          viewBox="0 0 10 6"
-          class="w-2.5 h-1.5 transition-transform duration-200"
-          [class.rotate-180]="menuIdiomaAberto()"
-          aria-hidden="true"
-        >
-          <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          @if (menuMobileAberto()) {
+            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+          } @else {
+            <line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="18" y2="18" />
+          }
         </svg>
       </button>
 
-      @if (menuIdiomaAberto()) {
-        <ul
-          class="absolute right-0 top-full mt-2 min-w-[150px]
-                 rounded-lg border border-[#262626] bg-[#141414]
-                 py-1 shadow-[0_12px_30px_rgba(0,0,0,0.45)]
-                 animate-aparecer"
-        >
-          @for (opcao of idiomas; track opcao.codigo) {
-            <li>
-              <button
-                type="button"
-                (click)="trocarIdioma(opcao.codigo)"
-                [attr.aria-current]="idioma() === opcao.codigo ? 'true' : null"
-                [attr.lang]="opcao.lang"
-                class="flex w-full items-center justify-between gap-4 px-3.5 py-2
-                       text-left text-sm transition-colors hover:bg-[#1f1f1f]"
-                [class]="idioma() === opcao.codigo ? 'text-ouro' : 'text-[#c4c4c4] hover:text-white'"
-              >
-                {{ opcao.nome }}
-                <span class="text-[10px] font-semibold tracking-wider opacity-60">{{ opcao.rotulo }}</span>
-              </button>
-            </li>
-          }
-        </ul>
-      }
+      </div>
     </div>
 
-    </div>
+    @if (menuMobileAberto()) {
+      <nav
+        [attr.aria-label]="t().rodape.navegacao"
+        class="flex flex-col border-t border-[#1f1f1f] bg-[#0b0b0b] px-6 py-4 text-sm animate-aparecer md:hidden"
+      >
+        <a href="#inicio" (click)="fecharMenuMobile()" class="py-2.5 text-[#c4c4c4] no-underline hover:text-white">
+          {{ t().nav.inicio }}
+        </a>
+        <a href="#sobre" (click)="fecharMenuMobile()" class="py-2.5 text-[#c4c4c4] no-underline hover:text-white">
+          {{ t().nav.sobre }}
+        </a>
+        <a href="#servicos" (click)="fecharMenuMobile()" class="py-2.5 text-[#c4c4c4] no-underline hover:text-white">
+          {{ t().nav.servicos }}
+        </a>
+        <a href="#diferenciais" (click)="fecharMenuMobile()" class="py-2.5 text-[#c4c4c4] no-underline hover:text-white">
+          {{ t().nav.porQue }}
+        </a>
+        <a href="#contato" (click)="fecharMenuMobile()" class="py-2.5 text-[#c4c4c4] no-underline hover:text-white">
+          {{ t().nav.contato }}
+        </a>
+      </nav>
+    }
   </header>
 
 
@@ -239,8 +282,9 @@
         </div>
 
 
+        <!-- 1 coluna no celular: em 2 colunas os titulos grandes ("Pontualidade") estouravam a largura da tela -->
         <div
-          class="grid grid-cols-2 gap-5"
+          class="grid grid-cols-1 sm:grid-cols-2 gap-5"
         >
 
           <div
@@ -420,7 +464,7 @@
             </p>
 
             <a
-              routerLink="/servicos/transfers"
+              href="#contato"
               class="inline-block
                      mt-5
                      text-[#181818]
@@ -472,7 +516,7 @@
             </p>
 
             <a
-              routerLink="/servicos/passeios"
+              href="#contato"
               class="inline-block
                      mt-5
                      text-[#181818]
@@ -525,7 +569,7 @@
             </p>
 
             <a
-              routerLink="/servicos/executivo"
+              href="#contato"
               class="inline-block
                      mt-5
                      text-[#181818]
@@ -577,7 +621,7 @@
             </p>
 
             <a
-              routerLink="/servicos/grupos"
+              href="#contato"
               class="inline-block
                      mt-5
                      text-[#181818]
@@ -904,6 +948,10 @@
 
           <a href="#servicos" class="text-[#999] no-underline transition-colors hover:text-white">
             {{ t().nav.servicos }}
+          </a>
+
+          <a href="#diferenciais" class="text-[#999] no-underline transition-colors hover:text-white">
+            {{ t().nav.porQue }}
           </a>
 
           <a href="#contato" class="text-[#999] no-underline transition-colors hover:text-white">

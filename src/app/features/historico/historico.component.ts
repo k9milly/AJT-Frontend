@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TabelaAuditada } from '../../core/models/auditoria.model';
 import { HistoricoListaComponent } from './historico-lista.component';
 
@@ -10,6 +10,7 @@ import { HistoricoListaComponent } from './historico-lista.component';
 @Component({
   selector: 'app-historico',
   imports: [HistoricoListaComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-4xl p-5 sm:p-6">
       <div class="mb-5 animate-surgir">
