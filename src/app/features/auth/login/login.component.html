@@ -72,7 +72,7 @@
         novalidate
       >
         <h2 class="mb-1 text-xl font-bold">Entrar no painel</h2>
-        <p class="mb-6 text-sm text-login-muted">Use o usuário e a senha fornecidos pelo administrador.</p>
+        <p class="mb-6 text-sm text-login-muted">Use seu usuário e senha. Contas novas entram depois que o administrador libera.</p>
 
         <!-- usuario -->
         <label for="username" class="mb-1.5 block text-xs font-medium text-login-muted">Usuário</label>
@@ -146,9 +146,14 @@
           {{ carregando() ? 'Entrando...' : 'Entrar' }}
         </button>
 
+        <p class="mt-5 text-center text-xs text-login-muted">
+          Ainda não tem conta?
+          <a routerLink="/criar-conta" class="font-semibold text-ouro no-underline hover:brightness-110">Criar conta</a>
+        </p>
+
         <a
           routerLink="/"
-          class="mt-6 flex items-center justify-center gap-1.5 text-xs text-login-muted no-underline transition-colors hover:text-login-foreground"
+          class="mt-4 flex items-center justify-center gap-1.5 text-xs text-login-muted no-underline transition-colors hover:text-login-foreground"
         >
           <app-icone nome="voltar" class="size-3.5" />
           Voltar para o site
