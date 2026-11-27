@@ -1,0 +1,193 @@
+<!-- mesmo canvas escuro do login: marca a esquerda, formulario a direita -->
+<div class="ajt-app relative min-h-screen overflow-hidden bg-[#0b0b0b] text-login-foreground">
+
+  <div class="relative flex min-h-screen flex-col lg:flex-row">
+
+    <!-- ===================== metade da marca ===================== -->
+    <div class="relative flex flex-1 flex-col justify-center px-6 py-10 lg:px-16">
+      <div class="mx-auto w-full max-w-md animate-surgir">
+
+        <div class="mb-9 flex items-center gap-2.5">
+          <img src="/logo.png" alt="Logo AJT Viagens" class="size-10 object-contain" />
+          <div class="flex flex-col leading-none">
+            <span class="text-[17px] font-bold">AJT Viagens</span>
+            <span class="mt-1 text-[11px] text-login-muted">Sistema receptivo</span>
+          </div>
+        </div>
+
+        <h1 class="mb-3 text-3xl font-bold leading-[1.15] lg:text-[2.5rem]">
+          Faça parte da equipe,<br />
+          <span class="text-ouro">em poucos passos.</span>
+        </h1>
+
+        <p class="mb-6 max-w-sm text-sm text-login-muted">
+          Crie seu acesso ao painel. Por segurança, toda conta nova passa pela liberação de um administrador,
+          que também define o seu perfil.
+        </p>
+
+        <ol class="hidden max-w-sm space-y-2.5 text-sm sm:block">
+          <li class="flex items-center gap-3">
+            <span class="flex size-6 items-center justify-center rounded-full bg-ouro text-[11px] font-bold text-[#1a1206]">1</span>
+            Preencha nome, usuário e senha
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="flex size-6 items-center justify-center rounded-full bg-white/10 text-[11px] font-bold">2</span>
+            Um administrador libera o acesso
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="flex size-6 items-center justify-center rounded-full bg-white/10 text-[11px] font-bold">3</span>
+            Entre no painel com o seu usuário
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ===================== metade do formulario ===================== -->
+    <div class="relative flex flex-1 items-center justify-center border-t border-[#1f1f1f] px-6 py-10 lg:border-l lg:border-t-0 lg:px-16">
+
+      @if (criada(); as username) {
+        <!-- sucesso: a conta existe mas ainda nao entra -->
+        <div class="w-full max-w-[21rem] animate-surgir" role="status">
+          <div class="mb-4 flex size-11 items-center justify-center rounded-full bg-status-success/15 text-[#4ade80]">
+            <app-icone nome="usuario" class="size-5" />
+          </div>
+          <h2 class="mb-2 text-xl font-bold">Conta criada!</h2>
+          <p class="mb-6 text-sm text-login-muted">
+            O usuário <span class="ajt-dado font-semibold text-login-foreground">{{ username }}</span> foi cadastrado e está
+            <span class="text-ouro">aguardando a liberação</span> de um administrador. Assim que for liberado, é só entrar
+            com a senha que você escolheu.
+          </p>
+          <a
+            routerLink="/login"
+            mdbRipple
+            rippleColor="dark"
+            class="block w-full rounded-md bg-ouro py-2.5 text-center text-sm font-semibold text-[#1a1206] no-underline
+                   transition-all hover:brightness-110"
+          >
+            Ir para o login
+          </a>
+        </div>
+      } @else {
+        <form
+          [formGroup]="form"
+          (ngSubmit)="criar()"
+          class="w-full max-w-[21rem] animate-surgir"
+          style="animation-delay: 60ms"
+          novalidate
+        >
+          <h2 class="mb-1 text-xl font-bold">Criar conta</h2>
+          <p class="mb-6 text-sm text-login-muted">O acesso fica liberado depois da aprovação de um administrador.</p>
+
+          <!-- nome -->
+          <label for="nome" class="mb-1.5 block text-xs font-medium text-login-muted">Nome completo</label>
+          <div class="relative mb-4">
+            <app-icone nome="usuario" class="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-login-muted" />
+            <input
+              id="nome"
+              type="text"
+              autocomplete="name"
+              autofocus
+              formControlName="nome"
+              class="ajt-campo-login w-full rounded-lg border border-[#262626] bg-[#141414] py-2.5 pl-9 pr-3.5 text-sm text-login-foreground
+                     outline-none transition-colors focus:border-[#6b6b6b]"
+            />
+            @if (form.controls.nome.touched && form.controls.nome.hasError('required')) {
+              <p class="mt-1 text-[11px] text-[#f87171]">Informe o nome.</p>
+            } @else if (form.controls.nome.touched && form.controls.nome.invalid) {
+              <p class="mt-1 text-[11px] text-[#f87171]">Máximo de 100 caracteres.</p>
+            }
+          </div>
+
+          <!-- usuario -->
+          <label for="username" class="mb-1.5 block text-xs font-medium text-login-muted">Usuário</label>
+          <div class="relative mb-4">
+            <app-icone nome="usuario" class="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-login-muted" />
+            <input
+              id="username"
+              type="text"
+              autocomplete="username"
+              formControlName="username"
+              class="ajt-campo-login w-full rounded-lg border border-[#262626] bg-[#141414] py-2.5 pl-9 pr-3.5 text-sm text-login-foreground
+                     outline-none transition-colors focus:border-[#6b6b6b]"
+            />
+            @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+              <p class="mt-1 text-[11px] text-[#f87171]">Informe o usuário.</p>
+            } @else if (form.controls.username.touched && form.controls.username.invalid) {
+              <p class="mt-1 text-[11px] text-[#f87171]">De 3 a 50 caracteres: letras, números, ponto, _ ou -.</p>
+            }
+          </div>
+
+          <!-- senha -->
+          <label for="senha" class="mb-1.5 block text-xs font-medium text-login-muted">Senha</label>
+          <div class="relative mb-4">
+            <app-icone nome="cadeado" class="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-login-muted" />
+            <input
+              id="senha"
+              [type]="mostrarSenha() ? 'text' : 'password'"
+              autocomplete="new-password"
+              formControlName="senha"
+              class="ajt-campo-login w-full rounded-lg border border-[#262626] bg-[#141414] py-2.5 pl-9 pr-10 text-sm text-login-foreground
+                     outline-none transition-colors focus:border-[#6b6b6b]"
+            />
+            <button
+              type="button"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-login-muted hover:text-login-foreground"
+              [attr.aria-label]="mostrarSenha() ? 'Ocultar senha' : 'Mostrar senha'"
+              (click)="mostrarSenha.set(!mostrarSenha())"
+            >
+              <app-icone nome="olho" class="size-4" />
+            </button>
+            @if (form.controls.senha.touched && form.controls.senha.hasError('required')) {
+              <p class="mt-1 text-[11px] text-[#f87171]">Informe a senha.</p>
+            } @else if (form.controls.senha.touched && form.controls.senha.invalid) {
+              <p class="mt-1 text-[11px] text-[#f87171]">A senha deve ter entre 8 e 72 caracteres.</p>
+            }
+          </div>
+
+          <!-- confirmacao -->
+          <label for="confirmacao" class="mb-1.5 block text-xs font-medium text-login-muted">Confirmar senha</label>
+          <div class="relative mb-6">
+            <app-icone nome="cadeado" class="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-login-muted" />
+            <input
+              id="confirmacao"
+              [type]="mostrarSenha() ? 'text' : 'password'"
+              autocomplete="new-password"
+              formControlName="confirmacao"
+              class="ajt-campo-login w-full rounded-lg border border-[#262626] bg-[#141414] py-2.5 pl-9 pr-3.5 text-sm text-login-foreground
+                     outline-none transition-colors focus:border-[#6b6b6b]"
+            />
+            @if (form.controls.confirmacao.touched && form.controls.confirmacao.hasError('required')) {
+              <p class="mt-1 text-[11px] text-[#f87171]">Repita a senha.</p>
+            } @else if (form.controls.confirmacao.touched && form.hasError('senhasDiferentes')) {
+              <p class="mt-1 text-[11px] text-[#f87171]">As senhas não conferem.</p>
+            }
+          </div>
+
+          <!-- erro da api: username ja usado, campo invalido ou backend fora do ar -->
+          @if (erro()) {
+            <div class="mb-4 rounded-lg bg-[#451a1a] px-3 py-2 text-xs text-[#f87171]" role="alert">
+              {{ erro() }}
+            </div>
+          }
+
+          <button
+            type="submit"
+            mdbRipple
+            rippleColor="dark"
+            [disabled]="carregando()"
+            class="w-full rounded-md bg-ouro py-2.5 text-sm font-semibold text-[#1a1206]
+                   transition-all hover:brightness-110 disabled:opacity-50"
+          >
+            {{ carregando() ? 'Criando...' : 'Criar conta' }}
+          </button>
+
+          <p class="mt-5 text-center text-xs text-login-muted">
+            Já tem conta?
+            <a routerLink="/login" class="font-semibold text-ouro no-underline hover:brightness-110">Entrar</a>
+          </p>
+        </form>
+      }
+    </div>
+
+  </div>
+</div>

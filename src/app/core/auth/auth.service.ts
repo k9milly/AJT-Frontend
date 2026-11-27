@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginResponse, Perfil, Sessao, TrocaSenhaRequest } from '../models/auth.model';
+import { LoginResponse, Perfil, RegistroRequest, Sessao, TrocaSenhaRequest } from '../models/auth.model';
 import { Usuario } from '../models/usuario.model';
 import { Recurso, podeEscrever, podeExcluir, podeLer, podeAlterarStatusParada } from './permissoes';
 
@@ -42,6 +42,11 @@ export class AuthService {
     return this.http
       .post<LoginResponse>(`${this.base}/login`, { username, senha })
       .pipe(tap(resposta => this.guardarSessao(resposta)));
+  }
+
+  // cadastro publico: nao abre sessao (a conta fica aguardando o admin liberar)
+  registrar(dados: RegistroRequest): Observable<Usuario> {
+    return this.http.post<Usuario>(`${this.base}/registro`, dados);
   }
 
   // restaura/atualiza os dados do usuario logado (nome, perfil, trocarSenha)

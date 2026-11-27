@@ -25,6 +25,14 @@ export const routes: Routes = [
       import('./features/auth/login/login.component').then(m => m.LoginComponent),
   },
 
+  // cadastro publico: a conta nasce inativa e o admin libera em Usuarios
+  {
+    path: 'criar-conta',
+    canActivate: [semBootstrapGuard],
+    loadComponent: () =>
+      import('./features/auth/criar-conta/criar-conta.component').then(m => m.CriarContaComponent),
+  },
+
   // fora do shell de proposito: quem esta com senha provisoria nao pode navegar pelo painel
   {
     path: 'trocar-senha',
