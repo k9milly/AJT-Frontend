@@ -136,8 +136,12 @@ export class UsuariosComponent implements OnInit {
       });
   }
 
-  // "Ativo" / "Inativo" / "Troca de senha pendente"
+  // "Aguardando liberação" / "Ativo" / "Inativo" / "Troca de senha pendente"
   situacao(usuario: Usuario): { tom: TomStatus; rotulo: string } {
+    // inativo que nunca entrou: em geral veio do "Criar conta" e espera o admin ligar o "Usuário ativo"
+    if (!usuario.ativo && !usuario.ultimoLogin) {
+      return { tom: 'warning', rotulo: 'Aguardando liberação' };
+    }
     if (!usuario.ativo) {
       return { tom: 'neutral', rotulo: 'Inativo' };
     }
