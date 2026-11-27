@@ -10,7 +10,16 @@
 
   &.form-outline .form-control {
     color: rgb(var(--login-foreground));
-    background-color: rgb(var(--login-bg));
+    background-color: transparent;
+
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px rgb(var(--login-surface)) inset;
+      -webkit-text-fill-color: rgb(var(--login-foreground));
+      caret-color: rgb(var(--login-foreground));
+      transition: background-color 9999s ease-out;
+    }
   }
 
   &.form-outline .form-notch-leading,

@@ -23,6 +23,15 @@ export class TemaService {
     this.aplicar(novoValor);
   }
 
+  // reaplica a preferencia ao entrar no painel e desliga ao sair (evita vazar color-scheme: dark pra home)
+  ativarNoPainel(): void {
+    this.aplicar(this.escuro());
+  }
+
+  desativarForaDoPainel(): void {
+    this.aplicar(false);
+  }
+
   private lerPreferenciaInicial(): boolean {
     const salvo = localStorage.getItem(CHAVE_TEMA);
     if (salvo === 'escuro') {

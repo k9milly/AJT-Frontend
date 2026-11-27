@@ -12,7 +12,7 @@ O projeto tem duas áreas:
 | Camada | Tecnologia |
 | --- | --- |
 | Framework | Angular 19 (standalone components, signals) |
-| Estilo | Tailwind CSS (painel) + Bootstrap (somente navbar da landing) |
+| Estilo | Tailwind CSS + MDB Angular UI Kit |
 | Formulários | Angular Reactive Forms |
 | Autenticação | JWT emitido pelo AJT-Backend |
 | Testes | Jasmine + Karma |
@@ -61,6 +61,12 @@ docker build -t ajt-frontend .
 docker run --rm -p 8081:80 -e AJT_API_UPSTREAM=http://host.docker.internal:9090 ajt-frontend
 ```
 
+### Produção (AWS EC2)
+
+Em produção o front não usa Docker: o script `deploy/provisionar-ec2.sh` do [AJT-Backend](https://github.com/guiPinheiroAfK/AJT-Backend) baixa este repositório, roda `npm ci` e `npm run build -- --configuration production` e publica o conteúdo de `dist/ajt-front/browser` no nginx da EC2. O nginx devolve o `index.html` nas rotas do Angular (fallback de SPA) e repassa `/api` para o back-end, por isso o build de produção usa `apiUrl: '/api'` e não tem nenhum `localhost` fixo.
+
+O passo a passo (criar a EC2, Security Group e rodar o script) está na seção **Deploy na AWS (EC2)** do README do backend.
+
 ### Primeiro acesso
 
 Usuário `admin` / senha `admin123` (seed do backend). O login devolve `trocarSenha: true` e o painel leva direto para a tela de troca de senha. Usuários criados pelo administrador também trocam a senha no primeiro acesso.
@@ -70,13 +76,14 @@ Usuário `admin` / senha `admin123` (seed do backend). O login devolve `trocarSe
 | Seção | Tela | Rota |
 | --- | --- | --- |
 | Operação | Painel (indicadores e pendências) | `/admin/painel` |
+| Operação | Minhas OS do dia (somente MOTORISTA) | `/admin/minhas-os` |
 | Operação | Transfers | `/admin/transfers` |
 | Operação | Ordens de serviço e detalhe da rota (paradas) | `/admin/ordens-servico`, `/admin/ordens-servico/:id` |
 | Operação | Pontos de coleta | `/admin/pontos-coleta` |
 | Cadastros | Passageiros, Motoristas, Veículos | `/admin/passageiros`, `/admin/motoristas`, `/admin/veiculos` |
-| Administração | Usuários (somente ADMIN) | `/admin/usuarios` |
+| Administração | Usuários (somente ADMIN) e Histórico (ADMIN e GERENTE) | `/admin/usuarios`, `/admin/historico` |
 
-Cadastro e edição abrem em modal dentro de cada tela. O perfil `MOTORISTA` vê um menu reduzido (Início e Ordens de serviço) e só pode alterar o status das paradas.
+Cadastro e edição abrem em modal dentro de cada tela. O perfil `MOTORISTA` acessa apenas seu painel inicial, Minhas OS do dia e Ordens de serviço, podendo alterar somente o status das paradas.
 
 ### Permissões por perfil
 
@@ -127,7 +134,7 @@ src/app/
 
 ### Bootstrap x Tailwind
 
-O Bootstrap é gerado como bundle separado (`angular.json`) e fica ativo **somente na landing page**. Várias classes dele têm o mesmo nome das do Tailwind (`bg-primary`, `border`, `p-4`, `gap-3`...), com `!important` e outra escala. Os guards em `core/layout/estilos-site.ts` desligam o arquivo no login e no painel.
+O Bootstrap é gerado como bundle separado (`angular.json`) e mantido desativado em todas as rotas pelo guard em `core/layout/estilos-site.ts`, pois várias classes utilitárias dele têm o mesmo nome das do Tailwind (`bg-primary`, `border`, `p-4`, `gap-3`...), com `!important` e outra escala.
 
 ## Testes
 

@@ -144,7 +144,7 @@
                           #seletorStatusParada
                           class="ajt-campo !w-36 !py-1 text-xs"
                           [attr.aria-label]="'Status da parada ' + parada.ordemParada"
-                          [disabled]="alterandoParadaId() === parada.id"
+                          [disabled]="estaAlterandoParada(parada.id)"
                           (change)="alterarStatusParada(parada, seletorStatusParada)"
                         >
                           @for (status of statusParadaOpcoes; track status) {
@@ -258,6 +258,7 @@
 <!-- ===================== cadastro/edicao de parada ===================== -->
 <app-modal
   [aberto]="modalAberto()"
+  [bloqueado]="salvando()"
   [titulo]="editandoParada() ? 'Editar parada' : 'Nova parada'"
   largura="larga"
   (fechar)="fecharModal()"
@@ -266,10 +267,10 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-[6rem_1fr]">
       <div>
         <label for="ordemParada" class="ajt-rotulo">Ordem</label>
-        <input id="ordemParada" type="number" min="1" formControlName="ordemParada" class="ajt-campo ajt-dado"
+        <input id="ordemParada" type="number" min="1" step="1" formControlName="ordemParada" class="ajt-campo ajt-dado"
                [class.ajt-campo-invalido]="form.controls.ordemParada.touched && form.controls.ordemParada.invalid" />
         @if (form.controls.ordemParada.touched && form.controls.ordemParada.invalid) {
-          <p class="ajt-erro-campo">Informe a ordem (maior que zero).</p>
+          <p class="ajt-erro-campo">Informe um número inteiro maior que zero.</p>
         }
       </div>
 

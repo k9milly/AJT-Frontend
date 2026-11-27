@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { IconeComponent, NomeIcone } from '../icone/icone.component';
 
 export type TomCard = 'default' | 'success' | 'warning' | 'danger';
@@ -22,6 +22,7 @@ const CLASSE_ICONE: Record<TomCard, string> = {
 @Component({
     selector: 'app-stat-card',
     imports: [IconeComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div class="ajt-card overflow-hidden hover:shadow-md">
       <div [class]="'h-1 ' + classeBarra()"></div>

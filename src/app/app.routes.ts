@@ -1,23 +1,21 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, sessaoAtivaGuard } from './core/auth/auth.guard';
+import { authChildGuard, authGuard, sessaoAtivaGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { semBootstrapGuard } from './core/layout/estilos-site';
-
-import { HomeComponent } from './features/site/home/home.component';
 
 export const routes: Routes = [
 
   // landing page publica (nao depende de login nem da api)
-  // unica area que usa bootstrap (ver core/layout/estilos-site.ts)
   {
     path: '',
-    component: HomeComponent,
     pathMatch: 'full',
     // o bootstrap nao e mais ligado em lugar nenhum (ver estilos-site.ts): a landing
     // nao usa nenhum componente real dele, so classes utilitarias que colidiam com as
     // do tailwind (border, shadow-sm, mt-3, gap-4...) e o bootstrap ganhava por usar !important
     canActivate: [semBootstrapGuard],
+    loadComponent: () =>
+      import('./features/site/home/home.component').then(m => m.HomeComponent),
   },
 
   {
@@ -25,6 +23,14 @@ export const routes: Routes = [
     canActivate: [semBootstrapGuard],
     loadComponent: () =>
       import('./features/auth/login/login.component').then(m => m.LoginComponent),
+  },
+
+  // cadastro publico: a conta nasce inativa e o admin libera em Usuarios
+  {
+    path: 'criar-conta',
+    canActivate: [semBootstrapGuard],
+    loadComponent: () =>
+      import('./features/auth/criar-conta/criar-conta.component').then(m => m.CriarContaComponent),
   },
 
   // fora do shell de proposito: quem esta com senha provisoria nao pode navegar pelo painel
@@ -42,6 +48,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [semBootstrapGuard, authGuard],
+    canActivateChild: [authChildGuard],
     loadComponent: () =>
       import('./layout/shell/shell.component').then(m => m.ShellComponent),
 
@@ -59,6 +66,7 @@ export const routes: Routes = [
       {
         path: 'transfers',
         data: { titulo: 'Transfers' },
+        canActivate: [roleGuard('ADMIN', 'GERENTE', 'ATENDENTE')],
         loadComponent: () =>
           import('./features/transfers/transfers.component').then(m => m.TransfersComponent),
       },
@@ -86,6 +94,7 @@ export const routes: Routes = [
       {
         path: 'pontos-coleta',
         data: { titulo: 'Pontos de coleta' },
+        canActivate: [roleGuard('ADMIN', 'GERENTE', 'ATENDENTE')],
         loadComponent: () =>
           import('./features/pontos-coleta/pontos-coleta.component').then(m => m.PontosColetaComponent),
       },
@@ -102,12 +111,14 @@ export const routes: Routes = [
       {
         path: 'motoristas',
         data: { titulo: 'Motoristas' },
+        canActivate: [roleGuard('ADMIN', 'GERENTE', 'ATENDENTE')],
         loadComponent: () =>
           import('./features/motoristas/motoristas.component').then(m => m.MotoristasComponent),
       },
       {
         path: 'veiculos',
         data: { titulo: 'Veículos' },
+        canActivate: [roleGuard('ADMIN', 'GERENTE', 'ATENDENTE')],
         loadComponent: () =>
           import('./features/veiculos/veiculos.component').then(m => m.VeiculosComponent),
       },

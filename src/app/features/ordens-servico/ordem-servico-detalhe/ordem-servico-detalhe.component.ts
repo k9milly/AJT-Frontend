@@ -1,7 +1,8 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { Subscription, catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../../core/http/erro-api';
 import { TAMANHO_MAXIMO_PAGINA } from '../../../core/models/api.model';
@@ -44,6 +45,7 @@ import {
   textoOuNulo,
   tomDoStatus,
 } from '../../../shared/utils/rotulos';
+import { inteiroPositivo, textoObrigatorio } from '../../../shared/utils/validadores';
 
 // ---------------------------------------------------------------
 // detalhe da ordem de servico: a rota do motorista
@@ -56,9 +58,6 @@ import {
 // permissoes (matriz em core/auth/permissoes.ts):
 // - os e paradas: ADMIN, GERENTE editam | MOTORISTA so troca o status da parada
 // - vinculo de transfer: quem pode escrever em transfers (ADMIN, GERENTE, ATENDENTE)
-//
-// limitacao conhecida: o backend nao tem "transfers por os", entao os transfers sao lidos da
-// listagem geral (100 mais recentes, limite de pagina) e filtrados aqui pelo osId.
 @Component({
     selector: 'app-ordem-servico-detalhe',
     imports: [
@@ -69,7 +68,8 @@ import {
         ModalComponent,
         StatusBadgeComponent,
     ],
-    templateUrl: './ordem-servico-detalhe.component.html'
+    templateUrl: './ordem-servico-detalhe.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrdemServicoDetalheComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -81,6 +81,11 @@ export class OrdemServicoDetalheComponent implements OnInit {
   private auth = inject(AuthService);
   private notificacao = inject(NotificacaoService);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
+  private disponiveisSub?: Subscription;
+  private osIdAtual = 0;
 
   statusOsOpcoes = STATUS_ORDEM_SERVICO;
   statusParadaOpcoes = STATUS_PARADA;
@@ -98,23 +103,16 @@ export class OrdemServicoDetalheComponent implements OnInit {
   motorista = signal<Motorista | null>(null);
   veiculo = signal<Veiculo | null>(null);
   paradas = signal<ParadaOs[]>([]);
-  transfersRecentes = signal<Transfer[]>([]);
+  transfersVinculados = signal<Transfer[]>([]);
+  transfersSemOsDoDia = signal<Transfer[]>([]);
 
   carregando = signal(true);
   erro = signal<string | null>(null);
 
-  // transfers desta os e os que ainda podem entrar nela (sem os)
-  transfersVinculados = computed(() => {
-    const id = this.ordem()?.id;
-    return this.transfersRecentes().filter(t => t.osId === id);
-  });
-
-  // o backend so aceita transfer do mesmo dia da os (RF009), entao a lista ja vem filtrada pela data
-  transfersDisponiveis = computed(() => {
-    const data = this.ordem()?.dataServico;
-    return this.transfersRecentes().filter(t =>
-      t.osId === null && t.dataTransfer === data && t.status !== 'CANCELADO' && t.status !== 'CONCLUIDO');
-  });
+  // o backend so aceita transfer do mesmo dia da os (RF009) e que nao esteja concluido/cancelado
+  transfersDisponiveis = computed(() =>
+    this.transfersSemOsDoDia().filter(t => t.osId === null && t.status !== 'CANCELADO' && t.status !== 'CONCLUIDO'),
+  );
 
   // os cancelada ou finalizada nao recebe transfer novo (o backend responde 400)
   osRecebeTransfers = computed(() => {
@@ -133,7 +131,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
 
   // ----- acoes em andamento (desabilitam o botao/select correspondente) -----
   alterandoStatusOs = signal(false);
-  alterandoParadaId = signal<number | null>(null);
+  paradasEmAlteracao = signal<ReadonlySet<number>>(new Set());
   alterandoTransferId = signal<number | null>(null);
 
   // ----- modal de parada -----
@@ -144,8 +142,8 @@ export class OrdemServicoDetalheComponent implements OnInit {
 
   // regras iguais as do ParadaOsRequestDTO do backend
   form = this.fb.group({
-    ordemParada: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
-    localParada: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
+    ordemParada: this.fb.control<number | null>(null, [Validators.required, inteiroPositivo]),
+    localParada: this.fb.nonNullable.control('', [textoObrigatorio, Validators.maxLength(100)]),
     horarioPrevisto: this.fb.nonNullable.control(''),
     acao: this.fb.control<AcaoParada | null>(null),
     statusParada: this.fb.nonNullable.control<StatusParada>('PENDENTE'),
@@ -159,38 +157,63 @@ export class OrdemServicoDetalheComponent implements OnInit {
   excluindo = signal(false);
 
   ngOnInit(): void {
-    this.carregar();
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        const id = Number(params.get('id'));
+        if (!Number.isInteger(id) || id <= 0) {
+          this.osIdAtual = 0;
+          this.carregando.set(false);
+          this.erro.set('Identificador de ordem de serviço inválido.');
+          return;
+        }
+        this.osIdAtual = id;
+        this.carregar();
+      });
+  }
+
+  estaAlterandoParada(paradaId: number): boolean {
+    return this.paradasEmAlteracao().has(paradaId);
   }
 
   carregar(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.osIdAtual;
+    if (!id) {
+      return;
+    }
+
+    this.cargaSub?.unsubscribe();
+    this.disponiveisSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
 
-    forkJoin({
+    this.cargaSub = forkJoin({
       ordem: this.ordemServicoService.buscarPorId(id),
       paradas: this.paradaService.listarPorOrdemServico(id),
-      // se a listagem de transfers falhar, a tela ainda mostra os e paradas
-      transfers: this.transferService
-        .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'dataTransfer,desc' })
+      // busca filtrada direto pelo osId (RF015): nao perde transfers quando ha mais de 100 no sistema
+      vinculados: this.transferService
+        .listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'horaTransfer,asc' }, { osId: id })
         .pipe(catchError(() => of(null))),
-    }).subscribe({
-      next: ({ ordem, paradas, transfers }) => {
-        this.ordem.set(ordem);
-        this.paradas.set(paradas);
-        this.transfersRecentes.set(transfers?.conteudo ?? []);
-        this.carregarFrota(ordem);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar a ordem de serviço.'));
-        this.carregando.set(false);
-      },
-    });
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ ordem, paradas, vinculados }) => {
+          this.ordem.set(ordem);
+          this.paradas.set(paradas);
+          this.transfersVinculados.set(vinculados?.conteudo ?? []);
+          this.carregarFrota(ordem);
+          this.carregarTransfersDisponiveis(ordem);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar a ordem de serviço.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   descricaoTransfer(transferId: number): string {
-    const transfer = this.transfersRecentes().find(t => t.id === transferId);
+    const transfer = this.transfersVinculados().find(t => t.id === transferId);
     return transfer ? `${transfer.origem} → ${transfer.destino}` : `Transfer #${transferId}`;
   }
 
@@ -205,19 +228,28 @@ export class OrdemServicoDetalheComponent implements OnInit {
     }
 
     this.alterandoStatusOs.set(true);
-    this.ordemServicoService.alterarStatus(ordem, valor as StatusOrdemServico).subscribe({
-      next: atualizada => {
-        this.ordem.set(atualizada);
-        this.alterandoStatusOs.set(false);
-        this.notificacao.sucesso(`OS marcada como "${this.rotuloStatusOs[atualizada.status]}".`);
-      },
-      error: (err: unknown) => {
-        this.alterandoStatusOs.set(false);
-        seletor.value = ordem.status;
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status.'));
-        this.recarregarSeConflito(err);
-      },
-    });
+    this.ordemServicoService.alterarStatus(ordem, valor as StatusOrdemServico)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: atualizada => {
+          this.ordem.set(atualizada);
+          this.alterandoStatusOs.set(false);
+          // cancelar a os devolve os transfers pendentes pra "aguardando OS" (saem dela e do roteiro):
+          // recarrega tudo pra tela nao continuar mostrando esses transfers como vinculados
+          if (atualizada.status === 'CANCELADA') {
+            this.carregar();
+          } else {
+            this.carregarTransfersDisponiveis(atualizada);
+          }
+          this.notificacao.sucesso(`OS marcada como "${this.rotuloStatusOs[atualizada.status]}".`);
+        },
+        error: (err: unknown) => {
+          this.alterandoStatusOs.set(false);
+          seletor.value = ordem.status;
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status.'));
+          this.recarregarSeConflito(err);
+        },
+      });
   }
 
   // 409 = outra pessoa salvou a os ou o transfer no meio tempo (RNF008): busca os dados novos
@@ -238,35 +270,37 @@ export class OrdemServicoDetalheComponent implements OnInit {
 
     const aba = window.open('', '_blank');
     this.gerandoPdf.set(true);
-    this.ordemServicoService.baixarPdf(ordem.id).subscribe({
-      next: pdf => {
-        this.gerandoPdf.set(false);
-        const url = URL.createObjectURL(pdf);
-        if (aba) {
-          aba.location.href = url;
-        } else {
-          // popup bloqueado: baixa o arquivo
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `ordem-servico-${ordem.id}.pdf`;
-          link.click();
-        }
-        // da tempo da aba carregar antes de liberar a memoria
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      },
-      error: (err: unknown) => {
-        this.gerandoPdf.set(false);
-        aba?.close();
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível gerar o PDF da ordem de serviço.'));
-      },
-    });
+    this.ordemServicoService.baixarPdf(ordem.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pdf => {
+          this.gerandoPdf.set(false);
+          const url = URL.createObjectURL(pdf);
+          if (aba) {
+            aba.location.href = url;
+          } else {
+            // popup bloqueado: baixa o arquivo
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ordem-servico-${ordem.id}.pdf`;
+            link.click();
+          }
+          // da tempo da aba carregar antes de liberar a memoria
+          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        },
+        error: (err: unknown) => {
+          this.gerandoPdf.set(false);
+          aba?.close();
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível gerar o PDF da ordem de serviço.'));
+        },
+      });
   }
 
   // ----- transfers vinculados -----
 
   vincularTransfer(valor: string): void {
     const ordem = this.ordem();
-    const transfer = this.transfersRecentes().find(t => t.id === Number(valor));
+    const transfer = this.transfersDisponiveis().find(t => t.id === Number(valor));
     if (!ordem || !transfer) {
       return;
     }
@@ -279,40 +313,69 @@ export class OrdemServicoDetalheComponent implements OnInit {
 
   private alterarVinculo(transfer: Transfer, osId: number | null, mensagemSucesso: string): void {
     this.alterandoTransferId.set(transfer.id);
-    this.transferService.alterarOrdemServico(transfer, osId).subscribe({
-      next: atualizado => {
-        this.transfersRecentes.update(lista => lista.map(t => (t.id === atualizado.id ? atualizado : t)));
-        this.alterandoTransferId.set(null);
-        this.notificacao.sucesso(mensagemSucesso);
-      },
-      error: (err: unknown) => {
-        this.alterandoTransferId.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o vínculo do transfer.'));
-        this.recarregarSeConflito(err);
-      },
-    });
+    this.transferService.alterarOrdemServico(transfer, osId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: atualizado => {
+          if (osId !== null) {
+            this.transfersSemOsDoDia.update(lista => lista.filter(t => t.id !== atualizado.id));
+            this.transfersVinculados.update(lista => [...lista.filter(t => t.id !== atualizado.id), atualizado]);
+          } else {
+            this.transfersVinculados.update(lista => lista.filter(t => t.id !== atualizado.id));
+            const ordem = this.ordem();
+            if (ordem && atualizado.dataTransfer === ordem.dataServico) {
+              this.transfersSemOsDoDia.update(lista => [...lista.filter(t => t.id !== atualizado.id), atualizado]);
+            }
+            // desvincular pode alterar paradas no backend (transferIds/versao): sincroniza a rota
+            if (ordem) {
+              this.recarregarParadas(ordem.id);
+            }
+          }
+          this.alterandoTransferId.set(null);
+          this.notificacao.sucesso(mensagemSucesso);
+        },
+        error: (err: unknown) => {
+          this.alterandoTransferId.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o vínculo do transfer.'));
+          this.recarregarSeConflito(err);
+        },
+      });
   }
 
   // ----- status da parada (unica acao liberada pro motorista) -----
 
   alterarStatusParada(parada: ParadaOs, seletor: HTMLSelectElement): void {
     const valor = seletor.value;
-    if (valor === parada.statusParada) {
+    if (valor === parada.statusParada || this.estaAlterandoParada(parada.id)) {
       return;
     }
 
-    this.alterandoParadaId.set(parada.id);
-    this.paradaService.alterarStatus(parada, valor as StatusParada).subscribe({
-      next: atualizada => {
-        this.paradas.update(lista => lista.map(p => (p.id === atualizada.id ? atualizada : p)));
-        this.alterandoParadaId.set(null);
-      },
-      error: (err: unknown) => {
-        this.alterandoParadaId.set(null);
-        seletor.value = parada.statusParada;
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status da parada.'));
-        this.recarregarSeConflito(err);
-      },
+    this.marcarParadaEmAlteracao(parada.id, true);
+    this.paradaService.alterarStatus(parada, valor as StatusParada)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: atualizada => {
+          this.paradas.update(lista => lista.map(p => (p.id === atualizada.id ? atualizada : p)));
+          this.marcarParadaEmAlteracao(parada.id, false);
+        },
+        error: (err: unknown) => {
+          this.marcarParadaEmAlteracao(parada.id, false);
+          seletor.value = parada.statusParada;
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível alterar o status da parada.'));
+          this.recarregarSeConflito(err);
+        },
+      });
+  }
+
+  private marcarParadaEmAlteracao(paradaId: number, emAlteracao: boolean): void {
+    this.paradasEmAlteracao.update(atual => {
+      const proximo = new Set(atual);
+      if (emAlteracao) {
+        proximo.add(paradaId);
+      } else {
+        proximo.delete(paradaId);
+      }
+      return proximo;
     });
   }
 
@@ -336,6 +399,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
   }
 
   abrirEdicaoParada(parada: ParadaOs): void {
+    const idsVinculados = new Set(this.transfersVinculados().map(t => t.id));
     this.editandoParada.set(parada);
     this.form.reset({
       ordemParada: parada.ordemParada,
@@ -345,7 +409,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
       statusParada: parada.statusParada,
       latitude: parada.latitude,
       longitude: parada.longitude,
-      transferIds: [...parada.transferIds],
+      transferIds: parada.transferIds.filter(id => idsVinculados.has(id)),
     });
     this.erroFormulario.set(null);
     this.modalAberto.set(true);
@@ -375,6 +439,8 @@ export class OrdemServicoDetalheComponent implements OnInit {
     }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      // o erro do servidor era da tentativa anterior: nao pode ficar junto com os erros novos
+      this.erroFormulario.set(null);
       return;
     }
 
@@ -383,6 +449,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
 
     const editando = this.editandoParada();
     const valores = this.form.getRawValue();
+    const idsVinculados = new Set(this.transfersVinculados().map(t => t.id));
     const numeroOuNulo = (valor: number | null) =>
       valor === null || (valor as unknown) === '' ? null : Number(valor);
 
@@ -395,7 +462,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
       statusParada: valores.statusParada,
       latitude: numeroOuNulo(valores.latitude),
       longitude: numeroOuNulo(valores.longitude),
-      transferIds: valores.transferIds,
+      transferIds: valores.transferIds.filter(id => idsVinculados.has(id)),
       // RNF008: com a versao carregada, se outra pessoa salvou antes o backend responde 409
       versao: editando?.versao,
     };
@@ -404,7 +471,7 @@ export class OrdemServicoDetalheComponent implements OnInit {
       ? this.paradaService.atualizar(editando.id, dados)
       : this.paradaService.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: salva => {
         // mantem a lista ordenada pela posicao na rota, igual o backend devolve
         this.paradas.update(lista =>
@@ -431,19 +498,49 @@ export class OrdemServicoDetalheComponent implements OnInit {
     }
 
     this.excluindo.set(true);
-    this.paradaService.excluir(parada.id).subscribe({
-      next: () => {
-        this.paradas.update(lista => lista.filter(p => p.id !== parada.id));
-        this.excluindo.set(false);
-        this.paradaParaExcluir.set(null);
-        this.notificacao.sucesso('Parada removida da rota.');
-      },
-      error: (err: unknown) => {
-        this.excluindo.set(false);
-        this.paradaParaExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível remover a parada.'));
-      },
-    });
+    this.paradaService.excluir(parada.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.paradas.update(lista => lista.filter(p => p.id !== parada.id));
+          this.excluindo.set(false);
+          this.paradaParaExcluir.set(null);
+          this.notificacao.sucesso('Parada removida da rota.');
+        },
+        error: (err: unknown) => {
+          this.excluindo.set(false);
+          this.paradaParaExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível remover a parada.'));
+        },
+      });
+  }
+
+  private recarregarParadas(osId: number): void {
+    this.paradaService.listarPorOrdemServico(osId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: paradas => this.paradas.set(paradas),
+        error: () => {},
+      });
+  }
+
+  private carregarTransfersDisponiveis(ordem: OrdemServico): void {
+    this.disponiveisSub?.unsubscribe();
+    if (!this.podeVincularTransfers() || !STATUS_OS_RECEBE_TRANSFER.includes(ordem.status)) {
+      this.transfersSemOsDoDia.set([]);
+      return;
+    }
+
+    this.disponiveisSub = this.transferService
+      .listar(
+        { page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'horaTransfer,asc' },
+        { semOs: true, dataInicio: ordem.dataServico, dataFim: ordem.dataServico },
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => this.transfersSemOsDoDia.set(pagina.conteudo),
+        error: () => this.transfersSemOsDoDia.set([]),
+      });
   }
 
   // motorista e veiculo sao opcionais na os; falha aqui nao impede o uso da tela
@@ -452,16 +549,20 @@ export class OrdemServicoDetalheComponent implements OnInit {
     this.veiculo.set(null);
 
     if (ordem.motoristaId) {
-      this.motoristaService.buscarPorId(ordem.motoristaId).subscribe({
-        next: motorista => this.motorista.set(motorista),
-        error: () => {},
-      });
+      this.motoristaService.buscarPorId(ordem.motoristaId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: motorista => this.motorista.set(motorista),
+          error: () => {},
+        });
     }
     if (ordem.veiculoId) {
-      this.veiculoService.buscarPorId(ordem.veiculoId).subscribe({
-        next: veiculo => this.veiculo.set(veiculo),
-        error: () => {},
-      });
+      this.veiculoService.buscarPorId(ordem.veiculoId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: veiculo => this.veiculo.set(veiculo),
+          error: () => {},
+        });
     }
   }
 }

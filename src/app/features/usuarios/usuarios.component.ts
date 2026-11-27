@@ -1,8 +1,10 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
+import { Pagina, TAMANHO_MAXIMO_PAGINA, paginaAposExclusao } from '../../core/models/api.model';
 import { PERFIS, Perfil } from '../../core/models/auth.model';
 import { Motorista } from '../../core/models/motorista.model';
 import { Usuario, UsuarioRequest } from '../../core/models/usuario.model';
@@ -15,7 +17,8 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { StatusBadgeComponent, TomStatus } from '../../shared/components/status-badge/status-badge.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
-import { ROTULO_PERFIL, formatarData, formatarHora, iniciais } from '../../shared/utils/rotulos';
+import { ROTULO_PERFIL, formatarDataHora, iniciais } from '../../shared/utils/rotulos';
+import { textoObrigatorio } from '../../shared/utils/validadores';
 
 const TAMANHO_PAGINA = 20;
 
@@ -48,7 +51,8 @@ const DESCRICAO_PERFIL: Record<Perfil, string> = {
         StatusBadgeComponent,
         TabelaSkeletonComponent,
     ],
-    templateUrl: './usuarios.component.html'
+    templateUrl: './usuarios.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsuariosComponent implements OnInit {
   private service = inject(UsuarioService);
@@ -56,6 +60,9 @@ export class UsuariosComponent implements OnInit {
   private auth = inject(AuthService);
   private notificacao = inject(NotificacaoService);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
 
   perfis = PERFIS;
   rotuloPerfil = ROTULO_PERFIL;
@@ -75,8 +82,8 @@ export class UsuariosComponent implements OnInit {
 
   // senha: obrigatoria so no cadastro (o validador e trocado ao abrir o modal)
   form = this.fb.nonNullable.group({
-    nome: ['', [Validators.required, Validators.maxLength(100)]],
-    username: ['', [Validators.required, Validators.pattern(PADRAO_USERNAME)]],
+    nome: ['', [textoObrigatorio, Validators.maxLength(100)]],
+    username: ['', [textoObrigatorio, Validators.pattern(PADRAO_USERNAME)]],
     senha: [''],
     role: ['ATENDENTE' as Perfil, Validators.required],
     ativo: [true],
@@ -84,7 +91,7 @@ export class UsuariosComponent implements OnInit {
     motoristaId: this.fb.control<number | null>(null),
   });
 
-  // opcoes do select de motorista (os 100 primeiros por nome, limite de pagina do backend)
+  // opcoes do select de motorista
   motoristas = signal<Motorista[]>([]);
 
   // nome do motorista ligado, pra mostrar na tabela
@@ -104,27 +111,37 @@ export class UsuariosComponent implements OnInit {
   ngOnInit(): void {
     this.carregar();
     this.carregarMotoristas();
-    this.form.controls.role.valueChanges.subscribe(perfil => this.perfilSelecionado.set(perfil));
+    this.form.controls.role.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(perfil => this.perfilSelecionado.set(perfil));
   }
 
   carregar(numeroPagina = 0): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
 
-    this.service.listar({ page: numeroPagina, size: TAMANHO_PAGINA, sort: 'nome,asc' }).subscribe({
-      next: pagina => {
-        this.pagina.set(pagina);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os usuários.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.service.listar({ page: numeroPagina, size: TAMANHO_PAGINA, sort: 'nome,asc' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.pagina.set(pagina);
+          this.garantirMotoristasDaPagina(pagina.conteudo);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os usuários.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
-  // "Ativo" / "Inativo" / "Troca de senha pendente"
+  // "Aguardando liberação" / "Ativo" / "Inativo" / "Troca de senha pendente"
   situacao(usuario: Usuario): { tom: TomStatus; rotulo: string } {
+    // inativo que nunca entrou: em geral veio do "Criar conta" e espera o admin ligar o "Usuário ativo"
+    if (!usuario.ativo && !usuario.ultimoLogin) {
+      return { tom: 'warning', rotulo: 'Aguardando liberação' };
+    }
     if (!usuario.ativo) {
       return { tom: 'neutral', rotulo: 'Inativo' };
     }
@@ -134,18 +151,15 @@ export class UsuariosComponent implements OnInit {
     return { tom: 'success', rotulo: 'Ativo' };
   }
 
-  // "17/09/2026 14:30" (a api manda "2026-09-17T14:30:00")
-  formatarDataHora(valor: string | null): string {
-    if (!valor) {
-      return 'Nunca acessou';
-    }
-    return `${formatarData(valor)} ${formatarHora(valor.slice(11))}`;
+  ultimoAcesso(valor: string | null): string {
+    return formatarDataHora(valor, 'Nunca acessou');
   }
 
   // ----- cadastro/edicao -----
 
   abrirCadastro(): void {
     this.editando.set(null);
+    this.carregarMotoristas();
     this.configurarSenha(true);
     this.form.reset({ nome: '', username: '', senha: '', role: 'ATENDENTE', ativo: true, motoristaId: null });
     this.form.controls.ativo.enable();
@@ -154,6 +168,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   abrirEdicao(usuario: Usuario): void {
+    this.garantirMotoristasDaPagina([usuario]);
     this.editando.set(usuario);
     this.configurarSenha(false);
     this.form.reset({
@@ -183,6 +198,8 @@ export class UsuariosComponent implements OnInit {
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      // o erro do servidor era da tentativa anterior: nao pode ficar junto com os erros novos
+      this.erroFormulario.set(null);
       return;
     }
 
@@ -207,7 +224,7 @@ export class UsuariosComponent implements OnInit {
       ? this.service.atualizar(editando.id, dados)
       : this.service.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.modalAberto.set(false);
@@ -237,21 +254,21 @@ export class UsuariosComponent implements OnInit {
 
     this.excluindo.set(true);
 
-    this.service.excluir(usuario.id).subscribe({
-      next: () => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.sucesso('Usuário excluído.');
-        const atual = this.pagina();
-        const voltarUma = !!atual && atual.conteudo.length === 1 && atual.pagina > 0;
-        this.carregar(atual ? (voltarUma ? atual.pagina - 1 : atual.pagina) : 0);
-      },
-      error: (err: unknown) => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o usuário.'));
-      },
-    });
+    this.service.excluir(usuario.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.sucesso('Usuário excluído.');
+          this.carregar(paginaAposExclusao(this.pagina()));
+        },
+        error: (err: unknown) => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o usuário.'));
+        },
+      });
   }
 
   // no cadastro a senha e obrigatoria; na edicao e opcional, mas se vier precisa ter 8 a 72 caracteres
@@ -266,9 +283,29 @@ export class UsuariosComponent implements OnInit {
   }
 
   private carregarMotoristas(): void {
-    this.motoristaService.listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'nome,asc' }).subscribe({
-      next: pagina => this.motoristas.set(pagina.conteudo),
-      error: () => this.motoristas.set([]),
-    });
+    this.motoristaService.listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'nome,asc' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.motoristas.set(pagina.conteudo);
+          this.garantirMotoristasDaPagina(this.pagina()?.conteudo ?? []);
+        },
+        error: () => this.motoristas.set([]),
+      });
+  }
+
+  private garantirMotoristasDaPagina(usuarios: Usuario[]): void {
+    const conhecidos = new Set(this.motoristas().map(m => m.id));
+    for (const u of usuarios) {
+      if (u.motoristaId && !conhecidos.has(u.motoristaId)) {
+        conhecidos.add(u.motoristaId);
+        this.motoristaService.buscarPorId(u.motoristaId)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: m => this.motoristas.update(lista => (lista.some(x => x.id === m.id) ? lista : [...lista, m])),
+            error: () => {},
+          });
+      }
+    }
   }
 }

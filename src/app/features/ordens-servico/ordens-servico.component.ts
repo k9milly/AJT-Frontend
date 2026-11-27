@@ -1,10 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina, TAMANHO_MAXIMO_PAGINA } from '../../core/models/api.model';
+import { Pagina, TAMANHO_MAXIMO_PAGINA, paginaAposExclusao } from '../../core/models/api.model';
 import { Motorista } from '../../core/models/motorista.model';
 import {
   FiltroOrdemServico,
@@ -25,6 +26,7 @@ import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
 import { ROTULO_STATUS_OS, formatarData, iniciais, tomDoStatus } from '../../shared/utils/rotulos';
+import { periodoInvalido } from '../../shared/utils/validadores';
 
 const TAMANHO_PAGINA = 20;
 
@@ -46,7 +48,8 @@ const TAMANHO_PAGINA = 20;
         StatusBadgeComponent,
         TabelaSkeletonComponent,
     ],
-    templateUrl: './ordens-servico.component.html'
+    templateUrl: './ordens-servico.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrdensServicoComponent implements OnInit {
   private service = inject(OrdemServicoService);
@@ -57,6 +60,9 @@ export class OrdensServicoComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
 
   statusOpcoes = STATUS_ORDEM_SERVICO;
   rotuloStatus = ROTULO_STATUS_OS;
@@ -77,10 +83,10 @@ export class OrdensServicoComponent implements OnInit {
   filtroMotoristaId = signal<number | null>(null);
   filtrosAplicados = signal<FiltroOrdemServico>({});
   temFiltroExtra = computed(() => Object.values(this.filtrosAplicados()).some(valor => !!valor));
+  intervaloFiltroInvalido = computed(() => periodoInvalido(this.filtroDataInicio(), this.filtroDataFim()));
   ehMotorista = computed(() => this.auth.perfil() === 'MOTORISTA');
 
   // motoristas e veiculos pra mostrar nome/placa na tabela e preencher os selects
-  // (os 100 primeiros: limite de pagina do backend; suficiente pro tamanho da frota)
   motoristas = signal<Motorista[]>([]);
   veiculos = signal<Veiculo[]>([]);
 
@@ -117,22 +123,26 @@ export class OrdensServicoComponent implements OnInit {
 
   // mais recentes primeiro
   carregar(numeroPagina = 0): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
 
     const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'dataServico,desc' };
     const filtros: FiltroOrdemServico = { ...this.filtrosAplicados(), status: this.filtroStatus() || undefined };
 
-    this.service.listar(parametros, filtros).subscribe({
-      next: pagina => {
-        this.pagina.set(pagina);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar as ordens de serviço.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.service.listar(parametros, filtros)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.pagina.set(pagina);
+          this.garantirFrotaDaPagina(pagina.conteudo);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar as ordens de serviço.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   filtrarPorStatus(valor: string): void {
@@ -141,6 +151,9 @@ export class OrdensServicoComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
+    if (this.intervaloFiltroInvalido()) {
+      return;
+    }
     this.filtrosAplicados.set({
       dataInicio: this.filtroDataInicio() || undefined,
       dataFim: this.filtroDataFim() || undefined,
@@ -177,6 +190,7 @@ export class OrdensServicoComponent implements OnInit {
 
   abrirCadastro(): void {
     this.editando.set(null);
+    this.carregarFrota();
     this.form.reset({ dataServico: '', motoristaId: null, veiculoId: null, status: 'ABERTA' });
     this.erroFormulario.set(null);
     this.modalAberto.set(true);
@@ -185,6 +199,7 @@ export class OrdensServicoComponent implements OnInit {
   abrirEdicao(ordem: OrdemServico, evento?: Event): void {
     // o clique no botao nao deve abrir o detalhe (a linha inteira e clicavel)
     evento?.stopPropagation();
+    this.garantirFrotaDaPagina([ordem]);
     this.editando.set(ordem);
     this.form.reset({
       dataServico: ordem.dataServico,
@@ -210,6 +225,8 @@ export class OrdensServicoComponent implements OnInit {
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      // o erro do servidor era da tentativa anterior: nao pode ficar junto com os erros novos
+      this.erroFormulario.set(null);
       return;
     }
 
@@ -224,7 +241,7 @@ export class OrdensServicoComponent implements OnInit {
       ? this.service.atualizar(editando.id, dados)
       : this.service.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: salva => {
         this.salvando.set(false);
         this.modalAberto.set(false);
@@ -259,35 +276,65 @@ export class OrdensServicoComponent implements OnInit {
 
     this.excluindo.set(true);
 
-    this.service.excluir(ordem.id).subscribe({
-      next: () => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.sucesso(`OS #${ordem.id} excluída.`);
-        const atual = this.pagina();
-        const voltarUma = !!atual && atual.conteudo.length === 1 && atual.pagina > 0;
-        this.carregar(atual ? (voltarUma ? atual.pagina - 1 : atual.pagina) : 0);
-      },
-      error: (err: unknown) => {
-        // 409 = ainda existem transfers vinculados a esta os
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir a ordem de serviço.'));
-      },
-    });
+    this.service.excluir(ordem.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.sucesso(`OS #${ordem.id} excluída.`);
+          this.carregar(paginaAposExclusao(this.pagina()));
+        },
+        error: (err: unknown) => {
+          // 409 = ainda existem transfers vinculados a esta os
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir a ordem de serviço.'));
+        },
+      });
   }
 
   private carregarFrota(): void {
     forkJoin({
       motoristas: this.motoristaService.listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'nome,asc' }),
       veiculos: this.veiculoService.listar({ page: 0, size: TAMANHO_MAXIMO_PAGINA, sort: 'label,asc' }),
-    }).subscribe({
-      next: ({ motoristas, veiculos }) => {
-        this.motoristas.set(motoristas.conteudo);
-        this.veiculos.set(veiculos.conteudo);
-      },
-      // sem a frota a tabela mostra "#id" no lugar do nome; nao impede o uso da tela
-      error: () => {},
-    });
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ motoristas, veiculos }) => {
+          this.motoristas.set(motoristas.conteudo);
+          this.veiculos.set(veiculos.conteudo);
+          this.garantirFrotaDaPagina(this.pagina()?.conteudo ?? []);
+        },
+        // sem a frota a tabela mostra "#id" no lugar do nome; nao impede o uso da tela
+        error: () => {},
+      });
+  }
+
+  // se alguma OS da pagina usar motorista/veiculo alem dos 100 primeiros, busca individualmente
+  private garantirFrotaDaPagina(ordens: OrdemServico[]): void {
+    const motoristasConhecidos = new Set(this.motoristas().map(m => m.id));
+    const veiculosConhecidos = new Set(this.veiculos().map(v => v.id));
+
+    for (const ordem of ordens) {
+      if (ordem.motoristaId && !motoristasConhecidos.has(ordem.motoristaId)) {
+        motoristasConhecidos.add(ordem.motoristaId);
+        this.motoristaService.buscarPorId(ordem.motoristaId)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: m => this.motoristas.update(lista => (lista.some(x => x.id === m.id) ? lista : [...lista, m])),
+            error: () => {},
+          });
+      }
+      if (ordem.veiculoId && !veiculosConhecidos.has(ordem.veiculoId)) {
+        veiculosConhecidos.add(ordem.veiculoId);
+        this.veiculoService.buscarPorId(ordem.veiculoId)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: v => this.veiculos.update(lista => (lista.some(x => x.id === v.id) ? lista : [...lista, v])),
+            error: () => {},
+          });
+      }
+    }
   }
 }

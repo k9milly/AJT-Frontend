@@ -124,6 +124,15 @@ export function formatarHora(hora: string | null | undefined): string {
   return hora ? hora.slice(0, 5) : '—';
 }
 
+// "2026-10-19T20:23:39.807" -> "19/10/2026 20:23" (sem conversao de fuso)
+export function formatarDataHora(valor: string | null | undefined, vazio = '—'): string {
+  if (!valor) {
+    return vazio;
+  }
+  const [data, hora = ''] = valor.split('T');
+  return hora ? `${formatarData(data)} ${formatarHora(hora)}` : formatarData(data);
+}
+
 // 1234.5 + "USD" -> "US$ 1.234,50" (formato brasileiro, qualquer moeda iso)
 export function formatarMoeda(valor: number | null | undefined, moeda: string | null | undefined = 'BRL'): string {
   if (valor === null || valor === undefined) {

@@ -23,8 +23,10 @@ export function ajustarStatusAoVinculo(status: StatusTransfer, temOs: boolean): 
 // moeda base do sistema; valores em outra moeda sao convertidos pelo backend
 export const MOEDA_BASE = 'BRL';
 
-// moedas oferecidas no formulario (o backend aceita qualquer codigo iso de 3 letras)
-export const MOEDAS: string[] = ['BRL', 'USD', 'EUR', 'ARS', 'PYG'];
+// moedas oferecidas no formulario (o backend aceita qualquer codigo iso de 3 letras).
+// so as que a api de cambio (frankfurter, cotacoes do banco central europeu) converte:
+// ARS e PYG nao tem cotacao la, e o valor em reais ficaria sempre em branco
+export const MOEDAS: string[] = ['BRL', 'USD', 'EUR'];
 
 // transfer como o backend devolve (TransferResponseDTO)
 // datas sem fuso: dataTransfer "2026-09-20", horaTransfer "14:30:00"

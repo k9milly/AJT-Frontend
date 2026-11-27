@@ -76,6 +76,20 @@ describe('AuthService', () => {
     expect(service.isAutenticado()).toBeTrue();
   });
 
+  it('criar conta envia nome/username/senha e nao abre sessao (a conta espera o admin liberar)', () => {
+    criarServico();
+
+    service.registrar({ nome: 'Maria', username: 'maria', senha: 'senha12345' }).subscribe();
+
+    const req = http.expectOne(`${environment.apiUrl}/auth/registro`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ nome: 'Maria', username: 'maria', senha: 'senha12345' });
+    req.flush({ id: 7, username: 'maria', role: 'ATENDENTE', ativo: false });
+
+    expect(sessaoSalva()).toBeNull();
+    expect(service.isAutenticado()).toBeFalse();
+  });
+
   it('troca de senha substitui o token antigo pelo novo', () => {
     criarServico();
     service.login('admin', 'admin123').subscribe();
@@ -105,6 +119,23 @@ describe('AuthService', () => {
     expect(service.nomeExibicao()).toBe('Administrador');
     expect(service.perfil()).toBe('GERENTE');
     expect(service.precisaTrocarSenha()).toBeFalse();
+  });
+
+  it('/me com usuario desativado encerra a sessao local', () => {
+    criarServico();
+    service.login('admin', 'admin123').subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/login`).flush(respostaLogin);
+
+    service.carregarUsuarioLogado().subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({
+      id: 1, nome: 'Administrador', username: 'admin', role: 'ADMIN',
+      ativo: false, trocarSenha: false, ultimoLogin: null, criadoEm: '2026-09-17T10:00:00',
+      motoristaId: null, versao: 1,
+    });
+
+    expect(service.isAutenticado()).toBeFalse();
+    expect(service.getToken()).toBeNull();
+    expect(sessaoSalva()).toBeNull();
   });
 
   it('token vencido pelo relogio local derruba a sessao', () => {

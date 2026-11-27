@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginResponse, Perfil, Sessao, TrocaSenhaRequest } from '../models/auth.model';
+import { LoginResponse, Perfil, RegistroRequest, Sessao, TrocaSenhaRequest } from '../models/auth.model';
 import { Usuario } from '../models/usuario.model';
 import { Recurso, podeEscrever, podeExcluir, podeLer, podeAlterarStatusParada } from './permissoes';
 
@@ -44,6 +44,11 @@ export class AuthService {
       .pipe(tap(resposta => this.guardarSessao(resposta)));
   }
 
+  // cadastro publico: nao abre sessao (a conta fica aguardando o admin liberar)
+  registrar(dados: RegistroRequest): Observable<Usuario> {
+    return this.http.post<Usuario>(`${this.base}/registro`, dados);
+  }
+
   // restaura/atualiza os dados do usuario logado (nome, perfil, trocarSenha)
   // chamado ao abrir o painel: se o admin mudou o perfil ou desativou o usuario, o front fica sabendo
   carregarUsuarioLogado(): Observable<Usuario> {
@@ -51,6 +56,10 @@ export class AuthService {
       tap(usuario => {
         const sessao = this.sessaoAtual();
         if (!sessao) {
+          return;
+        }
+        if (!usuario.ativo) {
+          this.logout();
           return;
         }
         this.salvar({
@@ -81,21 +90,24 @@ export class AuthService {
   // ----- consultas usadas por guard, interceptor e telas -----
 
   // autenticado = tem token e ele ainda nao venceu pelo relogio local
-  // (o backend continua sendo a fonte da verdade: se ele responder 401 o interceptor desloga)
+  // leitura pura (sem mutar signal), segura pra usar dentro de computed() e templates
   isAutenticado(): boolean {
-    const sessao = this.sessaoAtual();
-    if (!sessao) {
-      return false;
+    return this.sessaoValida() !== null;
+  }
+
+  // usado pelos guards de rota: se a sessao expirou localmente, limpa o storage antes de redirecionar
+  encerrarSeExpirada(): boolean {
+    if (this.sessaoValida()) {
+      return true;
     }
-    if (Date.now() >= sessao.expiraEmMs) {
+    if (this.sessaoAtual()) {
       this.logout();
-      return false;
     }
-    return true;
+    return false;
   }
 
   getToken(): string | null {
-    return this.sessaoAtual()?.token ?? null;
+    return this.sessaoValida()?.token ?? null;
   }
 
   temPerfil(...perfis: Perfil[]): boolean {
@@ -139,7 +151,15 @@ export class AuthService {
     this.sessaoAtual.set(sessao);
   }
 
-  // le a sessao salva; se o json estiver corrompido (ou for de uma versao antiga do front), descarta
+  private sessaoValida(): Sessao | null {
+    const sessao = this.sessaoAtual();
+    if (!sessao || typeof sessao.expiraEmMs !== 'number' || Date.now() >= sessao.expiraEmMs) {
+      return null;
+    }
+    return sessao;
+  }
+
+  // le a sessao salva; se o json estiver corrompido, incompleto ou ja expirado, descarta
   private carregarSessao(): Sessao | null {
     const bruto = localStorage.getItem(CHAVE_SESSAO);
     if (!bruto) {
@@ -147,7 +167,17 @@ export class AuthService {
     }
     try {
       const sessao = JSON.parse(bruto) as Sessao;
-      return sessao?.token && sessao?.role ? sessao : null;
+      const valida = Boolean(
+        sessao?.token
+        && sessao?.role
+        && typeof sessao.expiraEmMs === 'number'
+        && Date.now() < sessao.expiraEmMs,
+      );
+      if (!valida) {
+        localStorage.removeItem(CHAVE_SESSAO);
+        return null;
+      }
+      return sessao;
     } catch {
       localStorage.removeItem(CHAVE_SESSAO);
       return null;

@@ -1,10 +1,12 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MdbRippleModule } from 'mdb-angular-ui-kit/ripple';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MENSAGENS_ERRO, mensagemDeErro } from '../../../core/http/erro-api';
 import { IconeComponent } from '../../../shared/components/icone/icone.component';
+import { textoObrigatorio } from '../../../shared/utils/validadores';
 
 // tela de login do painel
 // layout em duas metades sobre o mesmo fundo escuro (marca + contexto | formulario),
@@ -13,13 +15,15 @@ import { IconeComponent } from '../../../shared/components/icone/icone.component
 @Component({
     selector: 'app-login',
     imports: [ReactiveFormsModule, RouterLink, IconeComponent, MdbRippleModule],
-    templateUrl: './login.component.html'
+    templateUrl: './login.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   carregando = signal(false);
   erro = signal<string | null>(null);
@@ -28,7 +32,7 @@ export class LoginComponent implements OnInit {
 
   // limites iguais aos do LoginRequestDTO do backend
   form = this.fb.nonNullable.group({
-    username: ['', [Validators.required, Validators.maxLength(50)]],
+    username: ['', [textoObrigatorio, Validators.maxLength(50)]],
     senha: ['', [Validators.required, Validators.maxLength(72)]],
   });
 
@@ -56,7 +60,9 @@ export class LoginComponent implements OnInit {
     this.erro.set(null);
     this.aviso.set(null);
 
-    this.authService.login(username.trim(), senha).subscribe({
+    this.authService.login(username.trim(), senha)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.carregando.set(false);
         this.irParaDestino();

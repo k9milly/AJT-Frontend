@@ -1,9 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { mensagemDeErro, statusDoErro } from '../../core/http/erro-api';
-import { Pagina } from '../../core/models/api.model';
+import { Pagina, paginaAposExclusao } from '../../core/models/api.model';
 import { FiltroMotorista, Motorista, MotoristaRequest } from '../../core/models/motorista.model';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { MotoristaService } from './motorista.service';
@@ -13,13 +15,14 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PaginacaoComponent } from '../../shared/components/paginacao/paginacao.component';
 import { TabelaSkeletonComponent } from '../../shared/components/tabela-skeleton/tabela-skeleton.component';
 import { formatarTelefone, iniciais, textoOuNulo } from '../../shared/utils/rotulos';
+import { textoObrigatorio } from '../../shared/utils/validadores';
 
 const TAMANHO_PAGINA = 20;
 
 // ---------------------------------------------------------------
 // tela de motoristas: listagem + cadastro/edicao em modal
 // ---------------------------------------------------------------
-// leitura: todos os perfis | escrita e exclusao: ADMIN, GERENTE
+// leitura: ADMIN, GERENTE, ATENDENTE (na tela) | escrita e exclusao: ADMIN, GERENTE
 @Component({
     selector: 'app-motoristas',
     imports: [
@@ -30,7 +33,8 @@ const TAMANHO_PAGINA = 20;
         PaginacaoComponent,
         TabelaSkeletonComponent,
     ],
-    templateUrl: './motoristas.component.html'
+    templateUrl: './motoristas.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MotoristasComponent implements OnInit {
   private service = inject(MotoristaService);
@@ -38,6 +42,9 @@ export class MotoristasComponent implements OnInit {
   private notificacao = inject(NotificacaoService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  private cargaSub?: Subscription;
 
   iniciais = iniciais;
   formatarTelefone = formatarTelefone;
@@ -64,8 +71,8 @@ export class MotoristasComponent implements OnInit {
 
   // tamanhos iguais aos do MotoristaRequestDTO do backend
   form = this.fb.nonNullable.group({
-    nome: ['', [Validators.required, Validators.maxLength(100)]],
-    cnh: ['', [Validators.required, Validators.maxLength(20)]],
+    nome: ['', [textoObrigatorio, Validators.maxLength(100)]],
+    cnh: ['', [textoObrigatorio, Validators.maxLength(20)]],
     telefone: ['', Validators.maxLength(20)],
   });
 
@@ -83,20 +90,23 @@ export class MotoristasComponent implements OnInit {
   }
 
   carregar(numeroPagina = 0): void {
+    this.cargaSub?.unsubscribe();
     this.carregando.set(true);
     this.erro.set(null);
 
     const parametros = { page: numeroPagina, size: TAMANHO_PAGINA, sort: 'nome,asc' };
-    this.service.listar(parametros, this.filtroAplicado()).subscribe({
-      next: pagina => {
-        this.pagina.set(pagina);
-        this.carregando.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os motoristas.'));
-        this.carregando.set(false);
-      },
-    });
+    this.cargaSub = this.service.listar(parametros, this.filtroAplicado())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pagina => {
+          this.pagina.set(pagina);
+          this.carregando.set(false);
+        },
+        error: (err: unknown) => {
+          this.erro.set(mensagemDeErro(err, 'Não foi possível carregar os motoristas.'));
+          this.carregando.set(false);
+        },
+      });
   }
 
   buscar(): void {
@@ -143,6 +153,8 @@ export class MotoristasComponent implements OnInit {
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      // o erro do servidor era da tentativa anterior: nao pode ficar junto com os erros novos
+      this.erroFormulario.set(null);
       return;
     }
 
@@ -166,7 +178,7 @@ export class MotoristasComponent implements OnInit {
       ? this.service.atualizar(editando.id, dados)
       : this.service.criar(dados);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.modalAberto.set(false);
@@ -195,30 +207,21 @@ export class MotoristasComponent implements OnInit {
 
     this.excluindo.set(true);
 
-    this.service.excluir(motorista.id).subscribe({
-      next: () => {
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.sucesso('Motorista excluído.');
-        this.recarregarAposExclusao();
-      },
-      error: (err: unknown) => {
-        // 409 = motorista vinculado a uma ordem de servico
-        this.excluindo.set(false);
-        this.paraExcluir.set(null);
-        this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o motorista.'));
-      },
-    });
-  }
-
-  // se o item excluido era o ultimo da pagina, volta uma pagina pra nao mostrar tabela vazia
-  private recarregarAposExclusao(): void {
-    const atual = this.pagina();
-    if (!atual) {
-      this.carregar();
-      return;
-    }
-    const voltarUma = atual.conteudo.length === 1 && atual.pagina > 0;
-    this.carregar(voltarUma ? atual.pagina - 1 : atual.pagina);
+    this.service.excluir(motorista.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.sucesso('Motorista excluído.');
+          this.carregar(paginaAposExclusao(this.pagina()));
+        },
+        error: (err: unknown) => {
+          // 409 = motorista vinculado a uma ordem de servico
+          this.excluindo.set(false);
+          this.paraExcluir.set(null);
+          this.notificacao.erro(mensagemDeErro(err, 'Não foi possível excluir o motorista.'));
+        },
+      });
   }
 }

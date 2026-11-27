@@ -62,7 +62,7 @@
                 <td>
                   <app-status-badge [tom]="situacao(usuario).tom" [rotulo]="situacao(usuario).rotulo" />
                 </td>
-                <td class="ajt-dado text-xs text-muted-foreground">{{ formatarDataHora(usuario.ultimoLogin) }}</td>
+                <td class="ajt-dado text-xs text-muted-foreground">{{ ultimoAcesso(usuario.ultimoLogin) }}</td>
                 <td class="whitespace-nowrap text-right">
                   <button type="button" class="ajt-botao-icone" title="Editar" (click)="abrirEdicao(usuario)">
                     <app-icone nome="lapis" class="size-3.5" />
@@ -91,6 +91,7 @@
 <!-- ===================== cadastro/edicao ===================== -->
 <app-modal
   [aberto]="modalAberto()"
+  [bloqueado]="salvando()"
   [titulo]="editando() ? 'Editar usuário' : 'Novo usuário'"
   (fechar)="fecharModal()"
 >

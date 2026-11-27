@@ -1,10 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { Recurso } from '../../core/auth/permissoes';
 import { mensagemDeErro } from '../../core/http/erro-api';
-import { OrdemServico } from '../../core/models/ordem-servico.model';
+import { OrdemServico, OrdemServicoDoDia } from '../../core/models/ordem-servico.model';
 import { Transfer } from '../../core/models/transfer.model';
 import { PainelResumo } from '../../core/models/painel.model';
 import { PainelService } from './painel.service';
@@ -28,7 +29,7 @@ interface Atalho {
   queryParams?: Record<string, string>;
   rotulo: string;
   icone: NomeIcone;
-  recurso: Recurso;
+  recurso?: Recurso;
 }
 
 // quantos itens aparecem nas listas "pra resolver" do painel
@@ -37,19 +38,23 @@ const ITENS_POR_LISTA = 5;
 // ---------------------------------------------------------------
 // painel inicial (dashboard)
 // ---------------------------------------------------------------
-// os indicadores sao do dia (RF012) e vem prontos do GET /api/painel/resumo (uma consulta
-// agregada no backend). o faturamento (HU08) so vem preenchido pra ADMIN e GERENTE.
-// as listas mostram o que precisa de acao, de qualquer dia: transfers sem os e os ainda abertas.
+// para a equipe (ADMIN, GERENTE, ATENDENTE): indicadores do dia (RF012), faturamento (HU08) e
+// pendencias (transfers sem OS e OS abertas).
+// para o MOTORISTA: resumo e atalhos focados apenas nas proprias OS e paradas do dia (HU07).
 @Component({
     selector: 'app-painel',
     imports: [RouterLink, IconeComponent, StatCardComponent, StatusBadgeComponent],
-    templateUrl: './painel.component.html'
+    templateUrl: './painel.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PainelComponent implements OnInit {
   private painelService = inject(PainelService);
   private transferService = inject(TransferService);
   private ordemServicoService = inject(OrdemServicoService);
+  private destroyRef = inject(DestroyRef);
   auth = inject(AuthService);
+
+  private cargaSub?: Subscription;
 
   rotuloStatusTransfer = ROTULO_STATUS_TRANSFER;
   rotuloStatusOs = ROTULO_STATUS_OS;
@@ -57,7 +62,9 @@ export class PainelComponent implements OnInit {
   formatarData = formatarData;
   formatarHora = formatarHora;
 
-  // resumo do dia (null = ainda carregando)
+  ehMotorista = computed(() => this.auth.perfil() === 'MOTORISTA');
+
+  // resumo do dia da operacao (null = ainda carregando)
   resumo = signal<PainelResumo | null>(null);
   erroResumo = signal(false);
 
@@ -80,59 +87,132 @@ export class PainelComponent implements OnInit {
   faturamentoDia = computed(() => this.doResumo(r => formatarMoeda(r.faturamentoDia, 'BRL')));
   faturamentoMes = computed(() => this.doResumo(r => formatarMoeda(r.faturamentoMes, 'BRL')));
 
+  // listas da equipe
   transfersSemOs = signal<Transfer[]>([]);
   ordensAbertas = signal<OrdemServico[]>([]);
   carregandoListas = signal(true);
   erro = signal<string | null>(null);
+
+  // dados proprios do perfil MOTORISTA (HU07)
+  minhasOsHoje = signal<OrdemServicoDoDia[] | null>(null);
+  totalMinhasOsHoje = computed<number | string | null>(() => {
+    if (this.erro()) {
+      return '—';
+    }
+    const lista = this.minhasOsHoje();
+    return lista ? lista.length : null;
+  });
+  paradasPendentesHoje = computed<number | string | null>(() => {
+    if (this.erro()) {
+      return '—';
+    }
+    const lista = this.minhasOsHoje();
+    if (!lista) {
+      return null;
+    }
+    return lista.reduce(
+      (soma, item) => soma + item.paradas.filter(p => p.statusParada === 'PENDENTE' || p.statusParada === 'EM_ANDAMENTO').length,
+      0,
+    );
+  });
+  paradasConcluidasHoje = computed<number | string | null>(() => {
+    if (this.erro()) {
+      return '—';
+    }
+    const lista = this.minhasOsHoje();
+    if (!lista) {
+      return null;
+    }
+    return lista.reduce((soma, item) => soma + item.paradas.filter(p => p.statusParada === 'CONCLUIDA').length, 0);
+  });
 
   // "quarta-feira, 17 de setembro"
   hoje = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
   primeiroNome = computed(() => this.auth.nomeExibicao().split(' ')[0]);
 
-  private atalhos: Atalho[] = [
+  private atalhosEquipe: Atalho[] = [
     { rota: '/admin/transfers', queryParams: { novo: '1' }, rotulo: 'Novo transfer', icone: 'rota', recurso: 'transfers' },
     { rota: '/admin/ordens-servico', queryParams: { novo: '1' }, rotulo: 'Nova ordem de serviço', icone: 'prancheta', recurso: 'ordens-servico' },
     { rota: '/admin/passageiros', queryParams: { novo: '1' }, rotulo: 'Novo passageiro', icone: 'pessoas', recurso: 'passageiros' },
     { rota: '/admin/pontos-coleta', rotulo: 'Pontos de coleta', icone: 'pino', recurso: 'pontos-coleta' },
   ];
 
+  private atalhosMotorista: Atalho[] = [
+    { rota: '/admin/minhas-os', rotulo: 'Minhas OS do dia', icone: 'calendario' },
+    { rota: '/admin/ordens-servico', rotulo: 'Ordens de serviço', icone: 'prancheta' },
+  ];
+
   // atalho de cadastro so aparece pra quem pode escrever naquele recurso
-  atalhosVisiveis = computed(() =>
-    this.atalhos.filter(atalho => atalho.queryParams ? this.auth.podeEscrever(atalho.recurso) : this.auth.podeLer(atalho.recurso)),
-  );
+  atalhosVisiveis = computed(() => {
+    if (this.ehMotorista()) {
+      return this.atalhosMotorista;
+    }
+    return this.atalhosEquipe.filter(atalho =>
+      !atalho.recurso || (atalho.queryParams ? this.auth.podeEscrever(atalho.recurso) : this.auth.podeLer(atalho.recurso)),
+    );
+  });
 
   ngOnInit(): void {
     this.carregar();
   }
 
   carregar(): void {
+    this.cargaSub?.unsubscribe();
     this.erro.set(null);
     this.erroResumo.set(false);
     this.resumo.set(null);
     this.carregandoListas.set(true);
 
-    this.painelService.resumo().subscribe({
-      next: resumo => this.resumo.set(resumo),
-      error: (err: unknown) => {
-        this.erroResumo.set(true);
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar o painel.'));
-      },
-    });
+    if (this.ehMotorista()) {
+      this.minhasOsHoje.set(null);
+      this.cargaSub = this.ordemServicoService.minhasDoDia()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: ordens => {
+            this.minhasOsHoje.set(ordens);
+            this.carregandoListas.set(false);
+          },
+          error: (err: unknown) => {
+            this.erro.set(mensagemDeErro(err, 'Não foi possível carregar suas ordens de serviço.'));
+            this.carregandoListas.set(false);
+          },
+        });
+      return;
+    }
 
-    forkJoin({
-      aguardando: this.transferService.buscarPorStatus('AGUARDANDO_OS', { page: 0, size: ITENS_POR_LISTA, sort: 'dataTransfer,asc' }),
-      abertas: this.ordemServicoService.buscarPorStatus('ABERTA', { page: 0, size: ITENS_POR_LISTA, sort: 'dataServico,asc' }),
-    }).subscribe({
-      next: resultado => {
-        this.transfersSemOs.set(resultado.aguardando.conteudo);
-        this.ordensAbertas.set(resultado.abertas.conteudo);
-        this.carregandoListas.set(false);
-      },
-      error: (err: unknown) => {
-        this.erro.set(mensagemDeErro(err, 'Não foi possível carregar o painel.'));
-        this.carregandoListas.set(false);
-      },
-    });
+    const sub = new Subscription();
+    this.cargaSub = sub;
+
+    sub.add(
+      this.painelService.resumo()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: resumo => this.resumo.set(resumo),
+          error: (err: unknown) => {
+            this.erroResumo.set(true);
+            this.erro.set(mensagemDeErro(err, 'Não foi possível carregar o painel.'));
+          },
+        }),
+    );
+
+    sub.add(
+      forkJoin({
+        aguardando: this.transferService.buscarPorStatus('AGUARDANDO_OS', { page: 0, size: ITENS_POR_LISTA, sort: 'dataTransfer,asc' }),
+        abertas: this.ordemServicoService.buscarPorStatus('ABERTA', { page: 0, size: ITENS_POR_LISTA, sort: 'dataServico,asc' }),
+      })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: resultado => {
+            this.transfersSemOs.set(resultado.aguardando.conteudo);
+            this.ordensAbertas.set(resultado.abertas.conteudo);
+            this.carregandoListas.set(false);
+          },
+          error: (err: unknown) => {
+            this.erro.set(mensagemDeErro(err, 'Não foi possível carregar o painel.'));
+            this.carregandoListas.set(false);
+          },
+        }),
+    );
   }
 }
