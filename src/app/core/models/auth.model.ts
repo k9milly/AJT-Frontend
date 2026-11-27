@@ -23,6 +23,14 @@ export interface LoginResponse {
   trocarSenha: boolean;
 }
 
+// corpo de POST /api/auth/registro (tela "Criar conta", publica)
+// a conta nasce inativa e com perfil Atendente: so entra depois que um admin libera
+export interface RegistroRequest {
+  nome: string;
+  username: string;
+  senha: string;
+}
+
 export interface TrocaSenhaRequest {
   senhaAtual: string;
   novaSenha: string;
