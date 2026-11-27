@@ -76,6 +76,20 @@ describe('AuthService', () => {
     expect(service.isAutenticado()).toBeTrue();
   });
 
+  it('criar conta envia nome/username/senha e nao abre sessao (a conta espera o admin liberar)', () => {
+    criarServico();
+
+    service.registrar({ nome: 'Maria', username: 'maria', senha: 'senha12345' }).subscribe();
+
+    const req = http.expectOne(`${environment.apiUrl}/auth/registro`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ nome: 'Maria', username: 'maria', senha: 'senha12345' });
+    req.flush({ id: 7, username: 'maria', role: 'ATENDENTE', ativo: false });
+
+    expect(sessaoSalva()).toBeNull();
+    expect(service.isAutenticado()).toBeFalse();
+  });
+
   it('troca de senha substitui o token antigo pelo novo', () => {
     criarServico();
     service.login('admin', 'admin123').subscribe();
